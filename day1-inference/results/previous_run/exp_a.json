@@ -1,0 +1,96 @@
+{
+  "meta": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "device": "mps",
+    "dtype": "torch.float16",
+    "torch": "2.15.0",
+    "machine": "macOS-27.2.1-arm64-arm-64bit",
+    "smoke": false,
+    "config": {
+      "warmup": 3,
+      "repeats": 3,
+      "a_prompt_lens": [
+        128,
+        512,
+        1024,
+        2048
+      ],
+      "a_new_tokens": 64,
+      "b_prompt_len": 512,
+      "b_new_tokens": [
+        32,
+        128,
+        256
+      ],
+      "c_prompt_len": 512,
+      "c_new_tokens": [
+        32,
+        128,
+        256
+      ]
+    },
+    "kv_bytes_per_token": 12288
+  },
+  "rows": [
+    {
+      "mode": "cached",
+      "prompt_len": 128,
+      "new_tokens": 64,
+      "prefill_ms": 49.15254196384922,
+      "prefill_ms_min": 48.98095899261534,
+      "prefill_ms_max": 55.98245799774304,
+      "prefill_tok_per_s": 2604.1379527053073,
+      "decode_total_s": 1.0758534097112715,
+      "decode_ms_per_token": 17.07703824938526,
+      "total_s": 1.1248343687038869,
+      "tokens_per_s": 56.89726574921897,
+      "peak_mem_mb": 1048.703125,
+      "baseline_mem_mb": 1040.46875
+    },
+    {
+      "mode": "cached",
+      "prompt_len": 512,
+      "new_tokens": 64,
+      "prefill_ms": 159.18891702312976,
+      "prefill_ms_min": 155.8110419427976,
+      "prefill_ms_max": 159.4369579688646,
+      "prefill_tok_per_s": 3216.3043104665862,
+      "decode_total_s": 1.1982855070964433,
+      "decode_ms_per_token": 19.02040487454672,
+      "total_s": 1.357474424119573,
+      "tokens_per_s": 47.14637628735358,
+      "peak_mem_mb": 1056.703125,
+      "baseline_mem_mb": 1040.703125
+    },
+    {
+      "mode": "cached",
+      "prompt_len": 1024,
+      "new_tokens": 64,
+      "prefill_ms": 309.80975000420585,
+      "prefill_ms_min": 309.40241704229265,
+      "prefill_ms_max": 313.2507500122301,
+      "prefill_tok_per_s": 3305.254272940405,
+      "decode_total_s": 1.0422845809953287,
+      "decode_ms_per_token": 16.544199698338552,
+      "total_s": 1.3520943309995346,
+      "tokens_per_s": 47.333975546431034,
+      "peak_mem_mb": 1064.703125,
+      "baseline_mem_mb": 1048.703125
+    },
+    {
+      "mode": "cached",
+      "prompt_len": 2048,
+      "new_tokens": 64,
+      "prefill_ms": 658.3424169803038,
+      "prefill_ms_min": 644.5095420349389,
+      "prefill_ms_max": 660.5032089864835,
+      "prefill_tok_per_s": 3110.8431527073726,
+      "decode_total_s": 1.093061045918148,
+      "decode_ms_per_token": 17.350175332034098,
+      "total_s": 1.7535642549046315,
+      "tokens_per_s": 36.497094315760144,
+      "peak_mem_mb": 2120.703125,
+      "baseline_mem_mb": 1048.703125
+    }
+  ]
+}

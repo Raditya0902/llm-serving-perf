@@ -1,0 +1,81 @@
+{
+  "meta": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "device": "mps",
+    "dtype": "torch.float16",
+    "torch": "2.15.0",
+    "machine": "macOS-27.2.1-arm64-arm-64bit",
+    "smoke": false,
+    "config": {
+      "warmup": 3,
+      "repeats": 3,
+      "a_prompt_lens": [
+        128,
+        512,
+        1024,
+        2048
+      ],
+      "a_new_tokens": 64,
+      "b_prompt_len": 512,
+      "b_new_tokens": [
+        32,
+        128,
+        256
+      ],
+      "c_prompt_len": 512,
+      "c_new_tokens": [
+        32,
+        128,
+        256
+      ]
+    },
+    "kv_bytes_per_token": 12288
+  },
+  "rows": [
+    {
+      "mode": "cached",
+      "prompt_len": 512,
+      "new_tokens": 32,
+      "prefill_ms": 159.18000001693144,
+      "prefill_ms_min": 157.76745800394565,
+      "prefill_ms_max": 159.95275002205744,
+      "prefill_tok_per_s": 3216.4844826331214,
+      "decode_total_s": 0.5004269580822438,
+      "decode_ms_per_token": 16.14280509942722,
+      "total_s": 0.6596069580991752,
+      "tokens_per_s": 48.51373929137454,
+      "peak_mem_mb": 1056.703125,
+      "baseline_mem_mb": 1048.703125
+    },
+    {
+      "mode": "cached",
+      "prompt_len": 512,
+      "new_tokens": 128,
+      "prefill_ms": 157.80587500194088,
+      "prefill_ms_min": 157.69366698805243,
+      "prefill_ms_max": 158.10570801841095,
+      "prefill_tok_per_s": 3244.4926400471645,
+      "decode_total_s": 2.052609827136621,
+      "decode_ms_per_token": 16.16228210343796,
+      "total_s": 2.210715535155032,
+      "tokens_per_s": 57.89980572558092,
+      "peak_mem_mb": 1056.703125,
+      "baseline_mem_mb": 1048.703125
+    },
+    {
+      "mode": "cached",
+      "prompt_len": 512,
+      "new_tokens": 256,
+      "prefill_ms": 158.37179200025275,
+      "prefill_ms_min": 158.14100002171472,
+      "prefill_ms_max": 159.92962499149144,
+      "prefill_tok_per_s": 3232.8989495754577,
+      "decode_total_s": 4.115135041472968,
+      "decode_ms_per_token": 16.13778447636458,
+      "total_s": 4.273276041494682,
+      "tokens_per_s": 59.90719942128002,
+      "peak_mem_mb": 1056.703125,
+      "baseline_mem_mb": 1048.703125
+    }
+  ]
+}
