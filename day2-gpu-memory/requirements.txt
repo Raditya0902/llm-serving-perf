@@ -1,0 +1,6 @@
+torch
+numpy
+matplotlib
+pytest
+pytest-cov
+psutil

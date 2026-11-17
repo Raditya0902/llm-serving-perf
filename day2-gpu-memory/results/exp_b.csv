@@ -1,0 +1,12 @@
+stage,allocated_mb,reserved_mb,peak_allocated_mb,reserved_minus_allocated_mb,reserved_is_meaningful,note
+0 baseline,0.0,0.453,0.0,0.453,True,after empty_cache + reset_peak
+1 alloc A,256.0,1024.453,256.0,768.453,True,live tensor of 256 MB
+2 alloc B,512.0,1024.453,512.0,512.453,True,second live tensor; peak follows allocated
+3 free A,256.0,1024.453,512.0,768.453,True,allocated drops; reserved should stay (block is cached for reuse)
+4 alloc C (half size),384.0,1024.453,512.0,640.453,True,served from the cached block if the allocator reuses it
+5 free all,0.0,1024.453,512.0,1024.453,True,"no live tensors, memory still reserved; peak remembers the high-water mark"
+6 empty_cache,0.0,0.453,512.0,0.453,True,cached blocks returned to the driver; reserved falls
+7 many small tensors,256.0,1024.453,256.0,768.453,True,16 tensors of 1/16 size
+8 free every other,128.0,1024.453,256.0,896.453,True,half the bytes are free but scattered between live tensors
+9 alloc one large,260.0,1024.453,260.0,764.453,True,needs contiguous space; cannot reuse the scattered holes
+10 cleanup,0.0,0.453,260.0,0.453,True,all freed and cache emptied
