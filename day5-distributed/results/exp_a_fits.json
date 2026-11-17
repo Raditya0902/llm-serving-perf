@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "smoke": false,
+    "platform": "macOS-27.2.1-arm64-arm-64bit",
+    "torch": "2.15.0",
+    "backend": "gloo",
+    "device": "cpu",
+    "threads_per_rank": 1,
+    "cpu_count": 10,
+    "performance_cores": 4,
+    "efficiency_cores": 6,
+    "spawn_retries": [],
+    "note": "Measured on CPU with Gloo over loopback, all ranks on one machine, no CPU affinity (macOS has none), so ranks may land on performance or efficiency cores. Not NCCL, not NVLink/PCIe. Collective timings are bare torch.distributed calls on preallocated buffers; each timed call starts right after a barrier, so latencies include barrier-exit skew between ranks, and per-case results take the slowest rank's median. Rows with source=assumption are model predictions from assumed hardware numbers, not measurements.",
+    "config": {
+      "worlds": [
+        2,
+        4
+      ],
+      "message_bytes": [
+        1024,
+        4096,
+        16384,
+        65536,
+        262144,
+        1048576,
+        4194304,
+        16777216,
+        67108864
+      ],
+      "collective_iters": 20,
+      "warmup": 3,
+      "mlp_worlds": [
+        2,
+        4
+      ],
+      "mlp_d_models": [
+        256,
+        512,
+        1024,
+        2048
+      ],
+      "mlp_tokens": [
+        1,
+        16,
+        128,
+        512
+      ],
+      "mlp_iters": 10,
+      "repeats": 3,
+      "ff_mult": 4,
+      "seed": 0
+    }
+  },
+  "rows": [
+    {
+      "world": 2,
+      "collective": "all_reduce",
+      "alpha_us": 151.461085089368,
+      "beta_ns_per_byte": 0.12281740077036586,
+      "implied_bw_GBps": 8.14216872957375,
+      "points": 9,
+      "max_rel_err": 0.327647388344974
+    },
+    {
+      "world": 2,
+      "collective": "all_gather",
+      "alpha_us": 57.0943194314965,
+      "beta_ns_per_byte": 0.10558052451801835,
+      "implied_bw_GBps": 9.47144375882827,
+      "points": 9,
+      "max_rel_err": 0.3537845991828452
+    },
+    {
+      "world": 2,
+      "collective": "broadcast",
+      "alpha_us": 42.80038591088193,
+      "beta_ns_per_byte": 0.069983769176365,
+      "implied_bw_GBps": 14.289027466924734,
+      "points": 9,
+      "max_rel_err": 0.1868072734080961
+    },
+    {
+      "world": 4,
+      "collective": "all_reduce",
+      "alpha_us": 417.38858993107044,
+      "beta_ns_per_byte": 0.36843307607662035,
+      "implied_bw_GBps": 2.714197136285444,
+      "points": 9,
+      "max_rel_err": 0.34525922911937806
+    },
+    {
+      "world": 4,
+      "collective": "all_gather",
+      "alpha_us": 200.19601454052162,
+      "beta_ns_per_byte": 0.2723953168523435,
+      "implied_bw_GBps": 3.6711350677958494,
+      "points": 9,
+      "max_rel_err": 0.4052728014850091
+    },
+    {
+      "world": 4,
+      "collective": "broadcast",
+      "alpha_us": 81.68986960374754,
+      "beta_ns_per_byte": 0.20523389262858152,
+      "implied_bw_GBps": 4.872489563942212,
+      "points": 9,
+      "max_rel_err": 0.20179475726982343
+    }
+  ]
+}

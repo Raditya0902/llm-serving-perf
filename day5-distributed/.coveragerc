@@ -1,0 +1,6 @@
+# Workers run in processes started by torch.multiprocessing.spawn; trace them too.
+[run]
+patch = subprocess
+parallel = true
+sigterm = true
+omit = tests/*
