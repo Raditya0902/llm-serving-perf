@@ -1,0 +1,768 @@
+{
+  "meta": {
+    "simulated": true,
+    "note": "SIMULATED with the Day 3 engine and a roofline cost model derived from illustrative GPU peaks (kv_sizing.HARDWARE); not a GPU measurement. peak_gpu_mem_gib is not measured.",
+    "git_commit": "9b0277f",
+    "git_dirty": true,
+    "platform": "macOS-27.2.1-arm64-arm-64bit",
+    "python": "3.12.13",
+    "smoke": false,
+    "reps": 3,
+    "key_reps": 5,
+    "hardware": "a100-40gb",
+    "model_preset": "llama3-8b",
+    "hardware_profile": {
+      "name": "a100-40gb",
+      "gpu_bytes": 42949672960,
+      "mem_bw_bytes_s": 1555000000000.0,
+      "peak_flops": 312000000000000.0,
+      "assumed_mfu": 0.5,
+      "note": "illustrative, not measured"
+    },
+    "analysis_note": "derived from matrix_summary.json by analyze.py; thresholds and rules are named constants in objective.py, stability.py and bottleneck.py",
+    "matrix_summary_sha256": "04266852b7dabdf41159d316a53e9c86130dcfc1b8ac306918097219ddd3366c"
+  },
+  "rows": [
+    {
+      "k_threshold": 3.0,
+      "decisions": [
+        {
+          "workload": "A",
+          "k": 3.0,
+          "threshold_ms": 5283.727603837392,
+          "feasible": [
+            "A-c4-baseline",
+            "A-c4-tuned",
+            "A-c16-baseline",
+            "A-c16-tuned",
+            "A-c64-baseline",
+            "A-c64-tuned"
+          ],
+          "best_case": "A-c64-tuned",
+          "baseline_case": "A-c64-baseline",
+          "delta_pct": 0.003399527870295154,
+          "verdict": "within noise",
+          "recommendation": "keep baseline: tuned's +0.0% output_tok_s is within noise (noise floor 1.1%)",
+          "same_concurrency_baseline_feasible": true
+        },
+        {
+          "workload": "B",
+          "k": 3.0,
+          "threshold_ms": 19874.280071750156,
+          "feasible": [
+            "B-c4-baseline",
+            "B-c4-tuned",
+            "B-c16-baseline",
+            "B-c16-tuned"
+          ],
+          "best_case": "B-c16-tuned",
+          "baseline_case": "B-c16-baseline",
+          "delta_pct": 1.4632459990810118,
+          "verdict": "within noise",
+          "recommendation": "keep baseline: tuned's +1.5% output_tok_s is within noise (noise floor 1.1%)",
+          "same_concurrency_baseline_feasible": true
+        }
+      ],
+      "skipped_workloads": {},
+      "pairs": [
+        {
+          "workload": "A",
+          "concurrency": 4,
+          "before": "A-c4-baseline",
+          "after": "A-c4-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 30.177776923076866,
+              "after": 30.177776923076866,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 38.70330341880341,
+              "after": 38.70330341880341,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 11.103768701363897,
+              "after": 11.103768701363897,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 11.27452030473708,
+              "after": 11.27452030473708,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 1761.242534612464,
+              "after": 1761.242534612464,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 2.7627697093583734,
+              "after": 2.7627697093583734,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 350.8792507926417,
+              "after": 350.8792507926417,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": null,
+              "after": null,
+              "delta_pct": null,
+              "verdict": "not measured",
+              "direction": "not measured"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.011728748806112703,
+              "after": 0.010073169931423697,
+              "delta_pct": -14.115562555369623,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            }
+          ]
+        },
+        {
+          "workload": "A",
+          "concurrency": 16,
+          "before": "A-c16-baseline",
+          "after": "A-c16-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 81.65227530715812,
+              "after": 68.62405982905982,
+              "delta_pct": -15.95572864208497,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 426.1988461538462,
+              "after": 420.6307692307692,
+              "delta_pct": -1.306450492141191,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 12.84882073548797,
+              "after": 12.930401374473137,
+              "delta_pct": 0.6349270541213416,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 13.549248274749397,
+              "after": 13.731644604715214,
+              "delta_pct": 1.3461730589565912,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 2127.89451405874,
+              "after": 2124.550707601532,
+              "delta_pct": -0.1571415516660119,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 8.938433210277518,
+              "after": 8.953310772145441,
+              "delta_pct": 0.16644485132826978,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 1135.7595695833525,
+              "after": 1137.6687821916714,
+              "delta_pct": 0.16810006795886842,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": null,
+              "after": null,
+              "delta_pct": null,
+              "verdict": "not measured",
+              "direction": "not measured"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.04347659980897803,
+              "after": 0.03733963316599403,
+              "delta_pct": -14.115562555369616,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 0.0,
+              "after": 7.666666666666667,
+              "delta_pct": null,
+              "verdict": "real",
+              "direction": "regressed"
+            }
+          ]
+        },
+        {
+          "workload": "A",
+          "concurrency": 64,
+          "before": "A-c64-baseline",
+          "after": "A-c64-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 202.33798692908653,
+              "after": 164.51810657051288,
+              "delta_pct": -18.691438484968415,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 1674.4843846153847,
+              "after": 1112.7023948717936,
+              "delta_pct": -33.54955082920214,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 22.116921625784457,
+              "after": 22.421208519658727,
+              "delta_pct": 1.375810336640723,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 24.947371542808373,
+              "after": 25.449941484304578,
+              "delta_pct": 2.0145206104531748,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 4148.536004884778,
+              "after": 4135.392351057917,
+              "delta_pct": -0.3168263168352538,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 20.41778673657304,
+              "after": 20.41838657321046,
+              "delta_pct": 0.0029378141968031137,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 2613.751433793809,
+              "after": 2613.840289002261,
+              "delta_pct": 0.003399527870295154,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": null,
+              "after": null,
+              "delta_pct": null,
+              "verdict": "not measured",
+              "direction": "not measured"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.16524928366762176,
+              "after": 0.1418052957968304,
+              "delta_pct": -14.187043568640211,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 32.6,
+              "after": 55.6,
+              "delta_pct": 70.5521472392638,
+              "verdict": "real",
+              "direction": "regressed"
+            }
+          ]
+        },
+        {
+          "workload": "B",
+          "concurrency": 4,
+          "before": "B-c4-baseline",
+          "after": "B-c4-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 292.16570384615375,
+              "after": 287.6989169932372,
+              "delta_pct": -1.5288539325849868,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 535.0499572649545,
+              "after": 425.0248162393127,
+              "delta_pct": -20.56352673833741,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 13.41707784769011,
+              "after": 13.365090916743553,
+              "delta_pct": -0.3874683559021512,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 14.23205274996014,
+              "after": 14.178900258191426,
+              "delta_pct": -0.37347031171495965,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 6624.760023916719,
+              "after": 6587.6774752874735,
+              "delta_pct": -0.5597568590465113,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 0.7270217853832012,
+              "after": 0.7302905680996776,
+              "delta_pct": 0.4496127601944608,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 280.0171725870836,
+              "after": 281.2758558444325,
+              "delta_pct": 0.44950216649924746,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": null,
+              "after": null,
+              "delta_pct": null,
+              "verdict": "not measured",
+              "direction": "not measured"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.0929512893982808,
+              "after": 0.07983069199724381,
+              "delta_pct": -14.115562555369637,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 0.0,
+              "after": 2.6666666666666665,
+              "delta_pct": null,
+              "verdict": "real",
+              "direction": "regressed"
+            }
+          ]
+        },
+        {
+          "workload": "B",
+          "concurrency": 16,
+          "before": "B-c16-baseline",
+          "after": "B-c16-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 570.5319624732906,
+              "after": 542.6854289447641,
+              "delta_pct": -4.880801665836579,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 2896.5519145299095,
+              "after": 2600.5283675213655,
+              "delta_pct": -10.219859879728295,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 23.23586603559093,
+              "after": 22.943836307487704,
+              "delta_pct": -1.2568058692364554,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 26.391134955801324,
+              "after": 26.06074115413332,
+              "delta_pct": -1.251912061460527,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 12475.76131794144,
+              "after": 12294.231346098115,
+              "delta_pct": -1.4550612761584842,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 1.63704671701122,
+              "after": 1.6610068927756452,
+              "delta_pct": 1.4636219916906013,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 628.5730601520621,
+              "after": 637.7706303060382,
+              "delta_pct": 1.4632459990810118,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": null,
+              "after": null,
+              "delta_pct": null,
+              "verdict": "not measured",
+              "direction": "not measured"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.3485004775549188,
+              "after": 0.2992748630114513,
+              "delta_pct": -14.124977643885797,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 12.0,
+              "after": 14.666666666666666,
+              "delta_pct": 22.222222222222218,
+              "verdict": "real",
+              "direction": "regressed"
+            }
+          ]
+        },
+        {
+          "workload": "B",
+          "concurrency": 64,
+          "before": "B-c64-baseline",
+          "after": "B-c64-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 6964.347439921485,
+              "after": 3424.3105886706144,
+              "delta_pct": -50.83084785458062,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 10880.783851502838,
+              "after": 10478.827297435904,
+              "delta_pct": -3.6941874735561084,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 56.46048824447524,
+              "after": 60.46366410131782,
+              "delta_pct": 7.090225361687856,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 64.85231647740095,
+              "after": 69.62029857372487,
+              "delta_pct": 7.352061353098183,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 36653.26718690491,
+              "after": 35942.02657835412,
+              "delta_pct": -1.940456235249049,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 2.1898786391091063,
+              "after": 2.3605684247905296,
+              "delta_pct": 7.794486079414151,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 840.9975113232322,
+              "after": 906.5616169964453,
+              "delta_pct": 7.795992828808025,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": null,
+              "after": null,
+              "delta_pct": null,
+              "verdict": "not measured",
+              "direction": "not measured"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 1.0,
+              "after": 1.0,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "preemptions",
+              "before": 64.4,
+              "after": 55.8,
+              "delta_pct": -13.354037267080757,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 60.0,
+              "after": 62.8,
+              "delta_pct": 4.666666666666662,
+              "verdict": "real",
+              "direction": "regressed"
+            }
+          ]
+        }
+      ],
+      "bottlenecks": [
+        {
+          "case_id": "A-c4-baseline",
+          "label": "bandwidth-bound decode (weight reads)",
+          "caveat": null,
+          "reason": "TPOT 11.1 ms <= 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c4-tuned",
+          "label": "bandwidth-bound decode (weight reads)",
+          "caveat": null,
+          "reason": "TPOT 11.1 ms <= 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c16-baseline",
+          "label": "bandwidth-bound decode (weight reads)",
+          "caveat": null,
+          "reason": "TPOT 12.8 ms <= 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c16-tuned",
+          "label": "bandwidth-bound decode (weight reads)",
+          "caveat": null,
+          "reason": "TPOT 12.9 ms <= 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c64-baseline",
+          "label": "compute / prefill-interference bound",
+          "caveat": null,
+          "reason": "TPOT 22.1 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c64-tuned",
+          "label": "compute / prefill-interference bound",
+          "caveat": null,
+          "reason": "TPOT 22.4 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c4-baseline",
+          "label": "bandwidth-bound decode (weight reads)",
+          "caveat": null,
+          "reason": "TPOT 13.4 ms <= 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c4-tuned",
+          "label": "bandwidth-bound decode (weight reads)",
+          "caveat": null,
+          "reason": "TPOT 13.4 ms <= 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c16-baseline",
+          "label": "compute / prefill-interference bound",
+          "caveat": null,
+          "reason": "TPOT 23.2 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c16-tuned",
+          "label": "compute / prefill-interference bound",
+          "caveat": null,
+          "reason": "TPOT 22.9 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c64-baseline",
+          "label": "kv-capacity-bound",
+          "reason": "KV pool 100% full (>= 90%) with 64 preemptions",
+          "caveat": null
+        },
+        {
+          "case_id": "B-c64-tuned",
+          "label": "kv-capacity-bound",
+          "reason": "KV pool 100% full (>= 90%) with 56 preemptions",
+          "caveat": null
+        }
+      ],
+      "unstable": {
+        "A-c4-baseline": [
+          "p95_ttft_ms"
+        ],
+        "A-c4-tuned": [
+          "p95_ttft_ms"
+        ],
+        "A-c16-tuned": [
+          "peak_waiting"
+        ],
+        "B-c4-baseline": [
+          "p95_ttft_ms"
+        ],
+        "B-c4-tuned": [
+          "peak_waiting"
+        ],
+        "B-c16-baseline": [
+          "mean_ttft_ms",
+          "p95_ttft_ms"
+        ],
+        "B-c64-baseline": [
+          "preemptions",
+          "recomputed_tokens"
+        ],
+        "B-c64-tuned": [
+          "preemptions",
+          "recomputed_tokens"
+        ]
+      },
+      "p95_low_sample": [
+        "A-c16-baseline",
+        "A-c16-tuned",
+        "A-c4-baseline",
+        "A-c4-tuned",
+        "B-c16-baseline",
+        "B-c16-baseline-aa",
+        "B-c16-tuned",
+        "B-c4-baseline",
+        "B-c4-tuned"
+      ],
+      "noise_floor_pct": {
+        "output_tok_s": 1.0529584766711313,
+        "p95_e2e_ms": 3.0357595390458116,
+        "mean_ttft_ms": 5.286822970514537,
+        "mean_tpot_ms": 0.6736589070881682
+      },
+      "weight_read_ms": 10.32797427652733
+    }
+  ]
+}
