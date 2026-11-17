@@ -36,7 +36,7 @@ def flags_in_command(cmd: Sequence[str]) -> list[str]:
 
 
 def matrix_flags() -> set[str]:
-    case = mx.build_matrix()[0]
+    case = mx.build_matrix(cap_kv_pool=True)[0]  # capped: also covers --kv-cache-memory-bytes
     return set(flags_in_command(case.serve_command(PROBE_PORT))) | set(
         flags_in_command(case.bench_command("out", 0, PROBE_PORT))
     )

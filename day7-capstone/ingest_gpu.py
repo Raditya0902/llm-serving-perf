@@ -56,7 +56,7 @@ class ResultFormatError(ValueError):
     """A result file cannot be trusted as one repeat of its case."""
 
 
-def case_index(**matrix_kwargs: str) -> dict[str, mx.MatrixCase]:
+def case_index(**matrix_kwargs: str | bool) -> dict[str, mx.MatrixCase]:
     runs = mx.build_runs(1, 1, **matrix_kwargs)
     return {r.case.case_id: r.case for r in runs}
 
@@ -242,13 +242,15 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--hardware", default=mx.DEFAULT_HARDWARE, choices=sorted(kv_sizing.HARDWARE))
     p.add_argument("--model", default=mx.DEFAULT_HUB_MODEL)
     p.add_argument("--model-preset", default=mx.DEFAULT_PRESET, choices=sorted(kv_sizing.MODELS))
+    p.add_argument("--cap-kv-pool", action="store_true", help="the runs were made with --cap-kv-pool")
     return p
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    cases = case_index(model=args.model, model_preset=args.model_preset, hardware=args.hardware)
+    cases = case_index(model=args.model, model_preset=args.model_preset, hardware=args.hardware,
+                       cap_kv_pool=args.cap_kv_pool)
     rows, problems = load_dir(args.raw, cases)
     for message in problems:
         logger.error("REJECTED %s", message)
@@ -258,7 +260,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     meta = results_io.run_meta(
         simulated=False, note="measured with vllm bench serve; see sidecar files for server-side metrics",
         extra={"raw_dir": args.raw.name, "rejected": len(problems), "hardware": args.hardware,
-               "model": args.model},
+               "model": args.model, "cap_kv_pool": args.cap_kv_pool},
     )
     results_io.write_results("matrix", rows, meta, args.out)
     results_io.write_results("matrix_summary", stability.aggregate_cases(rows), meta, args.out)

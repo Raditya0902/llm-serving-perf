@@ -264,6 +264,9 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--model-preset", default=mx.DEFAULT_PRESET, choices=sorted(kv_sizing.MODELS),
                    help="Day 2 preset used for sizing; must match --model's architecture")
     p.add_argument("--hardware", default=mx.DEFAULT_HARDWARE, choices=sorted(kv_sizing.HARDWARE))
+    p.add_argument("--cap-kv-pool", action="store_true",
+                   help="pass --kv-cache-memory-bytes so the KV pool equals --hardware's modeled pool "
+                        "(run a bigger GPU while reproducing a smaller one's memory pressure)")
     return p
 
 
@@ -271,7 +274,8 @@ def _select_runs(args: argparse.Namespace, parser: argparse.ArgumentParser) -> l
     try:
         runs = mx.build_runs(args.reps, max(args.key_reps, args.reps),
                              include_control=not args.no_control, model=args.model,
-                             model_preset=args.model_preset, hardware=args.hardware)
+                             model_preset=args.model_preset, hardware=args.hardware,
+                             cap_kv_pool=args.cap_kv_pool)
     except ValueError as exc:
         parser.error(str(exc))
     if args.only:

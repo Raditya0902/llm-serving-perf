@@ -54,6 +54,10 @@ class HardwareProfile:
 HARDWARE: dict[str, HardwareProfile] = {
     "a100-40gb": HardwareProfile("a100-40gb", 40 * GIB, 1.555e12, 312e12, 0.5),
     "a10g-24gb": HardwareProfile("a10g-24gb", 24 * GIB, 0.600e12, 125e12, 0.5),
+    # RunPod candidates (vendor peak numbers from memory; verify against the spec sheets before relying on them).
+    "a40-48gb": HardwareProfile("a40-48gb", 48 * GIB, 0.696e12, 149.7e12, 0.5),
+    "l40s-48gb": HardwareProfile("l40s-48gb", 48 * GIB, 0.864e12, 362e12, 0.5),
+    "a100-80gb": HardwareProfile("a100-80gb", 80 * GIB, 2.039e12, 312e12, 0.5),
 }
 
 MODELS: dict[str, ModelSpec] = {

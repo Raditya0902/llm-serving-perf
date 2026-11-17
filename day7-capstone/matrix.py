@@ -96,6 +96,9 @@ class MatrixCase:
     model: str = DEFAULT_HUB_MODEL  # Hub id passed to `vllm serve`
     model_preset: str = DEFAULT_PRESET  # Day 2 preset used for sizing and the simulator
     hardware: str = DEFAULT_HARDWARE
+    # Run on a larger GPU but pin the KV pool to what `hardware` would have, so the modeled
+    # memory-pressure regime can be reproduced (vLLM then ignores gpu_memory_utilization for sizing).
+    cap_kv_pool: bool = False
     is_control: bool = False
 
     def __post_init__(self) -> None:
@@ -105,6 +108,27 @@ class MatrixCase:
             raise ValueError(f"unknown hardware {self.hardware!r}; valid: {sorted(kv_sizing.HARDWARE)}")
         if self.concurrency < 1:
             raise ValueError("concurrency must be >= 1")
+        if self.cap_kv_pool and self._modeled_pool_blocks() <= 0:
+            raise ValueError(
+                f"cannot cap the KV pool: model {self.model_preset!r} leaves an empty KV pool on {self.hardware!r}"
+            )
+
+    def _modeled_pool_blocks(self) -> int:
+        return kv_sizing.kv_pool_blocks(
+            kv_sizing.model_spec(self.model_preset),
+            kv_sizing.HARDWARE[self.hardware],
+            self.config.gpu_memory_utilization,
+        )
+
+    @property
+    def kv_cache_cap_bytes(self) -> int | None:
+        """Bytes for `--kv-cache-memory-bytes`, or None when the pool is left to vLLM."""
+        if not self.cap_kv_pool:
+            return None
+        bytes_per_block = kv_sizing.BLOCK_SIZE * kv_sizing.kv_bytes_per_token_for(
+            kv_sizing.model_spec(self.model_preset)
+        )
+        return self._modeled_pool_blocks() * bytes_per_block
 
     @property
     def case_id(self) -> str:
@@ -120,6 +144,8 @@ class MatrixCase:
         """Fingerprint of the experiment itself; identical for a case and its A/A control."""
         payload = dataclasses.asdict(self)
         payload.pop("is_control")
+        if not self.cap_kv_pool:
+            payload.pop("cap_kv_pool")  # keeps fingerprints of uncapped runs unchanged
         blob = json.dumps(payload, sort_keys=True).encode("utf-8")
         return hashlib.sha256(blob).hexdigest()[:CONFIG_ID_LENGTH]
 
@@ -136,7 +162,10 @@ class MatrixCase:
             max_num_batched_tokens=cfg.max_num_batched_tokens, port=port, seed=BASE_SEED,
         )
         bench = BenchParams(input_len=1, output_len=1, port=port)  # unused; satisfies SweepRun
-        return SweepRun(self.case_id, "matrix", self.case_id, serve, bench).serve_command()
+        cmd = SweepRun(self.case_id, "matrix", self.case_id, serve, bench).serve_command()
+        if self.kv_cache_cap_bytes is not None:
+            cmd = [*cmd, "--kv-cache-memory-bytes", str(self.kv_cache_cap_bytes)]
+        return cmd
 
     def bench_command(self, result_dir: str, rep: int, port: int) -> list[str]:
         w = self.workload
@@ -201,10 +230,10 @@ class RunSpec:
 
 def build_matrix(
     *, model: str = DEFAULT_HUB_MODEL, model_preset: str = DEFAULT_PRESET,
-    hardware: str = DEFAULT_HARDWARE,
+    hardware: str = DEFAULT_HARDWARE, cap_kv_pool: bool = False,
 ) -> list[MatrixCase]:
     return [
-        MatrixCase(w, cfg, conc, model, model_preset, hardware)
+        MatrixCase(w, cfg, conc, model, model_preset, hardware, cap_kv_pool)
         for w in WORKLOADS.values()
         for conc in CONCURRENCY_LEVELS
         for cfg in CONFIGS.values()
@@ -212,7 +241,7 @@ def build_matrix(
 
 
 def build_runs(
-    reps: int, key_reps: int, *, include_control: bool = True, **matrix_kwargs: str,
+    reps: int, key_reps: int, *, include_control: bool = True, **matrix_kwargs: str | bool,
 ) -> list[RunSpec]:
     """Every (case, rep) to execute: `reps` each, `key_reps` for the highest-concurrency cases
     that feed the optimization decision, plus an A/A control (a repeat of one baseline case)."""

@@ -144,3 +144,54 @@ def test_build_runs_rejects_nonpositive_reps():
 def test_capacity_pressure_only_for_workload_b_at_highest_concurrency():
     pressured = {c.case_id for c in mx.build_matrix() if c.predicted_pressure()["pressured"]}
     assert pressured == {"B-c64-baseline", "B-c64-tuned"}
+
+
+# --- KV-pool cap: run on a larger GPU while reproducing the modeled (smaller) GPU's pool ---------
+
+KV_CAP_FLAG = "--kv-cache-memory-bytes"
+
+
+def _capped_case(case_id: str, **overrides) -> mx.MatrixCase:
+    return next(c for c in mx.build_matrix(cap_kv_pool=True, **overrides) if c.case_id == case_id)
+
+
+def test_serve_command_has_no_kv_cap_by_default():
+    case = next(c for c in mx.build_matrix() if c.case_id == "B-c64-baseline")
+    assert KV_CAP_FLAG not in case.serve_command(port=8000)
+    assert case.kv_cache_cap_bytes is None
+
+
+def test_cap_pins_pool_to_the_modeled_hardware_pool():
+    case = _capped_case("B-c64-baseline")
+    model = mx.kv_sizing.model_spec(case.model_preset)
+    hardware = mx.kv_sizing.HARDWARE[case.hardware]
+    blocks = mx.kv_sizing.kv_pool_blocks(model, hardware, case.config.gpu_memory_utilization)
+    expected = blocks * mx.kv_sizing.BLOCK_SIZE * mx.kv_sizing.kv_bytes_per_token_for(model)
+
+    cmd = case.serve_command(port=8000)
+
+    assert cmd[cmd.index(KV_CAP_FLAG) + 1] == str(expected)
+    assert case.kv_cache_cap_bytes == expected
+
+
+def test_tuned_cap_is_larger_than_baseline_cap():
+    baseline = _capped_case("B-c64-baseline").kv_cache_cap_bytes
+    tuned = _capped_case("B-c64-tuned").kv_cache_cap_bytes
+    assert baseline is not None and tuned is not None
+    assert tuned > baseline
+
+
+def test_cap_value_is_plain_digits():
+    cmd = _capped_case("A-c4-tuned").serve_command(port=8000)
+    assert cmd[cmd.index(KV_CAP_FLAG) + 1].isdigit()
+
+
+def test_cap_changes_config_id_so_capped_and_uncapped_runs_never_mix():
+    plain = next(c for c in mx.build_matrix() if c.case_id == "B-c64-baseline")
+    capped = _capped_case("B-c64-baseline")
+    assert plain.config_id != capped.config_id
+
+
+def test_cap_is_rejected_when_the_modeled_pool_is_empty():
+    with pytest.raises(ValueError, match="KV pool"):
+        mx.build_matrix(model_preset="llama3-70b", hardware="a100-40gb", cap_kv_pool=True)

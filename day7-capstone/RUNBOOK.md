@@ -23,6 +23,15 @@ nvidia-smi                                   # confirm the GPU is idle; note its
 `kv_sizing.HARDWARE` (memory bytes, bandwidth, peak FLOPS) *before* running, so the predictions in section 4 are for your GPU. The real
 run does not depend on this; the comparison does.
 
+### Running on a bigger GPU than the model assumes (`--cap-kv-pool`)
+
+The predictions in section 4 assume the `a100-40gb` KV pool (~17.0 GiB baseline, ~19.8 GiB tuned). On a 48 GB card the simulator predicts B@64
+reaches ~95% KV use with **no** preemptions and no tuned-config TTFT win; on 80 GB it only reaches ~44%. To reproduce the modeled pressure on a
+larger GPU, keep `--hardware a100-40gb` and add `--cap-kv-pool` to `run_matrix_gpu.py` **and** `ingest_gpu.py`: the server then gets
+`--kv-cache-memory-bytes <modeled pool>`, which vLLM uses instead of `gpu_memory_utilization` for sizing. Consequences to record in the report:
+the `tuned` config's utilisation change is then tested as a pool-size change (17.0 -> 19.8 GiB), and peak whole-GPU memory no longer tracks
+`gpu_memory_utilization`. Capped and uncapped runs have different `matrix_config_id`s and cannot be mixed.
+
 ## 2. Check the commands without running anything
 
 ```bash
