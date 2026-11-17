@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "device": "mps",
+    "dtype": "torch.float16",
+    "torch": "2.15.0",
+    "transformers": "5.23.0",
+    "machine": "macOS-27.2.1-arm64-arm-64bit",
+    "git": "9d8d845",
+    "smoke": false,
+    "config": {
+      "warmup": 2,
+      "repeats": 5,
+      "cooldown_s": 5.0,
+      "prompt_len": 512,
+      "new_tokens": 64,
+      "n_requests": 8,
+      "overrides": {}
+    },
+    "config_id": "1f4e8d3432c7",
+    "experiment": {
+      "exp_id": "O2",
+      "name": "Optimization: attention implementation",
+      "variable": "attn_impl",
+      "values": [
+        "sdpa",
+        "eager"
+      ],
+      "baseline": "sdpa",
+      "measurement": "TTFT, TPOT (outputs must match)",
+      "hypothesis": "At decode (query length 1) the attention core is a small share of the step, so sdpa vs eager differ by < 5% in TPOT; any difference shows up in prefill (TTFT) at 512+ tokens.",
+      "runnable_on": "local"
+    }
+  },
+  "rows": [
+    {
+      "label": "sdpa",
+      "n_reps": 5,
+      "n_requests": 1,
+      "requests_per_s": 0.8135172423724026,
+      "requests_per_s_min": 0.7362668077938087,
+      "requests_per_s_max": 0.8718222560000425,
+      "output_tok_s": 52.06510351183377,
+      "ttft_ms_p50": 231.70075000962242,
+      "ttft_ms_p95": 263.4164914372377,
+      "tpot_ms_p50": 15.792962949028208,
+      "tpot_ms_p95": 16.992938585047213,
+      "wall_s": 1.22923024604097,
+      "wall_spread_fraction": 0.17179897396780044,
+      "peak_mem_mb": 1949.368896484375,
+      "wall_drift_fraction": 0.09327547508212697,
+      "tokens_match": 1.0,
+      "exp_id": "O2",
+      "variable": "attn_impl",
+      "requests_per_s_vs_baseline_pct": 0.0,
+      "output_tok_s_vs_baseline_pct": 0.0,
+      "ttft_ms_p95_vs_baseline_pct": 0.0,
+      "tpot_ms_p95_vs_baseline_pct": 0.0,
+      "peak_mem_mb_vs_baseline_pct": 0.0,
+      "wall_s_vs_baseline_pct": 0.0,
+      "is_baseline": true,
+      "rps_range_overlaps_baseline": true
+    },
+    {
+      "label": "eager",
+      "n_reps": 5,
+      "n_requests": 1,
+      "requests_per_s": 0.6372617626350578,
+      "requests_per_s_min": 0.588694620350176,
+      "requests_per_s_max": 0.6575755376041973,
+      "output_tok_s": 40.7847528086437,
+      "ttft_ms_p50": 216.2124160095118,
+      "ttft_ms_p95": 348.17679977277294,
+      "tpot_ms_p50": 21.083747273281453,
+      "tpot_ms_p95": 23.076602653045917,
+      "wall_s": 1.5692138751037419,
+      "wall_spread_fraction": 0.11339164778320063,
+      "peak_mem_mb": 1949.368896484375,
+      "wall_drift_fraction": 0.060757688425782753,
+      "tokens_match": 1.0,
+      "exp_id": "O2",
+      "variable": "attn_impl",
+      "requests_per_s_vs_baseline_pct": -21.66585667236055,
+      "output_tok_s_vs_baseline_pct": -21.66585667236055,
+      "ttft_ms_p95_vs_baseline_pct": 32.177297584168315,
+      "tpot_ms_p95_vs_baseline_pct": 35.80113020211802,
+      "peak_mem_mb_vs_baseline_pct": 0.0,
+      "wall_s_vs_baseline_pct": 27.65825443669079,
+      "is_baseline": false,
+      "rps_range_overlaps_baseline": false
+    }
+  ]
+}

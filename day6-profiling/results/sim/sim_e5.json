@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "simulated": true,
+    "note": "SIMULATED: Day 3 cost model with illustrative constants; direction/mechanism only, not a vLLM or GPU measurement",
+    "smoke": false,
+    "experiment": "At a saturating request rate, raising max_num_seqs raises throughput and lowers TTFT (less queueing) until compute saturates or KV capacity binds; past that it is flat or slightly worse for per-token latency.",
+    "workload": {
+      "num_requests": 100,
+      "seed": 0,
+      "short_prompt": [
+        32,
+        256
+      ],
+      "long_prompt": [
+        1024,
+        2048
+      ],
+      "long_prompt_frac": 0.3,
+      "short_output": [
+        16,
+        64
+      ],
+      "long_output": [
+        200,
+        512
+      ],
+      "long_output_frac": 0.4,
+      "mean_gap_ms": 2.0,
+      "burst_frac": 0.3,
+      "burst_window_ms": 300.0,
+      "high_priority_frac": 0.2
+    }
+  },
+  "rows": [
+    {
+      "exp_id": "E5",
+      "variable": "max_num_seqs",
+      "label": "16",
+      "is_baseline": false,
+      "n_seeds": 5,
+      "simulated": true,
+      "note": "SIMULATED: Day 3 cost model with illustrative constants; direction/mechanism only, not a vLLM or GPU measurement",
+      "throughput_tok_s": 1345.3392329144638,
+      "throughput_tok_s_std": 65.71631640189304,
+      "throughput_req_s": 8.073792778458937,
+      "throughput_req_s_std": 0.5666202043233918,
+      "p95_ttft_ms": 8376.515418834955,
+      "p95_ttft_ms_std": 1036.1309709198126,
+      "p95_token_gap_ms": 8.858699999999953,
+      "p95_token_gap_ms_std": 0.1854637835265056,
+      "p95_wait_ms": 8346.789737834957,
+      "p95_wait_ms_std": 1019.7805228474226,
+      "mean_batch": 13.409734979792281,
+      "mean_batch_std": 0.3662858866150091,
+      "util_proxy": 0.23208705603810661,
+      "util_proxy_std": 0.019893693706423823,
+      "kv_peak_frac": 0.1235107421875,
+      "kv_peak_frac_std": 0.010606217331574661,
+      "preemptions": 0.0,
+      "preemptions_std": 0.0,
+      "recomputed_tokens": 0.0,
+      "recomputed_tokens_std": 0.0
+    },
+    {
+      "exp_id": "E5",
+      "variable": "max_num_seqs",
+      "label": "64",
+      "is_baseline": false,
+      "n_seeds": 5,
+      "simulated": true,
+      "note": "SIMULATED: Day 3 cost model with illustrative constants; direction/mechanism only, not a vLLM or GPU measurement",
+      "throughput_tok_s": 2346.663718517359,
+      "throughput_tok_s_std": 213.71415289416225,
+      "throughput_req_s": 14.030906250412803,
+      "throughput_req_s_std": 0.549935855477326,
+      "p95_ttft_ms": 2229.7171496153765,
+      "p95_ttft_ms_std": 231.81749814816214,
+      "p95_token_gap_ms": 22.59599999999991,
+      "p95_token_gap_ms_std": 17.14315256888301,
+      "p95_wait_ms": 2167.5006789282,
+      "p95_wait_ms_std": 251.09645372167512,
+      "mean_batch": 36.696917877257555,
+      "mean_batch_std": 1.9491093199540117,
+      "util_proxy": 0.4030944651268878,
+      "util_proxy_std": 0.021868360020912456,
+      "kv_peak_frac": 0.315185546875,
+      "kv_peak_frac_std": 0.03091935232395865,
+      "preemptions": 0.0,
+      "preemptions_std": 0.0,
+      "recomputed_tokens": 0.0,
+      "recomputed_tokens_std": 0.0
+    },
+    {
+      "exp_id": "E5",
+      "variable": "max_num_seqs",
+      "label": "256",
+      "is_baseline": true,
+      "n_seeds": 5,
+      "simulated": true,
+      "note": "SIMULATED: Day 3 cost model with illustrative constants; direction/mechanism only, not a vLLM or GPU measurement",
+      "throughput_tok_s": 2342.51164552204,
+      "throughput_tok_s_std": 214.1734597796105,
+      "throughput_req_s": 14.010280460539388,
+      "throughput_req_s_std": 0.6716797785346013,
+      "p95_ttft_ms": 1907.8240806396207,
+      "p95_ttft_ms_std": 214.1007159956218,
+      "p95_token_gap_ms": 12.929300000000058,
+      "p95_token_gap_ms_std": 0.5605996967534702,
+      "p95_wait_ms": 1666.0606046933954,
+      "p95_wait_ms_std": 204.03613773858646,
+      "mean_batch": 41.58134964973658,
+      "mean_batch_std": 1.7298189192838993,
+      "util_proxy": 0.4022042824735828,
+      "util_proxy_std": 0.017265193491108794,
+      "kv_peak_frac": 0.43857421875,
+      "kv_peak_frac_std": 0.04258639404074553,
+      "preemptions": 0.0,
+      "preemptions_std": 0.0,
+      "recomputed_tokens": 0.0,
+      "recomputed_tokens_std": 0.0
+    }
+  ]
+}
