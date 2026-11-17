@@ -1,0 +1,231 @@
+{
+  "meta": {
+    "smoke": false,
+    "platform": "macOS-27.2.1-arm64-arm-64bit",
+    "note": "simulated times from cost_model.CostModel; utilisation is a proxy, not GPU utilisation",
+    "config": {
+      "workload": {
+        "num_requests": 100,
+        "seed": 0,
+        "short_prompt": [
+          32,
+          256
+        ],
+        "long_prompt": [
+          1024,
+          2048
+        ],
+        "long_prompt_frac": 0.3,
+        "short_output": [
+          16,
+          64
+        ],
+        "long_output": [
+          200,
+          512
+        ],
+        "long_output_frac": 0.4,
+        "mean_gap_ms": 60.0,
+        "burst_frac": 0.3,
+        "burst_window_ms": 300.0,
+        "high_priority_frac": 0.2
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "params": {
+        "max_running_seqs": 32,
+        "unchunked_budget": 4096,
+        "chunked_budget": 512,
+        "num_kv_blocks": 3072,
+        "block_size": 16
+      },
+      "b_batch_sizes": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "c_kv_blocks": [
+        3072,
+        1024,
+        768,
+        512,
+        384,
+        256,
+        192
+      ],
+      "d_budgets": [
+        2048,
+        1024,
+        512,
+        256,
+        128
+      ],
+      "d_num_decoders": 16,
+      "e_max_running": 16,
+      "f_continuous_sizes": [
+        4,
+        8,
+        16,
+        24,
+        32,
+        48
+      ],
+      "f_static_sizes": [
+        8,
+        16,
+        32,
+        64
+      ]
+    }
+  },
+  "rows": [
+    {
+      "policy": "fcfs",
+      "priority_class": 0,
+      "n_seeds": 5,
+      "class_n": 21.8,
+      "class_n_std": 2.8635642126552705,
+      "class_mean_latency_ms": 3593.9755857785917,
+      "class_mean_latency_ms_std": 895.9364952979487,
+      "class_p95_latency_ms": 7154.940714157315,
+      "class_p95_latency_ms_std": 1507.5242797147864,
+      "class_mean_wait_ms": 1861.7342956553596,
+      "class_mean_wait_ms_std": 902.4034375313619,
+      "class_mean_ttft_ms": 1892.0606495745517,
+      "class_mean_ttft_ms_std": 899.540955631476,
+      "class_preemptions": 0.0,
+      "class_preemptions_std": 0.0,
+      "throughput_tok_s": 1312.539183324761,
+      "throughput_tok_s_std": 51.5051306657162,
+      "overall_p95_latency_ms": 7937.321410715022,
+      "overall_p95_latency_ms_std": 914.5526497112274,
+      "recomputed_tokens": 0.0,
+      "recomputed_tokens_std": 0.0
+    },
+    {
+      "policy": "fcfs",
+      "priority_class": 1,
+      "n_seeds": 5,
+      "class_n": 78.2,
+      "class_n_std": 2.8635642126552705,
+      "class_mean_latency_ms": 4070.2550492037444,
+      "class_mean_latency_ms_std": 675.7246382274603,
+      "class_p95_latency_ms": 7987.989759025931,
+      "class_p95_latency_ms_std": 912.19128467123,
+      "class_mean_wait_ms": 2458.1030118966414,
+      "class_mean_wait_ms_std": 560.4410771192802,
+      "class_mean_ttft_ms": 2485.970100291758,
+      "class_mean_ttft_ms_std": 562.9309429730426,
+      "class_preemptions": 0.0,
+      "class_preemptions_std": 0.0,
+      "throughput_tok_s": 1312.539183324761,
+      "throughput_tok_s_std": 51.5051306657162,
+      "overall_p95_latency_ms": 7937.321410715022,
+      "overall_p95_latency_ms_std": 914.5526497112274,
+      "recomputed_tokens": 0.0,
+      "recomputed_tokens_std": 0.0
+    },
+    {
+      "policy": "priority",
+      "priority_class": 0,
+      "n_seeds": 5,
+      "class_n": 21.8,
+      "class_n_std": 2.8635642126552705,
+      "class_mean_latency_ms": 1990.8473867876842,
+      "class_mean_latency_ms_std": 267.9215431050795,
+      "class_p95_latency_ms": 4625.109656359351,
+      "class_p95_latency_ms_std": 366.92319676713214,
+      "class_mean_wait_ms": 229.07012727960264,
+      "class_mean_wait_ms_std": 174.89658187712251,
+      "class_mean_ttft_ms": 257.36726301495617,
+      "class_mean_ttft_ms_std": 170.7072654236259,
+      "class_preemptions": 0.0,
+      "class_preemptions_std": 0.0,
+      "throughput_tok_s": 1330.5621698442715,
+      "throughput_tok_s_std": 68.00239390210712,
+      "overall_p95_latency_ms": 8225.295154896192,
+      "overall_p95_latency_ms_std": 861.2012520581649,
+      "recomputed_tokens": 0.0,
+      "recomputed_tokens_std": 0.0
+    },
+    {
+      "policy": "priority",
+      "priority_class": 1,
+      "n_seeds": 5,
+      "class_n": 78.2,
+      "class_n_std": 2.8635642126552705,
+      "class_mean_latency_ms": 4497.102879602875,
+      "class_mean_latency_ms_std": 784.5618326225552,
+      "class_p95_latency_ms": 8335.518384291117,
+      "class_p95_latency_ms_std": 845.8980886728399,
+      "class_mean_wait_ms": 2895.5259511270247,
+      "class_mean_wait_ms_std": 670.3953277683186,
+      "class_mean_ttft_ms": 2923.3940414739054,
+      "class_mean_ttft_ms_std": 672.9288805746735,
+      "class_preemptions": 0.0,
+      "class_preemptions_std": 0.0,
+      "throughput_tok_s": 1330.5621698442715,
+      "throughput_tok_s_std": 68.00239390210712,
+      "overall_p95_latency_ms": 8225.295154896192,
+      "overall_p95_latency_ms_std": 861.2012520581649,
+      "recomputed_tokens": 0.0,
+      "recomputed_tokens_std": 0.0
+    },
+    {
+      "policy": "priority+preempt",
+      "priority_class": 0,
+      "n_seeds": 5,
+      "class_n": 21.8,
+      "class_n_std": 2.8635642126552705,
+      "class_mean_latency_ms": 1847.8631279169763,
+      "class_mean_latency_ms_std": 235.60085194386073,
+      "class_p95_latency_ms": 4736.546469310696,
+      "class_p95_latency_ms_std": 421.0816779198708,
+      "class_mean_wait_ms": 14.775049271521524,
+      "class_mean_wait_ms_std": 1.9307488780948006,
+      "class_mean_ttft_ms": 44.197201376572025,
+      "class_mean_ttft_ms_std": 9.635568493364545,
+      "class_preemptions": 0.0,
+      "class_preemptions_std": 0.0,
+      "throughput_tok_s": 1300.4058604751044,
+      "throughput_tok_s_std": 74.88656353958403,
+      "overall_p95_latency_ms": 8454.08391177344,
+      "overall_p95_latency_ms_std": 944.7035148134204,
+      "recomputed_tokens": 8119.0,
+      "recomputed_tokens_std": 5824.029189487292
+    },
+    {
+      "policy": "priority+preempt",
+      "priority_class": 1,
+      "n_seeds": 5,
+      "class_n": 78.2,
+      "class_n_std": 2.8635642126552705,
+      "class_mean_latency_ms": 4792.274274288054,
+      "class_mean_latency_ms_std": 940.6126441227646,
+      "class_p95_latency_ms": 8562.2137122188,
+      "class_p95_latency_ms_std": 953.7599245030464,
+      "class_mean_wait_ms": 3159.679946758028,
+      "class_mean_wait_ms_std": 815.3785847207705,
+      "class_mean_ttft_ms": 3122.363435574776,
+      "class_mean_ttft_ms_std": 778.993289094011,
+      "class_preemptions": 12.8,
+      "class_preemptions_std": 3.7013511046643495,
+      "throughput_tok_s": 1300.4058604751044,
+      "throughput_tok_s_std": 74.88656353958403,
+      "overall_p95_latency_ms": 8454.08391177344,
+      "overall_p95_latency_ms_std": 944.7035148134204,
+      "recomputed_tokens": 8119.0,
+      "recomputed_tokens_std": 5824.029189487292
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+
+== Experiment A (mean over 5 seeds)
+strategy            throughput_tok_s  mean_latency_ms  p95_latency_ms  util_proxy  mean_ttft_ms  p95_token_gap_ms  worst_itl_p95_ms  mean_wait_ms  mean_batch  busy_frac  padded_slot_frac  kv_peak_frac
+sequential          134               61,804           115,504         0.023       60,577        7.502             7.502             60,553        1.000       1.000      0.000             0.048       
+static              837               8,144            14,799          0.144       6,359         9.853             626               5,978         25          1.000      0.649             0.539       
+continuous          1,771             2,532            5,620           0.305       627           11                116               590           21          1.000      0.000             0.567       
+continuous_chunked  1,835             2,295            5,219           0.316       519           21                21                487           20          1.000      0.000             0.557       
+
+== Experiment B (mean over 5 seeds)
+max_running_seqs  throughput_tok_s  mean_wait_ms  p95_wait_ms  peak_waiting  mean_batch  p95_latency_ms  p95_token_gap_ms  preemptions  kv_peak_frac
+1                 134               60,553        113,983      95            1.000       115,504         7.502             0.000        0.048       
+2                 260               29,407        55,601       92            1.987       57,267          7.623             0.000        0.081       
+4                 484               13,821        26,566       84            3.866       27,828          7.845             0.000        0.124       
+8                 843               6,059         11,793       70            7.276       13,942          8.206             0.000        0.199       
+16                1,313             2,338         4,811        50            13          7,937           8.878             0.000        0.328       
+32                1,771             590           1,510        25            21          5,620           11                0.000        0.567       
+64                1,995             62            255          9.800         26          5,617           21                0.000        0.713       
+128               1,995             62            255          9.800         26          5,617           21                0.000        0.713       
+
+== Experiment C (mean over 5 seeds)
+kv_mode       num_kv_blocks  throughput_tok_s  p95_latency_ms  mean_batch  preemptions  recomputed_tokens  kv_peak_frac  mean_wait_ms
+on_demand     3072           1,771             5,620           21          0.000        0.000              0.567         590         
+on_demand     1024           1,459             7,139           16          16           8,262              1.000         1,609       
+on_demand     768            1,224             8,838           13          18           10,619             1.000         2,693       
+on_demand     512            937               12,233          8.965       26           14,841             1.000         4,896       
+on_demand     384            727               16,392          6.564       27           15,594             1.000         7,653       
+on_demand     256            511               25,688          4.309       27           13,044             1.000         12,875      
+on_demand     192            375               38,163          3.084       24           12,817             1.000         19,931      
+full_reserve  3072           1,771             5,620           21          0.000        0.000              0.671         590         
+full_reserve  1024           1,324             7,820           13          0.000        0.000              1.000         2,194       
+full_reserve  768            1,134             9,658           11          0.000        0.000              1.000         3,463       
+full_reserve  512            834               13,953          7.333       0.000        0.000              1.000         6,241       
+full_reserve  384            647               19,107          5.442       0.000        0.000              1.000         9,271       
+full_reserve  256            420               32,915          3.388       0.000        0.000              1.000         16,742      
+full_reserve  192            327               44,357          2.571       0.000        0.000              1.000         23,334      
+
+== Experiment D (mean over 1 seeds)
+mode                        token_budget  decoder_max_itl_ms  decoder_p95_itl_ms  decoder_mean_latency_ms  long_mean_ttft_ms  throughput_tok_s
+no long prompt (reference)  4096          16                  16                  3,102                    0.000              2,045           
+unchunked                   4096          83                  83                  3,259                    88                 1,957           
+chunked                     2048          82                  82                  3,258                    94                 1,958           
+chunked                     1024          41                  41                  3,243                    95                 1,967           
+chunked                     512           21                  21                  3,214                    96                 1,984           
+chunked                     256           11                  11                  3,155                    95                 2,017           
+chunked                     128           8.032               8.032               3,110                    147                2,040           
+
+== Experiment E (mean over 5 seeds)
+policy            priority_class  class_n  class_mean_latency_ms  class_p95_latency_ms  class_mean_wait_ms  class_mean_ttft_ms  class_preemptions  throughput_tok_s  recomputed_tokens
+fcfs              0               22       3,594                  7,155                 1,862               1,892               0.000              1,313             0.000            
+fcfs              1               78       4,070                  7,988                 2,458               2,486               0.000              1,313             0.000            
+priority          0               22       1,991                  4,625                 229                 257                 0.000              1,331             0.000            
+priority          1               78       4,497                  8,336                 2,896               2,923               0.000              1,331             0.000            
+priority+preempt  0               22       1,848                  4,737                 15                  44                  0.000              1,300             8,119            
+priority+preempt  1               78       4,792                  8,562                 3,160               3,122               13                 1,300             8,119            
+
+== Experiment F (mean over 5 seeds)
+family              max_running_seqs  throughput_tok_s  mean_latency_ms  p95_latency_ms  p95_token_gap_ms  worst_itl_p95_ms  mean_batch
+continuous          4                 484               15,157           27,828          7.845             80                3.866     
+continuous_chunked  4                 489               14,972           27,496          7.858             21                3.863     
+continuous          8                 843               7,503            13,942          8.206             81                7.276     
+continuous_chunked  8                 860               7,282            13,565          8.291             21                7.253     
+continuous          16                1,313             3,973            7,937           8.878             88                13        
+continuous_chunked  16                1,354             3,744            7,545           20                21                13        
+continuous          24                1,606             2,969            6,274           9.761             105               17        
+continuous_chunked  24                1,665             2,735            5,878           21                21                17        
+continuous          32                1,771             2,532            5,620           11                116               21        
+continuous_chunked  32                1,835             2,295            5,219           21                21                20        
+continuous          48                1,985             2,256            5,582           21                147               26        
+continuous_chunked  48                2,024             2,036            5,177           21                21                23        
+static              8                 370               20,693           38,202          8.174             141               7.600     
+static              16                578               12,585           23,011          8.725             323               14        
+static              32                837               8,144            14,799          9.853             626               25        
+static              64                1,065             6,054            11,344          12                1,157             40        
+
+== Experiment F: consecutive-size trade-offs
+family              from_seqs  to_seqs  throughput_change_pct  p95_latency_change_pct  p95_token_gap_change_pct  seeds_tput_up_and_p95_latency_worse  seeds_tput_up_and_tail_gap_worse
+continuous          4          8        74                     -50                     4.596                     0                                    5                               
+continuous          8          16       56                     -43                     8.210                     0                                    5                               
+continuous          16         24       22                     -21                     9.903                     0                                    5                               
+continuous          24         32       10                     -10                     17                        0                                    5                               
+continuous          32         48       12                     -0.595                  67                        1                                    4                               
+continuous_chunked  4          8        76                     -51                     5.513                     0                                    5                               
+continuous_chunked  8          16       58                     -44                     140                       0                                    5                               
+continuous_chunked  16         24       23                     -22                     5.435                     0                                    1                               
+continuous_chunked  24         32       10                     -11                     0.000                     0                                    0                               
+continuous_chunked  32         48       10                     -0.701                  0.000                     0                                    0                               
+static              8          16       56                     -40                     6.733                     0                                    5                               
+static              16         32       45                     -36                     13                        0                                    5                               
+static              32         64       28                     -23                     18                        0                                    5                               
+
+== Timeline (demo scenario)
+time: 0 ms -> 749 ms, 1 column = 7.5 ms
+P=prefill  D=decode  -=in batch, idle  .=waiting  X=preempted  (blank = not arrived / finished)
+req 0   p1 P=96   O=40  |PDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD                                                           |
+req 1   p1 P=64   O=24  |PPDDDDDDDDDDDDDDDDDDDDDDD                                                                           |
+req 2   p1 P=1024 O=16  | .......................PPPPPPPPDDDDDDDDDDDDDD                                                      |
+req 3   p1 P=48   O=60  |  ............................PX........PPDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD|
+req 4   p0 P=200  O=20  |        .....................................PPPDDDDDDDDDDDDDDDDDDD                                 |
+req 5   p1 P=32   O=12  |            .................................PPPDDDDDDDDDDD                                         |
+req 6   p1 P=512  O=30  |            .................................PPPPPDDDDDDDDDDDDDDDDDDDDDDDDDDDDD                     |
+req 7   p1 P=64   O=16  |             .............................................PPDDDDDDDDDDDDDDD                         |

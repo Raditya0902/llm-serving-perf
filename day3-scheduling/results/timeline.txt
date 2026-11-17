@@ -1,0 +1,10 @@
+time: 0 ms -> 749 ms, 1 column = 7.5 ms
+P=prefill  D=decode  -=in batch, idle  .=waiting  X=preempted  (blank = not arrived / finished)
+req 0   p1 P=96   O=40  |PDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD                                                           |
+req 1   p1 P=64   O=24  |PPDDDDDDDDDDDDDDDDDDDDDDD                                                                           |
+req 2   p1 P=1024 O=16  | .......................PPPPPPPPDDDDDDDDDDDDDD                                                      |
+req 3   p1 P=48   O=60  |  ............................PX........PPDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD|
+req 4   p0 P=200  O=20  |        .....................................PPPDDDDDDDDDDDDDDDDDDD                                 |
+req 5   p1 P=32   O=12  |            .................................PPPDDDDDDDDDDD                                         |
+req 6   p1 P=512  O=30  |            .................................PPPPPDDDDDDDDDDDDDDDDDDDDDDDDDDDDD                     |
+req 7   p1 P=64   O=16  |             .............................................PPDDDDDDDDDDDDDDD                         |

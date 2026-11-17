@@ -1,0 +1,236 @@
+{
+  "meta": {
+    "smoke": false,
+    "platform": "macOS-27.2.1-arm64-arm-64bit",
+    "note": "simulated times from cost_model.CostModel; utilisation is a proxy, not GPU utilisation",
+    "config": {
+      "workload": {
+        "num_requests": 100,
+        "seed": 0,
+        "short_prompt": [
+          32,
+          256
+        ],
+        "long_prompt": [
+          1024,
+          2048
+        ],
+        "long_prompt_frac": 0.3,
+        "short_output": [
+          16,
+          64
+        ],
+        "long_output": [
+          200,
+          512
+        ],
+        "long_output_frac": 0.4,
+        "mean_gap_ms": 60.0,
+        "burst_frac": 0.3,
+        "burst_window_ms": 300.0,
+        "high_priority_frac": 0.2
+      },
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "params": {
+        "max_running_seqs": 32,
+        "unchunked_budget": 4096,
+        "chunked_budget": 512,
+        "num_kv_blocks": 3072,
+        "block_size": 16
+      },
+      "b_batch_sizes": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "c_kv_blocks": [
+        3072,
+        1024,
+        768,
+        512,
+        384,
+        256,
+        192
+      ],
+      "d_budgets": [
+        2048,
+        1024,
+        512,
+        256,
+        128
+      ],
+      "d_num_decoders": 16,
+      "e_max_running": 16,
+      "f_continuous_sizes": [
+        4,
+        8,
+        16,
+        24,
+        32,
+        48
+      ],
+      "f_static_sizes": [
+        8,
+        16,
+        32,
+        64
+      ]
+    }
+  },
+  "rows": [
+    {
+      "family": "continuous",
+      "from_seqs": 4,
+      "to_seqs": 8,
+      "throughput_change_pct": 74.06204793242145,
+      "p95_latency_change_pct": -49.88030986789157,
+      "p95_token_gap_change_pct": 4.595792196525871,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    },
+    {
+      "family": "continuous",
+      "from_seqs": 8,
+      "to_seqs": 16,
+      "throughput_change_pct": 55.74984055701225,
+      "p95_latency_change_pct": -43.066961253612675,
+      "p95_token_gap_change_pct": 8.2095897184938,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    },
+    {
+      "family": "continuous",
+      "from_seqs": 16,
+      "to_seqs": 24,
+      "throughput_change_pct": 22.278622929082815,
+      "p95_latency_change_pct": -20.89725730744726,
+      "p95_token_gap_change_pct": 9.902663278919727,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    },
+    {
+      "family": "continuous",
+      "from_seqs": 24,
+      "to_seqs": 32,
+      "throughput_change_pct": 10.248690186421342,
+      "p95_latency_change_pct": -10.184496640423585,
+      "p95_token_gap_change_pct": 17.273511821681705,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    },
+    {
+      "family": "continuous",
+      "from_seqs": 32,
+      "to_seqs": 48,
+      "throughput_change_pct": 12.05928404300452,
+      "p95_latency_change_pct": -0.5953895599147563,
+      "p95_token_gap_change_pct": 66.80369944309817,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 1,
+      "seeds_tput_up_and_tail_gap_worse": 4
+    },
+    {
+      "family": "continuous_chunked",
+      "from_seqs": 4,
+      "to_seqs": 8,
+      "throughput_change_pct": 75.88496000449277,
+      "p95_latency_change_pct": -50.65092601039013,
+      "p95_token_gap_change_pct": 5.513273008166854,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    },
+    {
+      "family": "continuous_chunked",
+      "from_seqs": 8,
+      "to_seqs": 16,
+      "throughput_change_pct": 57.52285718937439,
+      "p95_latency_change_pct": -44.374940670118505,
+      "p95_token_gap_change_pct": 140.16546971463018,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    },
+    {
+      "family": "continuous_chunked",
+      "from_seqs": 16,
+      "to_seqs": 24,
+      "throughput_change_pct": 22.90453324290492,
+      "p95_latency_change_pct": -22.103127168815753,
+      "p95_token_gap_change_pct": 5.434516523867928,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 1
+    },
+    {
+      "family": "continuous_chunked",
+      "from_seqs": 24,
+      "to_seqs": 32,
+      "throughput_change_pct": 10.152329438731424,
+      "p95_latency_change_pct": -10.898663269682993,
+      "p95_token_gap_change_pct": 6.56516868459771e-13,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 0
+    },
+    {
+      "family": "continuous_chunked",
+      "from_seqs": 32,
+      "to_seqs": 48,
+      "throughput_change_pct": 10.169446883172302,
+      "p95_latency_change_pct": -0.7009713106136933,
+      "p95_token_gap_change_pct": 8.753558246130216e-13,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 0
+    },
+    {
+      "family": "static",
+      "from_seqs": 8,
+      "to_seqs": 16,
+      "throughput_change_pct": 55.91333502004012,
+      "p95_latency_change_pct": -39.75840461490729,
+      "p95_token_gap_change_pct": 6.732795914280797,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    },
+    {
+      "family": "static",
+      "from_seqs": 16,
+      "to_seqs": 32,
+      "throughput_change_pct": 45.06326404936713,
+      "p95_latency_change_pct": -35.67851299808558,
+      "p95_token_gap_change_pct": 12.91460367070278,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    },
+    {
+      "family": "static",
+      "from_seqs": 32,
+      "to_seqs": 64,
+      "throughput_change_pct": 28.259333358242294,
+      "p95_latency_change_pct": -23.349631407725035,
+      "p95_token_gap_change_pct": 17.86466042415629,
+      "seeds": 5,
+      "seeds_tput_up_and_p95_latency_worse": 0,
+      "seeds_tput_up_and_tail_gap_worse": 5
+    }
+  ]
+}
