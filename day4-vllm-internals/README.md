@@ -2,9 +2,12 @@
 
 > **What is and isn't done.** Sessions 2 and 4 (source investigation, comparison with Day 3) and the
 > knowledge checkpoint are **done**, from vLLM `v0.34.0` @ `62d4bc3` source. Session 3 (serve a model
-> and benchmark it) is **not done**: this was built on a Mac with no NVIDIA GPU. What exists for
-> Session 3 is tooling + a runbook, unit-tested against *synthetic* result files whose numbers mean
-> nothing. [RESULTS.md](RESULTS.md) says "no GPU run yet" until someone runs the sweep on a CUDA host.
+> and benchmark it) is **done on one NVIDIA A40** (2026-11-17/18, vLLM 0.34.0, Qwen2.5-0.5B): 117
+> runs, 0 failed requests (plus a 51-run rerun of the saturated profile with 1000 prompts, which
+> reversed the first pass's `max_num_seqs` conclusion); see [RESULTS.md](RESULTS.md). Not done: the
+> optional 1.5B repeat, and preemption was never triggered (the KV pool was at least 3x larger than
+> computed demand), so the KV-exhaustion behaviour in CHECKPOINT Q4 is still unmeasured. The tooling was written on a Mac with no GPU and
+> first ran on the A40; its unit tests still use *synthetic* files whose numbers mean nothing.
 
 ## Files
 
