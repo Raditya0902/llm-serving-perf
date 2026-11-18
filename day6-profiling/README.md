@@ -1,10 +1,17 @@
 # Day 6: Profiling and optimization experiments
 
-> **Status.** Measured on an Apple M4 (MPS) for the Day 1 engine: profiling, experiments E1-E3, and
-> two optimizations (O1, O2). **Not run: anything needing an NVIDIA GPU** (nsys, vLLM profiling, GPU peak memory).
-> **E4-E6 are SIMULATED** (Day 3 simulator, illustrative constants), not measurements. See [performance-report.md](performance-report.md).
+> **Status.** Measured on an Apple M4 (MPS) and, since 2026-11-18, on one NVIDIA A40 (report section 9): profiling, experiments
+> E1-E3, O1, O2, and a vLLM torch-profiler study. **Not run: nsys** (not installed in the container). The simulated E4-E6 rows are
+> compared against Day 4's real sweep in report section 9.4. See [performance-report.md](performance-report.md).
 
 ## Headline findings (details and caveats in the report)
+
+**On the A40 the Mac conclusions change:**
+- The Day 1 loop is **CPU-launch-bound on CUDA** (unprofiled: enqueue 97-98% of a 15.4-18.8 ms step; a loop with no syncs takes the same time as its enqueue; GPU device work is at most about 27% of the step), so Day 1's original launch-overhead guess was right there and the "device-bound" finding below is MPS-specific. Decode is 16.2-16.5 ms/token at every batch size, E1 throughput scales 7.6x at batch 8, TTFT is flat (17.5 ms) up to 1024 prompt tokens, and deferring syncs gains only 2.6%.
+- In vLLM, a step that carries prefill costs 93-132 ms vs 7.3 ms (256 seqs) or 26 ms (999 seqs) for a pure decode step, and each decode riding in a mixed step costs about 4x more; that is the mechanism behind Day 4's ITL tails and its non-monotonic p50 ITL.
+- `max_num_seqs=1024` being slower than 256 is **not** a CUDA-graph capture-range effect (tested and refuted); the 9% throughput loss is still unexplained.
+
+**Apple M4 (MPS) findings:**
 
 - Decode (Qwen2.5-0.5B, fp16, MPS) is **device-bound on weight reads**: matmuls 74% of a 15.9 ms step, effective 51-93 GB/s. The CPU enqueues a step in 3.0 ms, so Day 1's "launch overhead" guess was wrong.
 - Removing Day 1's per-step host syncs: **+6.6% throughput / -7% median TPOT**, identical tokens, validated against an A/A control (-0.1%).

@@ -1,0 +1,9 @@
+seq256_r0 done 04:08:54
+seq1024_r0 done 04:10:07
+seq256_r1 done 04:11:13
+seq1024_r1 done 04:12:23
+bt512_r0 done 04:13:44
+bt1024_r0 done 04:15:01
+bt2048_r0 done 04:16:15
+trace_seq256 done 04:17:28
+trace_seq1024 done 04:18:46

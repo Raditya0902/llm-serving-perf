@@ -1,7 +1,10 @@
 # Day 6 knowledge checkpoint
 
 Evidence tags: **[measured]** = from the Apple M4 / MPS runs in [performance-report.md](performance-report.md);
-**[mechanism]** = standard reasoning I did not test here; **[GPU pending]** = needs the NVIDIA runs in [RUNBOOK.md](RUNBOOK.md).
+**[measured A40]** = from the NVIDIA A40 runs (report section 9); **[mechanism]** = standard reasoning I did not test here;
+**[GPU pending]** = still not run (nsys, kernel counters, larger models).
+
+> **A40 update that changes the answers below.** The Day 1 loop on CUDA is **launch-bound, not memory-bound**: enqueue is 0.97-0.98 of the step (unprofiled), a loop with no syncs takes exactly its enqueue time, GPU device work is at most about 27% of the step, step time is 16.3 ms at every batch size 1-8, and TTFT is flat to 1024 tokens. So Q1's "decode is bandwidth-bound" holds for the roofline *argument* but not for this loop on this GPU (about 1.4 ms of weight reads at 696 GB/s inside a 16 ms step), and Q3's "ask whether the CPU can feed the device" is answered **yes, it cannot** [measured A40]. Q2's utilization point is also confirmed: "GPU busy" was true but the device did at most about 4 ms of work in a 15 ms step. The Mac text below stays as the MPS result.
 
 ## 1. How do you determine whether inference is compute-bound or memory-bound?
 

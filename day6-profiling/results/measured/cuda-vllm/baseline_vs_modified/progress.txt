@@ -1,0 +1,6 @@
+baseline_r0 done 03:53:26
+modified_r0 done 03:54:24
+baseline_r1 done 03:55:20
+modified_r1 done 03:56:15
+baseline_r2 done 03:57:10
+modified_r2 done 03:58:05

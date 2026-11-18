@@ -1,0 +1,43 @@
+{
+ "probe": [
+  {
+   "enqueue_ms": 18.26,
+   "step_ms": 18.7,
+   "fraction": 0.977
+  },
+  {
+   "enqueue_ms": 18.41,
+   "step_ms": 18.83,
+   "fraction": 0.978
+  },
+  {
+   "enqueue_ms": 18.26,
+   "step_ms": 18.7,
+   "fraction": 0.977
+  },
+  {
+   "enqueue_ms": 15.4,
+   "step_ms": 15.85,
+   "fraction": 0.972
+  },
+  {
+   "enqueue_ms": 15.39,
+   "step_ms": 15.83,
+   "fraction": 0.972
+  }
+ ],
+ "free_running_enqueue_ms_per_step": [
+  15.51,
+  15.3,
+  15.34,
+  15.37,
+  15.67
+ ],
+ "free_running_total_ms_per_step": [
+  15.52,
+  15.31,
+  15.36,
+  15.39,
+  15.69
+ ]
+}
