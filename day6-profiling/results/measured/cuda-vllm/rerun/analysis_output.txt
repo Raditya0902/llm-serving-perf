@@ -1,0 +1,15 @@
+== per-run summary (1000-prompt burst)
+bt1024_r0   tok/s=   5357 dur= 23.9s failed=0 ITL p50/p90/p95/p99= 36.6/ 42.4/ 46.6/  65.5 peak running=227 peak waiting=708 peak KV=4.4% preempt=0
+            ITL>15ms 89.9%  >50ms 3.1%  >100ms 0.3%  share-of-ITL-time in >30ms samples 87%
+bt2048_r0   tok/s=   6959 dur= 18.4s failed=0 ITL p50/p90/p95/p99= 20.2/ 55.2/ 57.8/  74.2 peak running=256 peak waiting=720 peak KV=5.1% preempt=0
+            ITL>15ms 53.7%  >50ms 31.9%  >100ms 0.3%  share-of-ITL-time in >30ms samples 81%
+bt512_r0    tok/s=   5050 dur= 25.3s failed=0 ITL p50/p90/p95/p99= 19.1/ 22.0/ 23.7/  29.6 peak running=115 peak waiting=743 peak KV=2.2% preempt=0
+            ITL>15ms 87.9%  >50ms 0.0%  >100ms 0.0%  share-of-ITL-time in >30ms samples 2%
+seq1024_r0  tok/s=   8218 dur= 15.6s failed=0 ITL p50/p90/p95/p99= 44.1/155.7/244.3/ 423.1 peak running=999 peak waiting=543 peak KV=21.5% preempt=0
+            ITL>15ms 96.9%  >50ms 35.1%  >100ms 19.6%  share-of-ITL-time in >30ms samples 97%
+seq1024_r1  tok/s=   8581 dur= 14.9s failed=0 ITL p50/p90/p95/p99= 38.7/162.2/198.8/ 414.5 peak running=996 peak waiting=554 peak KV=21.4% preempt=0
+            ITL>15ms 97.3%  >50ms 27.3%  >100ms 19.9%  share-of-ITL-time in >30ms samples 96%
+seq256_r0   tok/s=   9445 dur= 13.6s failed=0 ITL p50/p90/p95/p99= 11.0/ 81.2/102.4/ 111.7 peak running=256 peak waiting=487 peak KV=5.3% preempt=0
+            ITL>15ms 21.2%  >50ms 11.2%  >100ms 6.1%  share-of-ITL-time in >30ms samples 54%
+seq256_r1   tok/s=   9457 dur= 13.5s failed=0 ITL p50/p90/p95/p99= 10.9/ 65.1/104.2/ 119.1 peak running=256 peak waiting=482 peak KV=5.3% preempt=0
+            ITL>15ms 21.7%  >50ms 10.8%  >100ms 6.3%  share-of-ITL-time in >30ms samples 55%

@@ -1,0 +1,11 @@
+seq256: 100 steps | pure-decode n=85 mean 7.3 ms (decodes 256) | mixed n=15 mean 89.7 ms
+   mixed fit: ms = 7.2 + 8.97*(prefill tokens/1000) + 102.72*(decodes/1000)
+   prefill tok 1024-4096: n=1 mean 49.4 ms, decodes 252
+   prefill tok 6144-9000: n=14 mean 92.6 ms, decodes 134
+   pure decode batch 256-512: n=85 mean 7.3 ms
+seq1024: 100 steps | pure-decode n=34 mean 26.2 ms (decodes 999) | mixed n=66 mean 131.2 ms
+   mixed fit: ms = 3.9 + 9.16*(prefill tokens/1000) + 112.78*(decodes/1000)
+   prefill tok 1024-4096: n=1 mean 133.0 ms, decodes 995
+   prefill tok 4096-6144: n=1 mean 56.2 ms, decodes 22
+   prefill tok 6144-9000: n=64 mean 132.3 ms, decodes 516
+   pure decode batch 512-2000: n=34 mean 26.2 ms

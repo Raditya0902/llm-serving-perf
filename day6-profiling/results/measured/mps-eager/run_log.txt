@@ -1,0 +1,19 @@
+[prefill] profiled; artifacts in /Users/aditya.rallapalli/Code/llm-infrastructure-lab/day6-profiling/results/raw/mps-eager
+[decode] profiled; artifacts in /Users/aditya.rallapalli/Code/llm-infrastructure-lab/day6-profiling/results/raw/mps-eager
+{
+  "launch_probe": {
+    "n_steps": 32,
+    "enqueue_ms_median": 5.366333469282836,
+    "step_ms_median": 19.745208002859727,
+    "enqueue_fraction": 0.27177902955013805,
+    "verdict": "device-bound"
+  },
+  "alloc_probe": {
+    "available": true,
+    "reason": "",
+    "steps_with_growth": 32,
+    "mean_growth_per_step": 12288.0,
+    "expected_kv_bytes_per_step": 12288,
+    "growth_matches_kv": true
+  }
+}

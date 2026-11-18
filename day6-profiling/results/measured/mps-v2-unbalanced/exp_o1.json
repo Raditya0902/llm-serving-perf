@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "device": "mps",
+    "dtype": "torch.float16",
+    "torch": "2.15.0",
+    "transformers": "5.23.0",
+    "machine": "macOS-27.2.1-arm64-arm-64bit",
+    "git": "9d8d845",
+    "smoke": false,
+    "config": {
+      "warmup": 2,
+      "repeats": 5,
+      "cooldown_s": 0.0,
+      "prompt_len": 512,
+      "new_tokens": 64,
+      "n_requests": 8,
+      "overrides": {}
+    },
+    "config_id": "2323926d8e9a",
+    "experiment": {
+      "exp_id": "O1",
+      "name": "Optimization: defer host syncs",
+      "variable": "decode_loop",
+      "values": [
+        "day1",
+        "deferred_sync"
+      ],
+      "baseline": "day1",
+      "measurement": "per-step latency, tokens/s (outputs must be identical)",
+      "hypothesis": "Day 1 syncs twice per step. If the CPU enqueue time is >= ~80% of the synced step time (CPU/launch-bound), removing syncs cannot help: improvement < 5%. A bigger gain would mean the step was waiting on sync latency, not on work.",
+      "runnable_on": "local"
+    }
+  },
+  "rows": [
+    {
+      "label": "day1",
+      "n_reps": 5,
+      "n_requests": 1,
+      "requests_per_s": 0.822924085786852,
+      "requests_per_s_min": 0.7997151151756363,
+      "requests_per_s_max": 0.8554930660678693,
+      "output_tok_s": 52.66714149035853,
+      "ttft_ms_p50": 198.68824997683987,
+      "ttft_ms_p95": 218.1479328079149,
+      "tpot_ms_p50": 16.134772505167696,
+      "tpot_ms_p95": 16.457954278060544,
+      "wall_s": 1.2151789178024046,
+      "wall_spread_fraction": 0.06709196795234472,
+      "peak_mem_mb": 967.16943359375,
+      "wall_drift_fraction": 0.021868608772704367,
+      "tokens_match": 1.0,
+      "exp_id": "O1",
+      "variable": "decode_loop",
+      "requests_per_s_vs_baseline_pct": 0.0,
+      "output_tok_s_vs_baseline_pct": 0.0,
+      "ttft_ms_p95_vs_baseline_pct": 0.0,
+      "tpot_ms_p95_vs_baseline_pct": 0.0,
+      "peak_mem_mb_vs_baseline_pct": 0.0,
+      "wall_s_vs_baseline_pct": 0.0,
+      "is_baseline": true,
+      "rps_range_overlaps_baseline": true
+    },
+    {
+      "label": "deferred_sync",
+      "n_reps": 5,
+      "n_requests": 1,
+      "requests_per_s": 0.9016816134449488,
+      "requests_per_s_min": 0.8693829304508494,
+      "requests_per_s_max": 0.9127158430309603,
+      "output_tok_s": 57.70762326047672,
+      "ttft_ms_p50": 172.3708329955116,
+      "ttft_ms_p95": 202.21844160696492,
+      "tpot_ms_p50": 14.813823412941208,
+      "tpot_ms_p95": 14.992269974697145,
+      "wall_s": 1.1090389169403352,
+      "wall_spread_fraction": 0.049240720218155634,
+      "peak_mem_mb": 967.184814453125,
+      "wall_drift_fraction": 0.015219634980555558,
+      "tokens_match": 1.0,
+      "exp_id": "O1",
+      "variable": "decode_loop",
+      "requests_per_s_vs_baseline_pct": 9.5704487228359,
+      "output_tok_s_vs_baseline_pct": 9.5704487228359,
+      "ttft_ms_p95_vs_baseline_pct": -7.302150882619795,
+      "tpot_ms_p95_vs_baseline_pct": -8.905628722746217,
+      "peak_mem_mb_vs_baseline_pct": 0.0015902962646308083,
+      "wall_s_vs_baseline_pct": -8.73451631748342,
+      "is_baseline": false,
+      "rps_range_overlaps_baseline": false
+    }
+  ]
+}

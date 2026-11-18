@@ -1,0 +1,56 @@
+# Day 6: Profiling and optimization experiments
+
+> **Status.** Measured on an Apple M4 (MPS) and, since 2026-11-18, on one NVIDIA A40 (report section 9): profiling, experiments
+> E1-E3, O1, O2, and a vLLM torch-profiler study. **Not run: nsys** (not installed in the container). The simulated E4-E6 rows are
+> compared against Day 4's real sweep in report section 9.4. See [performance-report.md](performance-report.md).
+
+## Headline findings (details and caveats in the report)
+
+**On the A40 the Mac conclusions change:**
+- The Day 1 loop is **CPU-launch-bound on CUDA** (unprofiled: enqueue 97-98% of a 15.4-18.8 ms step; a loop with no syncs takes the same time as its enqueue; GPU device work is at most about 27% of the step), so Day 1's original launch-overhead guess was right there and the "device-bound" finding below is MPS-specific. Decode is 16.2-16.5 ms/token at every batch size, E1 throughput scales 7.6x at batch 8, TTFT is flat (17.5 ms) up to 1024 prompt tokens, and deferring syncs gains only 2.6%.
+- In vLLM, a step that carries prefill costs 93-132 ms vs 7.3 ms (256 seqs) or 26 ms (999 seqs) for a pure decode step, and each decode riding in a mixed step costs about 4x more; that is the mechanism behind Day 4's ITL tails and its non-monotonic p50 ITL.
+- `max_num_seqs=1024` being slower than 256 is **not** a CUDA-graph capture-range effect (tested and refuted); the 9% throughput loss is still unexplained.
+
+**Apple M4 (MPS) findings:**
+
+- Decode (Qwen2.5-0.5B, fp16, MPS) is **device-bound on weight reads**: matmuls 74% of a 15.9 ms step, effective 51-93 GB/s. The CPU enqueues a step in 3.0 ms, so Day 1's "launch overhead" guess was wrong.
+- Removing Day 1's per-step host syncs: **+6.6% throughput / -7% median TPOT**, identical tokens, validated against an A/A control (-0.1%).
+- `eager` attention is 33% slower than `sdpa` at decode (attention core 6.7 vs 3.1 ms, 32% more ops).
+- Batch 1 -> 8 raises output tok/s only 2.8-3.5x (not the hoped 5x) because prefill is compute-bound and stops amortizing.
+- Two of my own early "results" were harness artifacts (case-order bias; a wrong sync-overhead calibration); both are fixed and described in the report.
+
+## Files
+
+| File | Role |
+|---|---|
+| [performance-report.md](performance-report.md) | The deliverable: baseline table, profiling answers, hypothesis -> result -> evidence, interpretation |
+| [CHECKPOINT.md](CHECKPOINT.md) | The six knowledge-checkpoint answers, tagged measured / mechanism / GPU pending |
+| [RUNBOOK.md](RUNBOOK.md) | Unrun steps for an NVIDIA host: torch profiler on CUDA, nsys, vLLM profiler, E4-E6 sweeps |
+| [experiments.py](experiments.py) | Registry of the six experiments + 2 optimizations; hypotheses fixed before any run |
+| [profile_run.py](profile_run.py) | Profiles one Day 1 generation (prefill and decode windows); writes trace, op table, summary |
+| [module_timing.py](module_timing.py) | Device-inclusive attribution where the profiler has no device timeline (matmul replay + sync bracketing) |
+| [launch_probe.py](launch_probe.py), [alloc_probe.py](alloc_probe.py) | CPU-enqueue vs step time; per-step allocator growth |
+| [trace_analysis.py](trace_analysis.py), [op_classify.py](op_classify.py) | Gap/alloc analysis of Chrome traces; operator categories |
+| [variants.py](variants.py), [measure.py](measure.py) | Decode variants (day1, deferred sync, batched); interleaved repeats, request-level metrics, baseline deltas |
+| [run_local_experiments.py](run_local_experiments.py) | Runs E1-E3, O1, O2 with controls and token validation |
+| [sim_predictions.py](sim_predictions.py) | SIMULATED E4-E6 from the Day 3 simulator |
+| [make_performance_report.py](make_performance_report.py), [plot_results.py](plot_results.py) | Generated tables and figures |
+| `gpu/` | `run_nsys.sh`, `gpu_mem_sampler.py`, `report_from_vllm.py`: written for a GPU host, tested with stand-ins only |
+| `results/measured/` | Real result JSON/CSV (includes the two archived biased runs); `results/sim/` simulated; `results/raw/` gitignored traces |
+
+Day 1 is used unchanged via [_day1.py](_day1.py) (appends `../day1-inference` to `sys.path`).
+
+## Run
+
+```bash
+uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requirements.txt
+.venv/bin/python -m pytest --cov=.                       # 139 tests, CPU only, no model download
+.venv/bin/python profile_run.py --smoke --device cpu --out /tmp/p   # tiny-model smoke run
+.venv/bin/python profile_run.py --device mps --tag mps-baseline     # real profile (needs the cached Qwen model)
+.venv/bin/python run_local_experiments.py --exp O1 --device mps --tag mps
+```
+
+## Limitations
+
+See section 6 of the report. In short: one model on one Apple-silicon machine; MPS profiler gives CPU-side ops only, so device
+attribution is indirect (the attention-core figure is an estimate); no NVIDIA measurements; E4-E6 are simulated; Mac thermals/background load were not controlled.
