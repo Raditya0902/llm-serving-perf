@@ -1,5 +1,7 @@
 # Session 3 runbook — vLLM TP=1 vs TP=2 on two GPUs
 
+> **Status (updated): run once on 2x A100-80GB over NVLink** via `run_tp_compare.sh`; results and verdicts are in [RESULTS.md](RESULTS.md).
+> Not run: PCIe, `nsys` (not installed on the pod). The text below is the original procedure, written on a Mac and kept as written:
 > **Status: written, never run.** This Mac has no NVIDIA GPU, so every command below that
 > touches `vllm serve`, `vllm bench serve`, `nvidia-smi`, `nsys` or NCCL is **unexecuted**.
 > What I did verify, against the vLLM v0.34.0 source in `day4-vllm-internals/vllm_src/`: the
