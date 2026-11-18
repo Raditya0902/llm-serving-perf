@@ -1,6 +1,11 @@
 # Day 7: capstone benchmark, optimization decision, and final report
 
-> **What is and isn't done.** The 12-case benchmark matrix, the optimization decision and the report are **done on the Day 3
+> **Update (A40 run).** The matrix has now been run on a real GPU (one NVIDIA A40, vLLM 0.34.0, Llama-3.1-8B, KV pool capped to the
+> modeled A100-40GB size): 49 runs, 0 failures. **Results and verdicts are in [GPU_RESULTS.md](GPU_RESULTS.md)**: H1, H3, H5, H6 held,
+> H2 half refuted (the simulator had the wrong sign for the token-budget knob), H4 borderline. The decision is unchanged (keep baseline).
+> Not done: the two-GPU predictions. The paragraph below is the **pre-run** status and is kept for the record.
+>
+> **What was and wasn't done before the GPU run.** The 12-case benchmark matrix, the optimization decision and the report are **done on the Day 3
 > simulator and are SIMULATED**: no GPU produced any number in `results/sim/`. The vLLM runner that would produce real numbers is
 > built and tested only with stand-in server/bench/`nvidia-smi` processes; **it has never run against vLLM**, because this was built
 > on a Mac with no NVIDIA GPU (same limit as Days 4-6). The decision in [REPORT.md](REPORT.md) section 8 is a **hypothesis** until

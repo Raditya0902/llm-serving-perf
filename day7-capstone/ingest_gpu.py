@@ -131,9 +131,32 @@ def _check_completeness(data: Mapping[str, Any], case: mx.MatrixCase, name: str)
             f"{name}: incomplete run (completed {completed}/{case.num_prompts}, failed {failed})"
         )
     observed = _number(data, "max_concurrent_requests", name)
+    exact = _exact_peak_concurrency(data)
+    if exact is not None:
+        # vLLM's own figure buckets requests by whole second, so a request ending and its replacement
+        # starting in the same second both count: it read 68 against a cap of 64 on the real A40 run.
+        observed = exact
     if observed > case.concurrency:
         raise ResultFormatError(f"{name}: observed concurrency {observed:g} exceeds the target {case.concurrency}")
     return completed
+
+
+def _exact_peak_concurrency(data: Mapping[str, Any]) -> int | None:
+    """Peak number of simultaneously open requests from per-request start times and latencies, if present."""
+    starts, latencies = data.get("start_times"), data.get("latencies")
+    if not isinstance(starts, list) or not isinstance(latencies, list) or not starts or len(starts) != len(latencies):
+        return None
+    try:
+        # A request that ends exactly when another starts is not concurrent with it (ends sort first on ties).
+        events = sorted([(float(s), 1) for s in starts] + [(float(s) + float(l), -1) for s, l in zip(starts, latencies)],
+                        key=lambda e: (e[0], e[1]))
+    except (TypeError, ValueError):
+        return None
+    open_now = peak = 0
+    for _, delta in events:
+        open_now += delta
+        peak = max(peak, open_now)
+    return peak
 
 
 def _bounded(section: Mapping[str, Any], key: str, name: str, bounds: tuple[float, float | None]) -> Any:

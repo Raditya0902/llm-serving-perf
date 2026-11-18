@@ -1,6 +1,8 @@
 # RUNBOOK: run the Day 7 matrix on a Linux + NVIDIA host
 
-**Status: never executed.** Written on a Mac with no GPU. The orchestration is tested with stand-ins (`tests/test_run_matrix_gpu.py`);
+**Status: executed once on one NVIDIA A40** (49 runs; see [GPU_RESULTS.md](GPU_RESULTS.md)). Fixes needed on that first run: the ingest
+concurrency guard (vLLM's whole-second "peak concurrent requests" can read above the cap), and the gated model was replaced by the ungated
+mirror `NousResearch/Meta-Llama-3.1-8B-Instruct`. The rest of this paragraph is the original, pre-run status. Written on a Mac with no GPU. The orchestration is tested with stand-ins (`tests/test_run_matrix_gpu.py`);
 the real `vllm serve` / `vllm bench serve` path reuses Day 4's `default_backend()` and was not exercised. Expect to fix small things on
 the first run, and treat any surprise as a finding to record, not to hide.
 

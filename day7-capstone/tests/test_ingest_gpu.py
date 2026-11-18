@@ -158,6 +158,20 @@ def test_negative_metric_is_rejected(tmp_path):
         ig.load_run(write_bench_result(tmp_path, CASE, mean_ttft_ms=-1.0))
 
 
+def test_bucketed_bench_concurrency_is_not_trusted_when_exact_intervals_are_available(tmp_path):
+    # vLLM reports 68 (1-second buckets) but the intervals never overlap more than 2 at a time.
+    starts, lats = [0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]
+    path = write_bench_result(tmp_path, CASE, max_concurrent_requests=68, start_times=starts, latencies=lats)
+    assert ig.load_run(path)["case_id"] == CASE.case_id
+
+
+def test_exact_intervals_still_reject_real_over_concurrency(tmp_path):
+    n = CASE.concurrency + 1
+    path = write_bench_result(tmp_path, CASE, max_concurrent_requests=n, start_times=[0.0] * n, latencies=[1.0] * n)
+    with pytest.raises(ig.ResultFormatError, match="concurrency"):
+        ig.load_run(path)
+
+
 def test_missing_observed_concurrency_is_rejected(tmp_path):
     path = write_bench_result(tmp_path, CASE)
     data = json.loads(path.read_text())

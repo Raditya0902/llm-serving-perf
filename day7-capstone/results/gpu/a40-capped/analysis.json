@@ -1,0 +1,776 @@
+{
+  "meta": {
+    "simulated": false,
+    "note": "measured with vllm bench serve; see sidecar files for server-side metrics",
+    "git_commit": "52f7e68",
+    "git_dirty": true,
+    "platform": "Linux-6.8.0-149-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "raw_dir": "a40-capped",
+    "rejected": 0,
+    "hardware": "a100-40gb",
+    "model": "NousResearch/Meta-Llama-3.1-8B-Instruct",
+    "cap_kv_pool": true,
+    "analysis_note": "derived from matrix_summary.json by analyze.py; thresholds and rules are named constants in objective.py, stability.py and bottleneck.py",
+    "matrix_summary_sha256": "6d525200bbff0ea84c08c1307a6a75410561ca50816bada4ac3cac3303993797"
+  },
+  "rows": [
+    {
+      "k_threshold": 3.0,
+      "decisions": [
+        {
+          "workload": "A",
+          "k": 3.0,
+          "threshold_ms": 14593.054188495807,
+          "feasible": [
+            "A-c16-baseline",
+            "A-c16-tuned",
+            "A-c4-baseline",
+            "A-c4-tuned",
+            "A-c64-baseline",
+            "A-c64-tuned"
+          ],
+          "best_case": "A-c64-tuned",
+          "baseline_case": "A-c64-baseline",
+          "delta_pct": 0.01574938224524117,
+          "verdict": "within noise",
+          "recommendation": "keep baseline: tuned's +0.0% output_tok_s is within noise (noise floor 0.8%)",
+          "same_concurrency_baseline_feasible": true
+        },
+        {
+          "workload": "B",
+          "k": 3.0,
+          "threshold_ms": 50594.8086918921,
+          "feasible": [
+            "B-c16-baseline",
+            "B-c16-tuned",
+            "B-c4-baseline",
+            "B-c4-tuned"
+          ],
+          "best_case": "B-c16-baseline",
+          "baseline_case": "B-c16-baseline",
+          "delta_pct": null,
+          "verdict": null,
+          "recommendation": "keep baseline: B-c16-baseline is already the best feasible cell",
+          "same_concurrency_baseline_feasible": true
+        }
+      ],
+      "skipped_workloads": {},
+      "pairs": [
+        {
+          "workload": "A",
+          "concurrency": 4,
+          "before": "A-c4-baseline",
+          "after": "A-c4-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 116.76348675983415,
+              "after": 116.92973743357773,
+              "delta_pct": 0.14238241624758108,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 146.94216976458847,
+              "after": 142.8153295522255,
+              "delta_pct": -2.8084791581439474,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 30.45042286725123,
+              "after": 30.434870900953232,
+              "delta_pct": -0.051073071680473044,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 30.753238426100665,
+              "after": 30.74840370535523,
+              "delta_pct": -0.015721013437506055,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 4864.351396165269,
+              "after": 4862.556223951287,
+              "delta_pct": -0.03690465732793592,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 0.9760851465971979,
+              "after": 0.9765391925378394,
+              "delta_pct": 0.04651704231176456,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 126.50208215594462,
+              "after": 126.56128453937124,
+              "delta_pct": 0.046799532796338895,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": 33.718098958333336,
+              "after": 36.2724609375,
+              "delta_pct": 7.57564055530883,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.012232415902140636,
+              "after": 0.010375623850801152,
+              "delta_pct": -15.179275019700327,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            }
+          ]
+        },
+        {
+          "workload": "A",
+          "concurrency": 16,
+          "before": "A-c16-baseline",
+          "after": "A-c16-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 181.808105114726,
+              "after": 174.66225640100674,
+              "delta_pct": -3.9304346245784973,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 547.3458309166737,
+              "after": 565.079551949989,
+              "delta_pct": 3.239948133635284,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 34.67574822093869,
+              "after": 34.68617964634084,
+              "delta_pct": 0.03008276947822052,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 35.60679556009577,
+              "after": 35.58987284093633,
+              "delta_pct": -0.04752665577804457,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 5671.137324582621,
+              "after": 5659.321498415193,
+              "delta_pct": -0.20835020369212442,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 3.3181980549124535,
+              "after": 3.323680831809248,
+              "delta_pct": 0.16523356370116724,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 427.10111318520336,
+              "after": 427.8057344100558,
+              "delta_pct": 0.16497761375463166,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": 33.764973958333336,
+              "after": 36.296549479166664,
+              "delta_pct": 7.497638007828303,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.0451070336391437,
+              "after": 0.038613081166272635,
+              "delta_pct": -14.396762431381966,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 0.0,
+              "after": 0.3333333333333333,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            }
+          ]
+        },
+        {
+          "workload": "A",
+          "concurrency": 64,
+          "before": "A-c64-baseline",
+          "after": "A-c64-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 402.44317720781453,
+              "after": 377.27267794564204,
+              "delta_pct": -6.254423155290538,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 2011.9971535203513,
+              "after": 1636.7300524901286,
+              "delta_pct": -18.651472760467144,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 54.7009995431075,
+              "after": 54.89340726273194,
+              "delta_pct": 0.35174443105525505,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 58.98440270813319,
+              "after": 59.03016140858564,
+              "delta_pct": 0.07757762790084698,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 9357.701569599994,
+              "after": 9377.34959857953,
+              "delta_pct": 0.20996639862256475,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 8.321068934580092,
+              "after": 8.32237417272033,
+              "delta_pct": 0.015685943122214933,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 1064.8199878839873,
+              "after": 1064.987690454103,
+              "delta_pct": 0.01574938224524117,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": 34.3416015625,
+              "after": 36.3234375,
+              "delta_pct": 5.770947909616713,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.17541284403669724,
+              "after": 0.15106382978723404,
+              "delta_pct": -13.880975696608209,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 0.4,
+              "after": 37.0,
+              "delta_pct": 9150.0,
+              "verdict": "real",
+              "direction": "regressed"
+            }
+          ]
+        },
+        {
+          "workload": "B",
+          "concurrency": 4,
+          "before": "B-c4-baseline",
+          "after": "B-c4-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 493.72910340692516,
+              "after": 506.1648768566617,
+              "delta_pct": 2.518744259539249,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 612.7634768505231,
+              "after": 631.6974903160976,
+              "delta_pct": 3.0899383172919137,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 34.69876896114625,
+              "after": 34.61674582104286,
+              "delta_pct": -0.2363863115582945,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 36.068231547102116,
+              "after": 35.969105430159395,
+              "delta_pct": -0.27482943490941597,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 16864.9362306307,
+              "after": 16845.287373779745,
+              "delta_pct": -0.116507151774869,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 0.2825965673897224,
+              "after": 0.282944848133774,
+              "delta_pct": 0.1232430907666781,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 109.88092300764997,
+              "after": 110.01651416706864,
+              "delta_pct": 0.123398271244251,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": 34.173502604166664,
+              "after": 36.2724609375,
+              "delta_pct": 6.142063802021325,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.09373088685015292,
+              "after": 0.08050958760178617,
+              "delta_pct": -14.105594956658814,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 0.0,
+              "after": 1.3333333333333333,
+              "delta_pct": null,
+              "verdict": "real",
+              "direction": "regressed"
+            }
+          ]
+        },
+        {
+          "workload": "B",
+          "concurrency": 16,
+          "before": "B-c16-baseline",
+          "after": "B-c16-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 875.47167115387,
+              "after": 920.0687626588243,
+              "delta_pct": 5.094064488251846,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 3554.005441398897,
+              "after": 3450.854668264823,
+              "delta_pct": -2.902380844230576,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 53.590298276863045,
+              "after": 53.8559970766297,
+              "delta_pct": 0.49579645628015756,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 57.616725967535295,
+              "after": 57.772022857803414,
+              "delta_pct": 0.26953438894744247,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 27193.630882434383,
+              "after": 27405.338583517125,
+              "delta_pct": 0.778519433458565,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 0.7195704621349096,
+              "after": 0.7147947419204019,
+              "delta_pct": -0.6636904189116494,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 277.86335072976243,
+              "after": 276.0203085367812,
+              "delta_pct": -0.6632908543500854,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": 34.284830729166664,
+              "after": 36.358723958333336,
+              "delta_pct": 6.0490111371685344,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 0.34510703363914375,
+              "after": 0.2969529813501445,
+              "delta_pct": -13.95336738901441,
+              "verdict": "real",
+              "direction": "changed"
+            },
+            {
+              "metric": "preemptions",
+              "before": 0.0,
+              "after": 0.0,
+              "delta_pct": null,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 5.0,
+              "after": 11.666666666666666,
+              "delta_pct": 133.33333333333331,
+              "verdict": "real",
+              "direction": "regressed"
+            }
+          ]
+        },
+        {
+          "workload": "B",
+          "concurrency": 64,
+          "before": "B-c64-baseline",
+          "after": "B-c64-tuned",
+          "rows": [
+            {
+              "metric": "mean_ttft_ms",
+              "before": 14382.97533272102,
+              "after": 8183.906683100033,
+              "delta_pct": -43.100043671202116,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "p95_ttft_ms",
+              "before": 20791.517540830246,
+              "after": 16498.521307149673,
+              "delta_pct": -20.647825370370466,
+              "verdict": "real",
+              "direction": "improved"
+            },
+            {
+              "metric": "mean_tpot_ms",
+              "before": 114.70749089000958,
+              "after": 139.70353937593705,
+              "delta_pct": 21.791121305142678,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "p95_tpot_ms",
+              "before": 126.90783063669646,
+              "after": 155.3039762503027,
+              "delta_pct": 22.375408571041522,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "p95_e2e_ms",
+              "before": 73935.37559975819,
+              "after": 79199.90268569063,
+              "delta_pct": 7.120444094896375,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "req_per_s",
+              "before": 1.0649658882020052,
+              "after": 1.0134386006067764,
+              "delta_pct": -4.838397939883595,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "output_tok_s",
+              "before": 408.82086720048693,
+              "after": 389.0448228902027,
+              "delta_pct": -4.83733730269351,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "peak_gpu_mem_gib",
+              "before": 34.4412109375,
+              "after": 36.533203125,
+              "delta_pct": 6.074095917522491,
+              "verdict": "real",
+              "direction": "regressed"
+            },
+            {
+              "metric": "kv_peak_frac",
+              "before": 1.0,
+              "after": 1.0,
+              "delta_pct": 0.0,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "preemptions",
+              "before": 64.2,
+              "after": 56.6,
+              "delta_pct": -11.838006230529597,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            },
+            {
+              "metric": "peak_waiting",
+              "before": 53.6,
+              "after": 59.0,
+              "delta_pct": 10.07462686567164,
+              "verdict": "within noise",
+              "direction": "unchanged"
+            }
+          ]
+        }
+      ],
+      "bottlenecks": [
+        {
+          "case_id": "A-c16-baseline",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 34.7 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c16-tuned",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 34.7 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c4-baseline",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 30.5 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c4-tuned",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 30.4 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c64-baseline",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 54.7 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "A-c64-tuned",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 54.9 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c16-baseline",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 53.6 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c16-tuned",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 53.9 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c4-baseline",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 34.7 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c4-tuned",
+          "label": "compute / prefill-interference bound",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked",
+          "reason": "TPOT 34.6 ms > 1.5x weight-read floor 10.3 ms"
+        },
+        {
+          "case_id": "B-c64-baseline",
+          "label": "kv-capacity-bound",
+          "reason": "KV pool 100% full (>= 90%) with 64 preemptions",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked"
+        },
+        {
+          "case_id": "B-c64-tuned",
+          "label": "kv-capacity-bound",
+          "reason": "KV pool 100% full (>= 90%) with 57 preemptions",
+          "caveat": "batch size not measured, so the scheduler-cap rule was not checked"
+        }
+      ],
+      "unstable": {
+        "A-c16-baseline": [
+          "p95_ttft_ms"
+        ],
+        "A-c16-tuned": [
+          "p95_ttft_ms",
+          "peak_waiting"
+        ],
+        "A-c4-baseline": [
+          "p95_ttft_ms"
+        ],
+        "A-c4-tuned": [
+          "p95_ttft_ms"
+        ],
+        "A-c64-baseline": [
+          "p95_ttft_ms",
+          "peak_waiting"
+        ],
+        "A-c64-tuned": [
+          "peak_waiting"
+        ],
+        "B-c16-baseline-aa": [
+          "p95_ttft_ms",
+          "peak_waiting"
+        ],
+        "B-c16-baseline": [
+          "peak_waiting"
+        ],
+        "B-c16-tuned": [
+          "p95_ttft_ms"
+        ],
+        "B-c4-baseline": [
+          "p95_ttft_ms"
+        ],
+        "B-c4-tuned": [
+          "p95_ttft_ms",
+          "peak_waiting"
+        ],
+        "B-c64-baseline": [
+          "preemptions"
+        ],
+        "B-c64-tuned": [
+          "preemptions"
+        ]
+      },
+      "p95_low_sample": [
+        "A-c16-baseline",
+        "A-c16-tuned",
+        "A-c4-baseline",
+        "A-c4-tuned",
+        "B-c16-baseline",
+        "B-c16-baseline-aa",
+        "B-c16-tuned",
+        "B-c4-baseline",
+        "B-c4-tuned"
+      ],
+      "noise_floor_pct": {
+        "output_tok_s": 0.8085806329467244,
+        "p95_e2e_ms": 0.8073511602174859,
+        "mean_ttft_ms": 3.4256081232250155,
+        "mean_tpot_ms": 0.4394583655467098
+      },
+      "weight_read_ms": 10.32797427652733
+    }
+  ]
+}
