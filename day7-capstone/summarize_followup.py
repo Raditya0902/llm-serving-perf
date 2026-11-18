@@ -11,7 +11,10 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 CASES = ("B-c64-baseline", "B-c64-tuned", "B-c64-budget2048", "B-c64-pool092",
-         "B-c64-cap16", "B-c64-cap24", "B-c64-cap32")
+         "B-c64-cap16", "B-c64-cap24", "B-c64-cap32",
+         "B-c16-tp1", "B-c16-tp2", "B-c64-tp1", "B-c64-tp2", "B-c64-tp2nc")
+# Each row is compared with its own baseline: the single-GPU matrix baseline, or the TP=1 run at the same concurrency.
+BASELINE_FOR = {"B-c16-tp2": "B-c16-tp1", "B-c64-tp2": "B-c64-tp1", "B-c64-tp2nc": "B-c64-tp1"}
 METRICS = ("output_throughput", "mean_ttft_ms", "mean_tpot_ms", "p95_e2el_ms")
 
 
@@ -46,18 +49,18 @@ def summarize(raws: Sequence[Path]) -> dict[str, dict[str, float]]:
 
 
 def render(table: Mapping[str, Mapping[str, float]]) -> str:
-    base = table.get("B-c64-baseline")
     lines = ["| case | n | out tok/s (CV) | vs base | mean TTFT ms | vs base | mean TPOT ms | vs base | P95 e2e ms | KV peak | preempt | peak wait |",
              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
 
-    def delta(row: Mapping[str, float], key: str) -> str:
+    def delta(row: Mapping[str, float], base: Mapping[str, float] | None, key: str) -> str:
         return "-" if base is None or row is base else f"{(row[key] / base[key] - 1) * 100:+.1f}%"
 
     for case_id, r in table.items():
+        base = table.get(BASELINE_FOR.get(case_id, "B-c64-baseline"))
         lines.append(
             f"| {case_id} | {r['n']:.0f} | {r['output_throughput']:.0f} ({r['output_throughput_cv']:.1f}%) | "
-            f"{delta(r, 'output_throughput')} | {r['mean_ttft_ms']:.0f} | {delta(r, 'mean_ttft_ms')} | "
-            f"{r['mean_tpot_ms']:.1f} | {delta(r, 'mean_tpot_ms')} | {r['p95_e2el_ms']:.0f} | "
+            f"{delta(r, base, 'output_throughput')} | {r['mean_ttft_ms']:.0f} | {delta(r, base, 'mean_ttft_ms')} | "
+            f"{r['mean_tpot_ms']:.1f} | {delta(r, base, 'mean_tpot_ms')} | {r['p95_e2el_ms']:.0f} | "
             f"{r['kv_peak'] * 100:.0f}% | {r['preempt']:.1f} | {r['peak_wait']:.0f} |")
     return "\n".join(lines)
 

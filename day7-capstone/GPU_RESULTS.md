@@ -57,12 +57,39 @@ a larger resident batch fits (TPOT +13%), but batch size was not measured, so th
 - **What it got wrong**: the **token-budget knob has the wrong sign** on throughput (+5.0% vs -6.2%), TTFT and TPOT. Absolute times are also far off (for example A-c64 2,614 simulated vs 1,065 measured tok/s), as expected from modeling an A100 with illustrative constants.
 - **Implicated assumption**: the Day 3 cost model charges a fixed `overhead_ms = 0.3` per iteration, and a smaller token budget therefore looks free: it only reduces per-step interference. Day 6 measured per-step costs on this A40 of 7-16 ms for a 0.5B model, so a fixed per-step cost more than 20x larger than 0.3 ms is real, and a 2,048 budget splits each 2,560-token prompt into two chunks. That fits the measured loss and Day 4's independent finding on the same GPU (a smaller token budget cost throughput at saturation), but **this was not isolated here** (no step-level trace of the 8B runs, batch size not measured), so treat it as the leading hypothesis.
 
+## Two-GPU follow-up: the 8B model with `--tensor-parallel-size 2` (RUNBOOK section 5)
+
+Run on a different pod: **2x A100-SXM4-80GB over NVLink (NV12)**, same vLLM 0.34.0 and `Llama-3.1-8B-Instruct` mirror, workload B, `--gpu-memory-utilization 0.85`,
+**no KV cap** (`--hardware a100-80gb`), 3 repeats per arm, fresh server each, 0 failed requests. Summary: [results/gpu/a100-tp/summary.md](results/gpu/a100-tp/summary.md).
+These are not comparable in absolute terms with the A40 tables above (different GPU, no pool cap); only TP=2 against TP=1 on the same pod is.
+
+| arm | out tok/s (CV) | vs TP=1 | mean TPOT ms | vs TP=1 | mean TTFT ms | vs TP=1 | KV peak | preemptions |
+|---|---|---|---|---|---|---|---|---|
+| B@16 TP=1 | 721 (0.8%) | - | 20.5 | - | 404 | - | 12% | 0 |
+| B@16 TP=2 | 1,166 (0.8%) | **+61.7%** | 12.7 | -38.3% | 251 | -37.8% | 5% | 0 |
+| B@64 TP=1 | 1,044 (0.1%) | - | 57.3 | - | 1,050 | - | 45% | 0 |
+| B@64 TP=2 | 1,844 (0.2%) | **+76.5%** | 32.3 | -43.6% | 638 | -39.3% | 20% | 0 |
+| B@64 TP=2, `--disable-custom-all-reduce` | 1,796 (0.3%) | +71.9% | 33.2 | -42.1% | 630 | -40.0% | 20% | 0 |
+
+Against the pre-run analytic predictions (REPORT section 5; link constants were assumed):
+
+| Prediction | Measured | Verdict |
+|---|---|---|
+| NVLink speeds a 64-sequence decode step ~1.6x | TPOT 57.3 -> 32.3 ms = **1.77x** at B@64 (1.61x at B@16) | Held (somewhat better than predicted) |
+| Group KV capacity ~2.9x | 413,184 -> 952,320 tokens = **2.30x** | Smaller than predicted. The 2.9x was computed for 40 GB cards, where the 15 GiB of weights are a bigger share; on 80 GB the weights are a smaller share, so a smaller ratio is expected (this explanation is arithmetic, not tested on 40 GB). |
+| TP=2 stops B@64 from preempting | Neither TP=1 nor TP=2 preempts on 80 GB (KV peak 45% vs 20%) | **Not testable here.** The A40 result (100% KV, 64 preemptions) came from capping the pool to the modeled 40 GB size; this pod ran uncapped. |
+| PCIe: step speedup ~1.05x | not run | Not tested |
+
+TP=2 also lowers TTFT by ~39% and the custom all-reduce kernel is worth about +2.7% throughput at B@64 (1,844 vs 1,796 tok/s; small but outside the 0.2-0.3% CV).
+The Day 5 1.5B experiment on the same pod (TP=2 +20 to +38% throughput; two TP=1 replicas beat one TP=2 server by 19.5% at concurrency 128) is in
+[../day5-distributed/RESULTS.md](../day5-distributed/RESULTS.md); a data-parallel baseline was not run for the 8B model, so "is TP=2 the right use of the second GPU for 8B?" is open.
+
 ## Limits and what was not done
 
 - **One GPU, one model, one capped-pool configuration.** The capped pool is a modeling choice that reproduces the simulator's regime; uncapped, the 46 GiB A40 would have a larger pool and (per the simulator) much less pressure. That was not run.
 - **Caps are single runs** (n=1); the gaps are 8-31% against a baseline CV of 0.4%, so the direction is safe but the sizes are soft. `budget2048` and `pool092` have 3 repeats.
 - The bottleneck labels in the generated tables are rule-based and the tool notes that batch size was not measured, so the "compute / prefill-interference bound" labels at c>=16 are unverified. The A100-floor labels in `results/gpu/a40-capped/` are the wrong floor for this GPU; use `results/gpu/a40-capped-a40bw/` (A40 floor) for H4.
-- **Not done**: the two-GPU tensor-parallel predictions (RUNBOOK section 5; needs a second GPU), 8B step-level profiling, and a run with an uncapped pool.
+- **Not done**: the PCIe two-GPU case, a TP=2 run with a KV pool capped to the modeled size (the preemption prediction), an 8B data-parallel baseline, 8B step-level profiling, and a single-GPU run with an uncapped pool. (The NVLink TP=2 follow-up is the section above.)
 - **Found and fixed while running**: vLLM's "Peak concurrent requests" buckets requests by whole second and read 68 against a client cap of 64, so `ingest_gpu.py` rejected a valid run. The guard now computes exact overlap from `start_times` and `latencies` (2 new tests).
 
 ## Reproduce
@@ -76,6 +103,9 @@ python analyze.py --dir results/gpu/a40-capped --hardware a100-40gb --model-pres
 python analyze.py --dir results/gpu/a40-capped-a40bw --hardware a40-48gb --model-preset llama3-8b  # H4 on the A40 floor
 python run_followup_gpu.py --out results/raw/followup --hardware a100-40gb --cap-kv-pool --model ... --model-preset llama3-8b
 python summarize_followup.py --matrix-raw results/raw/a40-capped --followup-raw results/raw/followup
+
+# 2-GPU pod, no --cap-kv-pool (tensor-parallel arms):
+python run_followup_gpu.py --out results/raw/followup-tp --arms tp1_c16 tp2_c16 tp1_c64 tp2_c64 tp2nc_c64 --hardware a100-80gb --model NousResearch/Meta-Llama-3.1-8B-Instruct --model-preset llama3-8b
 ```
 
 Raw runs (`results/raw/`) are git-ignored; ingested summaries are in `results/gpu/`.

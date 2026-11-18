@@ -195,3 +195,12 @@ def test_cap_changes_config_id_so_capped_and_uncapped_runs_never_mix():
 def test_cap_is_rejected_when_the_modeled_pool_is_empty():
     with pytest.raises(ValueError, match="KV pool"):
         mx.build_matrix(model_preset="llama3-70b", hardware="a100-40gb", cap_kv_pool=True)
+
+
+def test_extra_serve_args_are_appended_and_default_to_none():
+    base = mx.MatrixCase(mx.WORKLOADS["B"], mx.CONFIGS["baseline"], 16)
+    tp2 = mx.ServingConfig("tp2", 0.85, 8192, extra_serve_args=("--tensor-parallel-size", "2"))
+    case = mx.MatrixCase(mx.WORKLOADS["B"], tp2, 16)
+    assert "--tensor-parallel-size" not in base.serve_command(8000)
+    cmd = case.serve_command(8000)
+    assert cmd[cmd.index("--tensor-parallel-size") + 1] == "2"

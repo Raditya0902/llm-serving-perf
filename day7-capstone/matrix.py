@@ -76,6 +76,7 @@ class ServingConfig:
     gpu_memory_utilization: float
     max_num_batched_tokens: int
     max_num_seqs: int = 256
+    extra_serve_args: tuple[str, ...] = ()  # appended verbatim to `vllm serve` (e.g. tensor parallelism)
 
 
 WORKLOADS: dict[str, WorkloadSpec] = {
@@ -165,7 +166,7 @@ class MatrixCase:
         cmd = SweepRun(self.case_id, "matrix", self.case_id, serve, bench).serve_command()
         if self.kv_cache_cap_bytes is not None:
             cmd = [*cmd, "--kv-cache-memory-bytes", str(self.kv_cache_cap_bytes)]
-        return cmd
+        return [*cmd, *cfg.extra_serve_args]
 
     def bench_command(self, result_dir: str, rep: int, port: int) -> list[str]:
         w = self.workload

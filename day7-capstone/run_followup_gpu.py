@@ -23,22 +23,31 @@ import matrix as mx
 import run_matrix_gpu as rm
 from run_sweep import default_backend
 
-ARMS: dict[str, tuple[mx.ServingConfig, int]] = {
-    "cap16": (mx.ServingConfig("cap16", 0.85, 8192, max_num_seqs=16), 1),
-    "cap24": (mx.ServingConfig("cap24", 0.85, 8192, max_num_seqs=24), 1),
-    "cap32": (mx.ServingConfig("cap32", 0.85, 8192, max_num_seqs=32), 1),
-    "budget2048": (mx.ServingConfig("budget2048", 0.85, 2048), 3),
-    "pool092": (mx.ServingConfig("pool092", 0.92, 8192), 3),
+TP2 = ("--tensor-parallel-size", "2")
+# name -> (config, repeats, concurrency). Single-GPU arms run at 64; the tp* arms need a 2-GPU host and use
+# --hardware a100-80gb WITHOUT --cap-kv-pool (both sides get a vLLM-sized pool; compare step time and KV tokens).
+ARMS: dict[str, tuple[mx.ServingConfig, int, int]] = {
+    "cap16": (mx.ServingConfig("cap16", 0.85, 8192, max_num_seqs=16), 1, 64),
+    "cap24": (mx.ServingConfig("cap24", 0.85, 8192, max_num_seqs=24), 1, 64),
+    "cap32": (mx.ServingConfig("cap32", 0.85, 8192, max_num_seqs=32), 1, 64),
+    "budget2048": (mx.ServingConfig("budget2048", 0.85, 2048), 3, 64),
+    "pool092": (mx.ServingConfig("pool092", 0.92, 8192), 3, 64),
+    "tp1_c16": (mx.ServingConfig("tp1", 0.85, 8192), 3, 16),
+    "tp1_c64": (mx.ServingConfig("tp1", 0.85, 8192), 3, 64),
+    "tp2_c16": (mx.ServingConfig("tp2", 0.85, 8192, extra_serve_args=TP2), 3, 16),
+    "tp2_c64": (mx.ServingConfig("tp2", 0.85, 8192, extra_serve_args=TP2), 3, 64),
+    "tp2nc_c64": (mx.ServingConfig("tp2nc", 0.85, 8192,
+                                   extra_serve_args=(*TP2, "--disable-custom-all-reduce")), 3, 64),
 }
-CONCURRENCY = 64
+SINGLE_GPU_ARMS = ("cap16", "cap24", "cap32", "budget2048", "pool092")
 
 
 def build_runs(model: str, model_preset: str, hardware: str, cap_kv_pool: bool,
                arms: Sequence[str]) -> list[mx.RunSpec]:
     runs: list[mx.RunSpec] = []
     for name in arms:
-        cfg, reps = ARMS[name]
-        case = mx.MatrixCase(mx.WORKLOADS["B"], cfg, CONCURRENCY, model, model_preset, hardware, cap_kv_pool)
+        cfg, reps, concurrency = ARMS[name]
+        case = mx.MatrixCase(mx.WORKLOADS["B"], cfg, concurrency, model, model_preset, hardware, cap_kv_pool)
         runs += [mx.RunSpec(case, rep) for rep in range(reps)]
     return runs
 
@@ -46,7 +55,7 @@ def build_runs(model: str, model_preset: str, hardware: str, cap_kv_pool: bool,
 def main(argv: Sequence[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--out", type=Path, required=True)
-    p.add_argument("--arms", nargs="+", choices=sorted(ARMS), default=list(ARMS))
+    p.add_argument("--arms", nargs="+", choices=sorted(ARMS), default=list(SINGLE_GPU_ARMS))
     p.add_argument("--model", default=mx.DEFAULT_HUB_MODEL)
     p.add_argument("--model-preset", default=mx.DEFAULT_PRESET)
     p.add_argument("--hardware", default=mx.DEFAULT_HARDWARE)

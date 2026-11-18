@@ -1,0 +1,2 @@
+GPU KV cache size: 413,184 tokens
+GPU KV cache size: 952,320 tokens
