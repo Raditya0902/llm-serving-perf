@@ -1,9 +1,9 @@
 # Day 6 GPU runbook (NVIDIA host)
 
-> **Status: written and unit-tested on an Apple M4 Mac; never run on an NVIDIA GPU.** Nothing in
-> sections 1-4 has produced a measurement. The vLLM flags below were read out of the pinned
-> v0.34.0 source in `../day4-vllm-internals/vllm_src/` (file references given), not run. If the
-> host's `--help` disagrees with this file, trust the host.
+> **Status (updated): run on RunPod A40 pods.** Sections 1, 3, 4 and 5 produced the measurements in [performance-report.md](performance-report.md) section 9; section 2 (nsys) ran in a second round
+> (nsys 2026.5.2 from the CUDA apt repo; `gpu/run_nsys.sh` now passes `--sample=none --cpuctxsw=none`, needed in a container). New in that round: `profile_run.py --model` and `--probe-only` (unprofiled launch probe),
+> `gpu/step_costs.py` (per-step GPU time vs prefill tokens and decodes), `gpu/run_itl_study.sh`, `gpu/run_e6_cap.sh` (E6 with a pool the workload can exhaust). The text below is the original procedure.
+> The vLLM flags were read out of the pinned v0.34.0 source in `../day4-vllm-internals/vllm_src/`. If the host's `--help` disagrees with this file, trust the host.
 
 Hypotheses for every experiment are fixed in [experiments.py](experiments.py) *before* any run.
 Experiments E4-E6 (max batched tokens, max seqs, KV capacity) are the ones that need this runbook;

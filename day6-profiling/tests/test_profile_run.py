@@ -149,3 +149,48 @@ def test_nsys_flag_requires_a_cuda_device(tmp_path):
 def test_main_rejects_invalid_sizes(flag, tmp_path):
     with pytest.raises(SystemExit):
         main(["--smoke", "--device", "cpu", "--out", str(tmp_path), *flag])
+
+
+def test_model_flag_defaults_to_the_day1_model_and_can_be_overridden():
+    from generate import DEFAULT_MODEL_ID
+
+    assert parse_args([]).model == DEFAULT_MODEL_ID
+    assert parse_args(["--model", "Qwen/Qwen2.5-1.5B-Instruct"]).model == "Qwen/Qwen2.5-1.5B-Instruct"
+
+
+def test_build_inputs_loads_the_requested_model(monkeypatch):
+    import loader
+    import profile_run
+
+    seen = {}
+
+    def fake_load(device, attn_impl="sdpa", model_id="default"):
+        seen["model_id"] = model_id
+        raise RuntimeError("stop after the model id was captured")
+
+    monkeypatch.setattr(loader, "load_model", fake_load)
+    with pytest.raises(RuntimeError, match="stop after"):
+        profile_run.build_inputs(torch.device("cpu"), 8, "sdpa", False, model_id="Qwen/Qwen2.5-1.5B-Instruct")
+    assert seen["model_id"] == "Qwen/Qwen2.5-1.5B-Instruct"
+
+
+def test_probe_only_writes_unprofiled_launch_passes_and_nothing_else(tmp_path):
+    code = main(
+        ["--smoke", "--device", "cpu", "--prompt-len", "16", "--new-tokens", "6", "--probe-only",
+         "--probe-passes", "3", "--tag", "p", "--out", str(tmp_path)]
+    )
+
+    assert code == 0
+    out = tmp_path / "p"
+    report = json.loads((out / "launch_probe_unprofiled.json").read_text())
+    assert report["passes"] == 3 and len(report["enqueue_ms"]) == 3 and len(report["step_ms"]) == 3
+    assert report["enqueue_fraction_range"][0] <= report["enqueue_fraction_range"][1]
+    assert report["model"] and report["decode_steps"] == 5
+    assert not (out / "trace_decode.json").exists() and not (out / "profile_summary.json").exists()
+
+
+def test_probe_only_rejects_nsys_and_bad_pass_counts(tmp_path):
+    with pytest.raises(SystemExit):
+        main(["--smoke", "--device", "cpu", "--probe-only", "--probe-passes", "0", "--out", str(tmp_path)])
+    with pytest.raises(SystemExit):
+        main(["--smoke", "--device", "cpu", "--probe-only", "--nsys", "--out", str(tmp_path)])

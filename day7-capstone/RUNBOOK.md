@@ -87,7 +87,7 @@ most useful output of this run: say which simulator assumption it points at.
 `--dry-run`, add `--tensor-parallel-size 2`, and run B at concurrency 64 and 16 against it. Capture `nvidia-smi topo -m` first (NVLink vs
 PCIe decides the result) and see `day5-distributed/RUNBOOK.md` for NCCL checks and `--disable-custom-all-reduce` comparison. Predictions
 (analytic, link constants assumed): TP=2 over NVLink speeds a 64-sequence decode step ~1.6x and raises group KV capacity ~2.9x so B@64
-stops preempting; over PCIe the step speedup is ~1.05x (capacity gain unchanged); across a 100 GbE link TP is slower than one GPU.
+stops preempting; over PCIe the step speedup is ~1.05x (capacity gain unchanged) [measured later: 1.29-1.53x on A40, see GPU_RESULTS.md]; across a 100 GbE link TP is slower than one GPU.
 
 ## 6. Teardown and hygiene
 

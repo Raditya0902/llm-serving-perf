@@ -3,6 +3,8 @@
 > **Update: a real-GPU run now exists.** This report is the **pre-run simulated analysis**; the predictions in it were scored against a
 > 49-run A40 matrix in [GPU_RESULTS.md](GPU_RESULTS.md) (structure held, including preemption counts; the token-budget knob had the wrong
 > sign; absolute times differ because the simulator modeled an A100). The tags below describe the state **before** that run.
+> **Section 5 (two GPUs) has also been measured**: the "PCIe 1.05x" row below was an A100-40GB number; on 2x A40 over PCIe the measured step speedup is 1.29x (B@64) to 1.53x (B@16), which this model reproduces to within 2% and 6% when given the A40 profile and the
+> measured link constants (25 us, 7.6 GB/s). The "require NVLink or the speedup vanishes" advice is therefore wrong for this model on these GPUs. KV capacity 2.88x held under the capped pool; see GPU_RESULTS.md.
 >
 > **Read this first (pre-run).** Every benchmark number below is **SIMULATED**: the Day 3 scheduler/engine with a roofline cost model derived
 > from *illustrative* A100-40GB peaks. No GPU ran anything in this repo (it was built on a Mac). Claims are tagged:

@@ -78,18 +78,91 @@ Against the pre-run analytic predictions (REPORT section 5; link constants were 
 | NVLink speeds a 64-sequence decode step ~1.6x | TPOT 57.3 -> 32.3 ms = **1.77x** at B@64 (1.61x at B@16) | Held (somewhat better than predicted) |
 | Group KV capacity ~2.9x | 413,184 -> 952,320 tokens = **2.30x** | Smaller than predicted. The 2.9x was computed for 40 GB cards, where the 15 GiB of weights are a bigger share; on 80 GB the weights are a smaller share, so a smaller ratio is expected (this explanation is arithmetic, not tested on 40 GB). |
 | TP=2 stops B@64 from preempting | Neither TP=1 nor TP=2 preempts on 80 GB (KV peak 45% vs 20%) | **Not testable here.** The A40 result (100% KV, 64 preemptions) came from capping the pool to the modeled 40 GB size; this pod ran uncapped. |
-| PCIe: step speedup ~1.05x | not run | Not tested |
+| PCIe: step speedup ~1.05x | not run on this pod; see the A40 PCIe section below | See below |
 
 TP=2 also lowers TTFT by ~39% and the custom all-reduce kernel is worth about +2.7% throughput at B@64 (1,844 vs 1,796 tok/s; small but outside the 0.2-0.3% CV).
 The Day 5 1.5B experiment on the same pod (TP=2 +20 to +38% throughput; two TP=1 replicas beat one TP=2 server by 19.5% at concurrency 128) is in
-[../day5-distributed/RESULTS.md](../day5-distributed/RESULTS.md); a data-parallel baseline was not run for the 8B model, so "is TP=2 the right use of the second GPU for 8B?" is open.
+[../day5-distributed/RESULTS.md](../day5-distributed/RESULTS.md); an 8B data-parallel baseline was not run on that pod; it was run on the 2x A40 PCIe pod (next section), not on NVLink.
+
+## Round 2 on a 2x A40 pod (PCIe only): capped TP=2, data-parallel baseline, uncapped single GPU, PCIe step speedup
+
+Run on a **2x NVIDIA A40 pod, no NVLink** (`nvidia-smi topo -m`: `PIX`; nccl-tests bus bandwidth 7.6 GB/s at 256 MB, see [../day5-distributed/RESULTS.md](../day5-distributed/RESULTS.md)),
+vLLM 0.34.0, the same `Llama-3.1-8B-Instruct` mirror, workload B, `--gpu-memory-utilization 0.85`, 3 repeats per arm, fresh server each (a fresh pair of servers per repeat for the
+data-parallel arm), 0 failed requests in every run. Generated tables: [results/gpu/a40-round2/summary.md](results/gpu/a40-round2/summary.md). New tools: a TP-aware pool cap
+(`--kv-cache-memory-bytes` is per GPU; `multi_gpu.kv_pool_per_gpu`), `run_dp_gpu.py` (two TP=1 replicas on ports 18000/18001, each pinned to one GPU, half the concurrency and prompts each, run at the same
+time; throughput = all output tokens over the longer duration).
+
+### 1. TP=2 with a KV pool capped to the modeled 40 GB size (the preemption prediction)
+
+Same setting as the A40 matrix (`--hardware a100-40gb --cap-kv-pool`): TP=1 gets the single-GPU modeled pool, TP=2 the per-GPU modeled pool of a TP=2 deployment. B@64:
+
+| arm (3 repeats) | out tok/s (CV) | vs TP=1 | mean TTFT ms | mean TPOT ms | KV peak | preemptions | pool (tokens) |
+|---|---|---|---|---|---|---|---|
+| TP=1 | 410 (0.4%) | - | 14,444 | 114.2 | 100% | 62.0 | 139,584 |
+| **TP=2** | **568 (0.2%)** | **+38.6%** | **2,223 (-84.6%)** | 105.1 (-8.0%) | **47%** | **0** | **401,728 (2.88x)** |
+| 2 x TP=1 replicas (32 + 32) | 747 (0.3%) | +82.2% (+31.5% vs TP=2) | 1,385 (-90.4%) | 79.5 (-30.4%) | 68% | 0 | 139,584 per replica |
+
+- This TP=1 row reproduces the earlier capped matrix baseline on a different pod (410 vs 409 tok/s, 62.0 vs 64.2 preemptions).
+- **Prediction "TP=2 stops B@64 from preempting": held.** 62 preemptions and a 100%-full pool become 0 and 47%. The TTFT collapse (-85%) is the queueing that preemption and a full pool
+  caused, not a faster prefill. **Prediction "group KV capacity ~2.9x": held under the cap** (2.88x); the 2.30x measured uncapped on 80 GB A100s was lower because the weights are a smaller share of 80 GB.
+- Replicas beat TP=2 here too, because each replica sees 32 sequences and never preempts.
+
+### 2. Uncapped single A40 (`--hardware a40-48gb`): the simulator's 48 GB prediction
+
+REPORT section 4 said that on a 48 GB card B@64 reaches ~95% KV with no preemptions and the tuned config gets no TTFT win. Measured, 3 repeats:
+
+| B@64 | simulator (a40-48gb) | measured | simulator | measured |
+|---|---|---|---|---|
+| config | baseline | baseline | tuned | tuned |
+| KV peak | 94.8% | **100%** | 82.9% | 94% |
+| preemptions | 0 | **65.0** | 0 | 0 |
+| out tok/s | 446 | 422 (0.5%) | 462 | 394 (0.2%) |
+| mean TTFT ms | 2,952 | **4,928** | 2,968 | 2,772 |
+| mean TPOT ms | 133.4 | 135.5 | 128.4 | **152.3** |
+
+- **Prediction refuted for the baseline** (pressure and 65 preemptions where none were predicted), and the "no TTFT win" claim is refuted too: tuned cuts TTFT by 43.8% because it removes the preemptions the baseline suffers.
+- **Implicated assumption: the modeled pool size.** The analytic model gives 195,312 tokens (baseline) and 222,832 (tuned); vLLM reported **171,008 and 197,632** (12.4% and 11.3% smaller, about 3 GiB). B@64's demand (64 x (2,560 + 384/2) = 176,128 tokens) is
+  90% of the modeled baseline pool but **103% of the real one**, which matches pressure in the baseline and none in the tuned config (demand 89% of 197,632). The simulator's `ACTIVATION_RESERVE_GIB = 2.0` looks about 3 GiB too small on this GPU
+  (arithmetic from the two pool sizes, not isolated). The sensitivity is the finding: preemption onset sits between pools of 171k and 198k tokens for this workload.
+- Baseline TPOT is within 1.6% of the simulator's, but the tuned config is **19% slower** than simulated and its throughput **6.7% below** baseline (the simulator said +3.6%), the same token-budget error as on the capped runs (fixed 0.3 ms per-step overhead assumption).
+
+### 3. TP=2 on PCIe, uncapped (prediction: step speedup ~1.05x)
+
+| 8B, 2x A40 PCIe (3 repeats) | TP=1 | TP=2 | TP=2 without custom all-reduce |
+|---|---|---|---|
+| B@16 out tok/s | 278 (0.7%) | **423 (0.7%), +51.8%** | not run |
+| B@16 mean TPOT / TTFT ms | 53.4 / 898 | 34.8 (-35.0%, **1.53x**) / 831 (-7.4%) | |
+| B@64 out tok/s | 422 (0.3%) | **569 (0.3%), +34.8%** | 562 (0.5%), +33.3% |
+| B@64 mean TPOT / TTFT ms | 135.4 / 4,944 | 105.0 (-22.5%, **1.29x**) / 2,199 (-55.5%) | 106.2 / 2,186 |
+| B@64 KV peak / preemptions | 100% / 60.3 | 40% / 0 | 40% / 0 |
+| KV pool (tokens) | 171,008 | 466,944 (**2.73x**) | |
+
+- **The ~1.05x PCIe prediction is refuted as stated**, but the model is not what failed: 1.05x was its B@64 value for an **A100-40GB**. With the same code and the A40 profile it gives 1.42x (B@64) and 1.63x (B@16) using the assumed PCIe constants,
+  and **1.31x and 1.62x with the link constants measured on this pod** (25 us, 7.6 GB/s), against measured 1.29x and 1.53x (-1.5% and -5.6%). The same model with measured NVLink constants on the A100-80GB gives 1.64x / 1.59x against the
+  measured 1.61x / 1.77x (B@16 / B@64) on the NVLink pod. Of the original gap, the GPU's memory bandwidth (the A40 reads weights 2.9x slower than an A100-80GB, so there is more compute time for TP to halve) explains most of it; that decomposition
+  comes from re-running the model, not from an isolating experiment.
+- The custom all-reduce kernel is worth only about +1.1% at B@64 here (569 vs 562 tok/s), against +2.7% on NVLink (different GPUs, so not a clean interconnect comparison).
+- KV pool gain 2.73x against the model's 2.63x for this GPU.
+
+### 4. Is TP=2 the right use of the second GPU for the 8B model? (PCIe, uncapped)
+
+| | TP=1 | TP=2 | 2 x TP=1 replicas | replicas vs TP=2 |
+|---|---|---|---|---|
+| B@16 (replicas 8 + 8) out tok/s | 278 | 423 | 366 (0.1%) | **-13.5%** |
+| B@16 mean TTFT / TPOT ms | 898 / 53.4 | 831 / 34.8 | 599 / 40.7 | TTFT -27.9%, TPOT +17.0% |
+| B@64 (replicas 32 + 32) out tok/s | 422 | 569 | **747 (0.3%)** | **+31.3%** |
+| B@64 mean TTFT / TPOT ms | 4,944 / 135.4 | 2,199 / 105.0 | 1,375 / 79.5 | TTFT -37.5%, TPOT -24.3% |
+
+**It depends on load.** At 16 concurrent requests TP=2 gives more throughput (plausibly because each replica is only 8 sequences deep and its decode step is the full single-GPU step; not isolated), while replicas still win on TTFT. At 64 the replicas win by 31% on throughput and
+24% on TPOT and never preempt. That is the same direction as the Day 5 1.5B result (replicas ahead at high concurrency). Caveats: the replica numbers are two simultaneous benchmark runs combined as described above (a single client's view would differ slightly);
+the two replicas draw different prompts (seed offset 100); only two load points; PCIe A40 only. An NVLink 8B data-parallel run was not made.
 
 ## Limits and what was not done
 
-- **One GPU, one model, one capped-pool configuration.** The capped pool is a modeling choice that reproduces the simulator's regime; uncapped, the 46 GiB A40 would have a larger pool and (per the simulator) much less pressure. That was not run.
+- **One model, A40 and A100 only.** The capped pool is a modeling choice that reproduces the simulator's regime. Uncapped on the 46 GiB A40 it was run in round 2: the real pool is ~12% smaller than modeled and B@64 baseline still preempts (above).
 - **Caps are single runs** (n=1); the gaps are 8-31% against a baseline CV of 0.4%, so the direction is safe but the sizes are soft. `budget2048` and `pool092` have 3 repeats.
 - The bottleneck labels in the generated tables are rule-based and the tool notes that batch size was not measured, so the "compute / prefill-interference bound" labels at c>=16 are unverified. The A100-floor labels in `results/gpu/a40-capped/` are the wrong floor for this GPU; use `results/gpu/a40-capped-a40bw/` (A40 floor) for H4.
-- **Not done**: the PCIe two-GPU case, a TP=2 run with a KV pool capped to the modeled size (the preemption prediction), an 8B data-parallel baseline, 8B step-level profiling, and a single-GPU run with an uncapped pool. (The NVLink TP=2 follow-up is the section above.)
+- **Not done**: 8B step-level profiling (nsys or torch profiler on the 8B runs), an 8B data-parallel run on NVLink, and a same-GPU PCIe/NVLink pair (the PCIe results are A40, the NVLink ones A100). The PCIe two-GPU case, a capped-pool TP=2 run, an 8B data-parallel baseline and an uncapped single-GPU run were done in round 2 (above).
 - **Found and fixed while running**: vLLM's "Peak concurrent requests" buckets requests by whole second and read 68 against a client cap of 64, so `ingest_gpu.py` rejected a valid run. The guard now computes exact overlap from `start_times` and `latencies` (2 new tests).
 
 ## Reproduce
@@ -106,6 +179,13 @@ python summarize_followup.py --matrix-raw results/raw/a40-capped --followup-raw 
 
 # 2-GPU pod, no --cap-kv-pool (tensor-parallel arms):
 python run_followup_gpu.py --out results/raw/followup-tp --arms tp1_c16 tp2_c16 tp1_c64 tp2_c64 tp2nc_c64 --hardware a100-80gb --model NousResearch/Meta-Llama-3.1-8B-Instruct --model-preset llama3-8b
+
+# 2x A40 PCIe pod, round 2 (see results/gpu/a40-round2/summary.md)
+python run_followup_gpu.py --out results/raw/followup-cap --arms tp1_c64 tp2_c64 --hardware a100-40gb --cap-kv-pool --port 18000 --model NousResearch/Meta-Llama-3.1-8B-Instruct --model-preset llama3-8b
+python run_dp_gpu.py --out results/raw/dp-cap --totals 64 --hardware a100-40gb --cap-kv-pool --model NousResearch/Meta-Llama-3.1-8B-Instruct --model-preset llama3-8b
+python run_matrix_gpu.py --out results/raw/a40-uncapped --reps 3 --key-reps 3 --no-control --hardware a40-48gb --only B-c64-baseline B-c64-tuned --port 18000 --model NousResearch/Meta-Llama-3.1-8B-Instruct --model-preset llama3-8b
+python run_followup_gpu.py --out results/raw/followup-tp-a40 --arms tp1_c16 tp1_c64 tp2_c16 tp2_c64 tp2nc_c64 --hardware a40-48gb --port 18000 --model NousResearch/Meta-Llama-3.1-8B-Instruct --model-preset llama3-8b
+python run_dp_gpu.py --out results/raw/dp-a40 --totals 16 64 --hardware a40-48gb --model NousResearch/Meta-Llama-3.1-8B-Instruct --model-preset llama3-8b
 ```
 
 Raw runs (`results/raw/`) are git-ignored; ingested summaries are in `results/gpu/`.

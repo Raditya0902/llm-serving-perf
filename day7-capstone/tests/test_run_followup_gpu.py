@@ -32,3 +32,12 @@ def test_tp_arms_differ_from_tp1_only_in_the_serve_flags():
     c = {n: [r for r in _runs([n])][0].case.config for n in ("tp1_c64", "tp2_c64")}
     assert (c["tp1_c64"].gpu_memory_utilization, c["tp1_c64"].max_num_batched_tokens) == \
            (c["tp2_c64"].gpu_memory_utilization, c["tp2_c64"].max_num_batched_tokens)
+
+
+def test_capped_tp_arms_both_get_a_pool_cap_and_tp2_gets_more_per_gpu():
+    runs = rf.build_runs("m", "llama3-8b", "a100-40gb", True, ["tp1_c64", "tp2_c64"])
+    caps = {r.case.case_id: r.case.kv_cache_cap_bytes for r in runs}
+    assert caps["B-c64-tp1"] and caps["B-c64-tp2"]
+    assert caps["B-c64-tp2"] > caps["B-c64-tp1"]
+    cmd = next(r.case.serve_command(8000) for r in runs if r.case.case_id == "B-c64-tp2")
+    assert "--kv-cache-memory-bytes" in cmd and "--tensor-parallel-size" in cmd

@@ -1,0 +1,36 @@
+[20:51:56] model=Qwen/Qwen2.5-1.5B-Instruct out=results/raw/tp_compare_pcie concs=[1 8 32 128] reps=3 gpus=2
+[20:51:59] topology saved (19 lines); NVLink entries: 
+[20:54:50] RUN tp1_c1_r0
+[20:59:17] RUN tp2_c1_r0
+[21:02:25] RUN tp1_c8_r0
+[21:03:49] RUN tp2_c8_r0
+[21:05:22] RUN tp1_c32_r0
+[21:06:44] RUN tp2_c32_r0
+[21:08:16] RUN tp1_c128_r0
+[21:10:02] RUN tp2_c128_r0
+[21:12:05] RUN tp1_c1_r1
+[21:16:09] RUN tp2_c1_r1
+[21:19:30] RUN tp1_c8_r1
+[21:21:02] RUN tp2_c8_r1
+[21:22:41] RUN tp1_c32_r1
+[21:23:56] RUN tp2_c32_r1
+[21:25:21] RUN tp1_c128_r1
+[21:26:53] RUN tp2_c128_r1
+[21:28:43] RUN tp1_c1_r2
+[21:32:43] RUN tp2_c1_r2
+[21:35:51] RUN tp1_c8_r2
+[21:37:12] RUN tp2_c8_r2
+[21:38:44] RUN tp1_c32_r2
+[21:39:59] RUN tp2_c32_r2
+[21:41:23] RUN tp1_c128_r2
+[21:43:01] RUN tp2_c128_r2
+[21:44:55] RUN tp2nc_c8_r0
+[21:46:32] RUN tp2nc_c8_r1
+[21:48:08] RUN tp2nc_c8_r2
+[21:49:42] RUN dp2_c32_r0
+[21:51:36] RUN dp2_c32_r1
+[21:53:31] RUN dp2_c32_r2
+[21:55:23] RUN dp2_c128_r0
+[21:57:25] RUN dp2_c128_r1
+[21:59:35] RUN dp2_c128_r2
+[22:01:46] DONE. failures: 0 

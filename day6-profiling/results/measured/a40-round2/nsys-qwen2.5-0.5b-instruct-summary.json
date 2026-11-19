@@ -1,0 +1,61 @@
+{
+  "allreduce_share_of_busy": 0.0,
+  "graph_launches": 0,
+  "kernels_from_graph_nodes": 0,
+  "graph_contents_visible": true,
+  "per_device": {
+    "0": {
+      "kernel_instances": 33760,
+      "busy_ns": 136032691,
+      "window_ns": 1031383889,
+      "busy_fraction_of_window": 0.13189336429512521,
+      "allreduce_ns": 0,
+      "nccl_other_ns": 0,
+      "allreduce_instances": 0,
+      "sampler_launches": 0,
+      "allreduce_share_of_busy": 0.0
+    }
+  },
+  "top_kernels": [
+    {
+      "name": "void cutlass::Kernel2<cutlass_80_wmma_tensorop_f16_s161616gemm_f16_32x32_128x2_tn_align8>(T1::Params)",
+      "total_ns": 28019711,
+      "instances": 1536
+    },
+    {
+      "name": "std::enable_if<!T7, void>::type internal::gemvx::kernel<int, int, __half, __half, __half, float, (bool)0, (bool)1, (bool)1, (bool)0, (int)7, (bool)0, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<__half>, float>>(T13)",
+      "total_ns": 23069722,
+      "instances": 2304
+    },
+    {
+      "name": "void gemv2T_kernel_val<int, int, __half, __half, __half, float, (int)128, (int)16, (int)4, (int)4, (bool)0, (bool)0, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<__half>, float>>(T13, T6, T6)",
+      "total_ns": 15625930,
+      "instances": 32
+    },
+    {
+      "name": "void pytorch_flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<(int)64, (int)64, (int)256, (int)4, (bool)0, (bool)0, cutlass::half_t, Flash_kernel_traits<(int)64, (int)64, (int)256, (int)4, cutlass::half_t>>, (bool)0, (bool)0, (bool)0, (bool)0, (bool)1, (bool)0, (bool)1, (bool)0>(pytorch_flash::Flash_fwd_params)",
+      "total_ns": 6731791,
+      "instances": 768
+    },
+    {
+      "name": "void at::native::elementwise_kernel<(int)128, (int)4, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::Half, c10::Half, c10::Half, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+      "total_ns": 6595154,
+      "instances": 3072
+    },
+    {
+      "name": "void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, (int)4, (int)4>>(T3)",
+      "total_ns": 5047817,
+      "instances": 1568
+    },
+    {
+      "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 7)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>, (int)4, TrivialOffsetCalculator<(int)1, unsigned int>, TrivialOffsetCalculator<(int)1, unsigned int>, at::native::memory::LoadWithCast<(int)1>, at::native::memory::StoreWithCast<(int)1>>(int, T1, T2, T4, T5, T6, T7)",
+      "total_ns": 4735754,
+      "instances": 1600
+    },
+    {
+      "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<c10::Half>, std::array<char *, (unsigned long)3>, (bool)0>(int, T2, T3)",
+      "total_ns": 4707723,
+      "instances": 3072
+    }
+  ]
+}

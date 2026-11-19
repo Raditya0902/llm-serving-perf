@@ -28,7 +28,7 @@ from typing import Iterator
 import _day1  # noqa: F401
 import torch
 from device import pick_device, sync
-from generate import generate_cached
+from generate import DEFAULT_MODEL_ID, generate_cached
 from torch.profiler import ProfilerActivity, profile, record_function
 
 from alloc_probe import measure_allocations
@@ -247,7 +247,7 @@ def smoke_model():
     return Qwen2ForCausalLM(config).eval()
 
 
-def build_inputs(device: torch.device, prompt_len: int, attn_impl: str, smoke: bool):
+def build_inputs(device: torch.device, prompt_len: int, attn_impl: str, smoke: bool, model_id: str | None = None):
     if smoke:
         model = smoke_model().to(device)
         generator = torch.Generator().manual_seed(0)
@@ -257,7 +257,7 @@ def build_inputs(device: torch.device, prompt_len: int, attn_impl: str, smoke: b
     from model_io import eos_token_ids
     from prompts import make_prompt_ids
 
-    tokenizer, model = load_model(device, attn_impl)
+    tokenizer, model = load_model(device, attn_impl, model_id or DEFAULT_MODEL_ID)
     return model, make_prompt_ids(tokenizer, prompt_len).to(device), eos_token_ids(tokenizer)
 
 
@@ -269,9 +269,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--new-tokens", type=int, default=33, help="decode window = new_tokens - 1 steps")
     parser.add_argument("--warmup", type=int, default=3)
     parser.add_argument("--attn-impl", choices=["sdpa", "eager"], default="sdpa")
+    parser.add_argument("--model", default=DEFAULT_MODEL_ID, help="Hub id (ignored with --smoke); default is Day 1's 0.5B")
     parser.add_argument("--tag", default="profile")
     parser.add_argument("--out", type=Path, default=RESULTS_DIR)
     parser.add_argument("--smoke", action="store_true", help="tiny random model; not for reporting")
+    parser.add_argument("--probe-only", action="store_true",
+                        help="only run the launch probe, with no profiler in the process (profiled probes are inflated)")
+    parser.add_argument("--probe-passes", type=int, default=5, help="passes of the launch probe with --probe-only")
     parser.add_argument("--nsys", action="store_true",
                         help="CUDA only: open/close the cudaProfilerApi window with no torch.profiler/probes")
     return parser.parse_args(argv)
@@ -284,6 +288,30 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("--prompt-len must be >= 1")
     if args.warmup < 0:
         raise SystemExit("--warmup must be >= 0")
+    if args.probe_only and args.nsys:
+        raise SystemExit("--probe-only and --nsys are different modes")
+    if args.probe_passes < 1:
+        raise SystemExit("--probe-passes must be >= 1")
+
+
+def run_probe_only(model, input_ids, args: argparse.Namespace, device: torch.device, out_dir: Path) -> int:
+    """Launch probe passes with no torch.profiler in the process: the profiled probe inside a full run is inflated."""
+    n_steps = args.new_tokens - 1
+    for _ in range(args.warmup):  # let kernels, allocator and clocks settle before the timed passes
+        measure_launch(model, input_ids, n_steps)
+    reports = [measure_launch(model, input_ids, n_steps) for _ in range(args.probe_passes)]
+    fractions = [r.enqueue_fraction for r in reports]
+    summary = {
+        "model": "smoke" if args.smoke else args.model, "device": str(device), "prompt_len": args.prompt_len,
+        "decode_steps": n_steps, "passes": len(reports), "dtype": str(next(model.parameters()).dtype),
+        "enqueue_ms": [r.enqueue_ms_median for r in reports], "step_ms": [r.step_ms_median for r in reports],
+        "enqueue_fraction": fractions, "enqueue_fraction_range": [min(fractions), max(fractions)],
+        "verdicts": [r.verdict for r in reports],
+        "params": sum(p.numel() for p in model.parameters()),
+    }
+    (out_dir / "launch_probe_unprofiled.json").write_text(json.dumps(summary, indent=2))
+    print(json.dumps({k: summary[k] for k in ("model", "enqueue_ms", "step_ms", "enqueue_fraction", "verdicts")}, indent=2))
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -292,9 +320,11 @@ def main(argv: list[str] | None = None) -> int:
     device = pick_device(args.device)
     if args.nsys and device.type != "cuda":
         raise SystemExit("--nsys needs --device cuda")
-    model, input_ids, eos_ids = build_inputs(device, args.prompt_len, args.attn_impl, args.smoke)
+    model, input_ids, eos_ids = build_inputs(device, args.prompt_len, args.attn_impl, args.smoke, args.model)
     out_dir = args.out / args.tag
     out_dir.mkdir(parents=True, exist_ok=True)
+    if args.probe_only:
+        return run_probe_only(model, input_ids, args, device, out_dir)
 
     phases = ["prefill", "decode"] if args.phase == "both" else [args.phase]
     summary: dict = {"phases": {}}
