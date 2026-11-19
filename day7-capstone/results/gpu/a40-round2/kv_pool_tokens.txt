@@ -1,0 +1,6 @@
+followup-cap/B-c64-tp1__r0: 139,584 tokens
+followup-cap/B-c64-tp2__r0: 401,728 tokens
+a40-uncapped/B-c64-baseline__r0: 171,008 tokens
+a40-uncapped/B-c64-tuned__r0: 197,632 tokens
+followup-tp-a40/B-c64-tp1__r0: 171,008 tokens
+followup-tp-a40/B-c64-tp2__r0: 466,944 tokens

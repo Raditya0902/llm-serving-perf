@@ -105,23 +105,35 @@ def _kv_shard_factor(num_kv_heads: int, tp: int) -> tuple[int, bool, bool]:
     return 1, False, False
 
 
-def kv_capacity(model_preset: str, hardware: str, util: float, *, tp: int) -> dict:
-    """Group-wide KV capacity (tokens) with weights sharded over `tp` and KV split per `_kv_shard_factor`.
+def kv_pool_per_gpu(model_preset: str, hardware: str, util: float, *, tp: int) -> tuple[int, int]:
+    """(blocks, block_bytes) of the KV pool each GPU holds when weights and KV heads are sharded over `tp`.
 
-    ``gain_vs_tp1`` is None when one GPU cannot hold the weights (the ratio is undefined, and
-    infinity would not survive JSON)."""
+    ``block_bytes`` is one block's size on one GPU (the KV shard), so ``blocks * block_bytes`` is the
+    per-GPU value for vLLM's ``--kv-cache-memory-bytes`` (which is per GPU) and ``blocks * BLOCK_SIZE``
+    is the group's capacity in tokens."""
     _check_tp(tp)
     if not 0.0 < util <= 1.0:
         raise ValueError("util must be in (0, 1]")
     model, hw = kv_sizing.model_spec(model_preset), kv_sizing.HARDWARE[hardware]
-    shard, kv_sharded, kv_replicated = _kv_shard_factor(model.num_kv_heads, tp)
+    shard, _, _ = _kv_shard_factor(model.num_kv_heads, tp)
     per_gpu_bytes = (
         hw.gpu_bytes * util
         - weight_bytes(kv_sizing.deployment_for(model)) / tp
         - kv_sizing.ACTIVATION_RESERVE_GIB * kv_sizing.GIB
     )
-    block_bytes = kv_sizing.BLOCK_SIZE * kv_sizing.kv_bytes_per_token_for(model) / shard
-    tokens = max(int(per_gpu_bytes // block_bytes), 0) * kv_sizing.BLOCK_SIZE
+    block_bytes = kv_sizing.BLOCK_SIZE * kv_sizing.kv_bytes_per_token_for(model) // shard
+    return max(int(per_gpu_bytes // block_bytes), 0), block_bytes
+
+
+def kv_capacity(model_preset: str, hardware: str, util: float, *, tp: int) -> dict:
+    """Group-wide KV capacity (tokens) with weights sharded over `tp` and KV split per `_kv_shard_factor`.
+
+    ``gain_vs_tp1`` is None when one GPU cannot hold the weights (the ratio is undefined, and
+    infinity would not survive JSON)."""
+    blocks, _ = kv_pool_per_gpu(model_preset, hardware, util, tp=tp)
+    model, hw = kv_sizing.model_spec(model_preset), kv_sizing.HARDWARE[hardware]
+    _, kv_sharded, kv_replicated = _kv_shard_factor(model.num_kv_heads, tp)
+    tokens = blocks * kv_sizing.BLOCK_SIZE
     base = kv_sizing.kv_pool_blocks(model, hw, util) * kv_sizing.BLOCK_SIZE
     return {
         "tp": tp, "kv_sharded": kv_sharded, "kv_replicated": kv_replicated,

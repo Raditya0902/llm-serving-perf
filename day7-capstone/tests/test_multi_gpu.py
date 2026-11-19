@@ -102,3 +102,19 @@ def test_tp_above_kv_head_count_replicates_heads_instead_of_losing_capacity():
 def test_indivisible_tp_is_unsharded():
     out = mg.kv_capacity("llama3-8b", "a100-40gb", 0.85, tp=3)
     assert not out["kv_sharded"] and not out["kv_replicated"]
+
+
+def test_per_gpu_pool_at_tp1_matches_the_single_gpu_pool():
+    model, hw = kv_sizing.model_spec("llama3-8b"), kv_sizing.HARDWARE["a100-40gb"]
+    blocks, block_bytes = mg.kv_pool_per_gpu("llama3-8b", "a100-40gb", 0.85, tp=1)
+    assert blocks == kv_sizing.kv_pool_blocks(model, hw, 0.85)
+    assert block_bytes == kv_sizing.BLOCK_SIZE * kv_sizing.kv_bytes_per_token_for(model)
+
+
+def test_per_gpu_pool_at_tp2_matches_the_group_capacity_and_is_larger_per_gpu():
+    blocks, block_bytes = mg.kv_pool_per_gpu("llama3-8b", "a100-40gb", 0.85, tp=2)
+    group = mg.kv_capacity("llama3-8b", "a100-40gb", 0.85, tp=2)["pool_tokens_total"]
+    assert blocks * kv_sizing.BLOCK_SIZE == group
+    one, _ = mg.kv_pool_per_gpu("llama3-8b", "a100-40gb", 0.85, tp=1)
+    assert blocks > one  # weights are sharded, so each GPU keeps more room (in sharded-token blocks)
+    assert block_bytes * 2 == kv_sizing.BLOCK_SIZE * kv_sizing.kv_bytes_per_token_for(kv_sizing.model_spec("llama3-8b"))

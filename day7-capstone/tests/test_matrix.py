@@ -204,3 +204,31 @@ def test_extra_serve_args_are_appended_and_default_to_none():
     assert "--tensor-parallel-size" not in base.serve_command(8000)
     cmd = case.serve_command(8000)
     assert cmd[cmd.index("--tensor-parallel-size") + 1] == "2"
+
+
+def test_tensor_parallel_property_reads_the_serve_flag_and_defaults_to_one():
+    assert mx.ServingConfig("x", 0.85, 8192).tensor_parallel == 1
+    assert mx.ServingConfig("x", 0.85, 8192, extra_serve_args=("--tensor-parallel-size", "2")).tensor_parallel == 2
+    nc = mx.ServingConfig("x", 0.85, 8192, extra_serve_args=("--tensor-parallel-size", "2", "--disable-custom-all-reduce"))
+    assert nc.tensor_parallel == 2
+
+
+def test_tp2_cap_is_the_per_gpu_modeled_pool_not_the_single_gpu_pool():
+    import multi_gpu
+    tp2 = mx.ServingConfig("tp2", 0.85, 8192, extra_serve_args=("--tensor-parallel-size", "2"))
+    case = mx.MatrixCase(mx.WORKLOADS["B"], tp2, 64, hardware="a100-40gb", cap_kv_pool=True)
+    blocks, block_bytes = multi_gpu.kv_pool_per_gpu("llama3-8b", "a100-40gb", 0.85, tp=2)
+    assert case.kv_cache_cap_bytes == blocks * block_bytes
+    cmd = case.serve_command(port=8000)
+    assert cmd[cmd.index(KV_CAP_FLAG) + 1] == str(blocks * block_bytes)
+    tp1 = mx.MatrixCase(mx.WORKLOADS["B"], mx.ServingConfig("tp1", 0.85, 8192), 64,
+                        hardware="a100-40gb", cap_kv_pool=True)
+    assert case.kv_cache_cap_bytes > tp1.kv_cache_cap_bytes  # more room per GPU once weights are sharded
+
+
+def test_tp1_cap_value_is_unchanged_by_tp_support():
+    case = _capped_case("B-c64-baseline")
+    assert case.config.tensor_parallel == 1
+    model = mx.kv_sizing.model_spec(case.model_preset)
+    blocks = mx.kv_sizing.kv_pool_blocks(model, mx.kv_sizing.HARDWARE[case.hardware], 0.85)
+    assert case.kv_cache_cap_bytes == blocks * mx.kv_sizing.BLOCK_SIZE * mx.kv_sizing.kv_bytes_per_token_for(model)

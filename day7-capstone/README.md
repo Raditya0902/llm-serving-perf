@@ -3,7 +3,9 @@
 > **Update (A40 run).** The matrix has now been run on a real GPU (one NVIDIA A40, vLLM 0.34.0, Llama-3.1-8B, KV pool capped to the
 > modeled A100-40GB size): 49 runs, 0 failures. **Results and verdicts are in [GPU_RESULTS.md](GPU_RESULTS.md)**: H1, H3, H5, H6 held,
 > H2 half refuted (the simulator had the wrong sign for the token-budget knob), H4 borderline. The decision is unchanged (keep baseline).
-> Not done: the two-GPU predictions. The paragraph below is the **pre-run** status and is kept for the record.
+> **Two-GPU update.** The tensor-parallel predictions were also run: on 2x A100 NVLink (TP=2 +62-77% tok/s, step 1.61-1.77x) and on 2x A40 over PCIe (+35-52%, step 1.29-1.53x), with the KV pool capped to the modeled size
+> (TP=2 removes the preemptions: 62 -> 0, pool 2.88x), an 8B data-parallel baseline (replicas +31% over TP=2 at 64 concurrent, TP=2 +16% at 16) and the uncapped A40 (the simulator's no-pressure prediction fails because the real pool is ~12% smaller than modeled);
+> see GPU_RESULTS.md. Still not done: 8B step-level profiling, an NVLink data-parallel run, a same-GPU PCIe/NVLink pair. The paragraph below is the **pre-run** status and is kept for the record.
 >
 > **What was and wasn't done before the GPU run.** The 12-case benchmark matrix, the optimization decision and the report are **done on the Day 3
 > simulator and are SIMULATED**: no GPU produced any number in `results/sim/`. The vLLM runner that would produce real numbers is

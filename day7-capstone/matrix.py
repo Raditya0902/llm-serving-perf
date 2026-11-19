@@ -25,6 +25,7 @@ import _prior  # noqa: F401  (puts Days 2-5 on sys.path)
 from sweep_config import BenchParams, ServeParams, SweepRun
 
 import kv_sizing
+import multi_gpu
 
 MAX_MODEL_LEN = 4096
 CONCURRENCY_LEVELS: tuple[int, ...] = (4, 16, 64)
@@ -36,6 +37,7 @@ CONTROL_SUFFIX = "-aa"
 DEFAULT_HUB_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
 DEFAULT_PRESET = "llama3-8b"
 DEFAULT_HARDWARE = "a100-40gb"
+TP_FLAG = "--tensor-parallel-size"
 PERCENTILE_METRICS = "ttft,tpot,itl,e2el"
 METRIC_PERCENTILES = "50,95,99"
 CONTROL_CASE = ("B", 16, "baseline")  # the A/A control repeats this case
@@ -78,6 +80,12 @@ class ServingConfig:
     max_num_seqs: int = 256
     extra_serve_args: tuple[str, ...] = ()  # appended verbatim to `vllm serve` (e.g. tensor parallelism)
 
+    @property
+    def tensor_parallel(self) -> int:
+        """Tensor-parallel degree read from `extra_serve_args` (a property, so config fingerprints are unchanged)."""
+        args = self.extra_serve_args
+        return int(args[args.index(TP_FLAG) + 1]) if TP_FLAG in args else 1
+
 
 WORKLOADS: dict[str, WorkloadSpec] = {
     "A": WorkloadSpec("A", "interactive chat", 256, 128, 0.25, "short prompts, short outputs, TTFT-sensitive"),
@@ -101,6 +109,7 @@ class MatrixCase:
     # memory-pressure regime can be reproduced (vLLM then ignores gpu_memory_utilization for sizing).
     cap_kv_pool: bool = False
     is_control: bool = False
+    seed_offset: int = 0  # lets two replicas of one experiment draw different prompts (data-parallel arm)
 
     def __post_init__(self) -> None:
         ServeParams(model=self.model)  # reuses Day 4's model-id validation
@@ -115,6 +124,10 @@ class MatrixCase:
             )
 
     def _modeled_pool_blocks(self) -> int:
+        if self.config.tensor_parallel > 1:  # per-GPU blocks, in KV-shard units
+            return multi_gpu.kv_pool_per_gpu(
+                self.model_preset, self.hardware, self.config.gpu_memory_utilization,
+                tp=self.config.tensor_parallel)[0]
         return kv_sizing.kv_pool_blocks(
             kv_sizing.model_spec(self.model_preset),
             kv_sizing.HARDWARE[self.hardware],
@@ -123,9 +136,13 @@ class MatrixCase:
 
     @property
     def kv_cache_cap_bytes(self) -> int | None:
-        """Bytes for `--kv-cache-memory-bytes`, or None when the pool is left to vLLM."""
+        """Bytes for `--kv-cache-memory-bytes` (per GPU), or None when the pool is left to vLLM."""
         if not self.cap_kv_pool:
             return None
+        if self.config.tensor_parallel > 1:
+            return self._modeled_pool_blocks() * multi_gpu.kv_pool_per_gpu(
+                self.model_preset, self.hardware, self.config.gpu_memory_utilization,
+                tp=self.config.tensor_parallel)[1]
         bytes_per_block = kv_sizing.BLOCK_SIZE * kv_sizing.kv_bytes_per_token_for(
             kv_sizing.model_spec(self.model_preset)
         )
@@ -147,11 +164,13 @@ class MatrixCase:
         payload.pop("is_control")
         if not self.cap_kv_pool:
             payload.pop("cap_kv_pool")  # keeps fingerprints of uncapped runs unchanged
+        if not self.seed_offset:
+            payload.pop("seed_offset")  # likewise for every run made before the field existed
         blob = json.dumps(payload, sort_keys=True).encode("utf-8")
         return hashlib.sha256(blob).hexdigest()[:CONFIG_ID_LENGTH]
 
     def seed_for(self, rep: int) -> int:
-        return BASE_SEED + rep + (CONTROL_SEED_OFFSET if self.is_control else 0)
+        return BASE_SEED + rep + self.seed_offset + (CONTROL_SEED_OFFSET if self.is_control else 0)
 
     def serve_command(self, port: int) -> list[str]:
         """`vllm serve` argv, built by Day 4's `SweepRun` so both days share one definition."""
