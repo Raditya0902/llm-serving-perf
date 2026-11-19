@@ -335,7 +335,7 @@ All three predictions held. Cross-checks: the microbenchmark's 0.0228 ms per dec
 |---|---|---|---|---|---|---|
 | mixed batch ms | 0.888 | 6.091 | 6.083 | 6.087 | 6.102 | 7.336 |
 
-With P = 1 the batch is still "all decodes" and costs the same as a pure batch (0.887 ms); the moment one sequence has two query tokens the cost jumps 6.9x and then stays flat from P = 2 to 1,024. Across 32 / 64 / 128 / 256 / 512 decodes the ratio is 5.5 / 6.2 / 6.7 / 6.6 / 6.9. At 512 cached tokens the same step appears (6.5-6.8x for P = 2-1,024; 0.0039 vs 0.0006 ms per decode and layer = **0.094 vs 0.014 ms per decode over 24 layers, which is the "0.1 ms per decode" rule of thumb of 9.3**). With P = 7,600 at 512 context the ratio is 18, an extra effect that does not occur in the server (its longest query is bounded by the 512-token prompt) and which I did not investigate.
+With P = 1 the batch is still "all decodes" and costs the same as a pure batch (0.887 ms); the moment one sequence has two query tokens the cost jumps 6.9x and then stays flat from P = 2 to 1,024. Across 32 / 64 / 128 / 256 / 512 decodes the ratio is 5.5 / 6.2 / 6.7 / 6.6 / 6.9. At 512 cached tokens the same step appears (6.5-6.8x for P = 2-1,024; 0.0039 vs 0.0006 ms per decode and layer = **0.094 vs 0.014 ms per decode over 24 layers, which is the "0.1 ms per decode" rule of thumb of 9.3**). With P = 7,600 at 512 context the ratio is 18, an extra effect that does not occur in the server (its longest query is bounded by the 512-token prompt); round 4 investigated it (9.12, Q4b: block-launch cost that grows with decodes x P and is hidden at long context).
 
 **4. Changing the backend removes most of it, end to end.** Unprofiled A/B, fresh server per run, 1000 prompts, 0 failed requests ([backend-ab/](results/measured/a40-round3/backend-ab/)):
 
@@ -346,7 +346,7 @@ With P = 1 the batch is still "all decodes" and costs the same as a pure batch (
 | 128 x 128 (n = 3) | 17,052 | 17,291 | +1.4% (within noise, 15,994-18,081) | |
 
 **What is measured and what is inferred.** Measured: where the time goes (attention), that a kernel-only benchmark reproduces it, the step at query length 2, the dependence on the GQA group size (1 / 4 / 7 gives 1.0 / 3.65 / 6.6), and the backend switch. Inferred, not observed: that FlashAttention 2 only uses its grouped-query path (one KV read per KV head) when the longest query in the batch is a single token, and otherwise streams the KV once per query head. It fits every number above (mixed GQA-7 time about equals 7x the bytes at the same bandwidth), but the DRAM byte counters that would confirm it could not be read: Nsight Compute 2026.4.0 installed fine and failed with `ERR_NVGPUCTRPERM` (the container may not read GPU performance counters; the setting is on the host), tested on a small matmul ([ncu_gate_a.txt](results/measured/a40-round3/ncu_gate_a.txt)).
-Scope: A40 (sm86, FlashAttention 2), vLLM 0.34.0, Qwen2.5-0.5B end to end and the 8B and MHA geometries in the microbenchmark only. Hopper uses FlashAttention 3, which I did not test. I did not compare output quality between the two backends. Profiled runs (the first table) are not comparable with unprofiled throughput; the A/B in 4 is unprofiled.
+Scope: A40 (sm86, FlashAttention 2), vLLM 0.34.0, Qwen2.5-0.5B end to end and the 8B and MHA geometries in the microbenchmark only. Hopper (FlashAttention 3: no penalty, 9.12), other models (1.5B / 3B / 8B, 9.12) and the output quality of the two backends (equivalent, 9.12) were tested in round 4; the 18 at 512 context is explained in 9.12 (Q4b). Profiled runs (the first table) are not comparable with unprofiled throughput; the A/B in 4 is unprofiled.
 
 ### 9.10 Isolating the `max_num_seqs=1024` loss
 
@@ -377,6 +377,7 @@ A rough estimate (inferred, with guessed average decode counts of 500 and 128): 
 
 **What the pre-registered rule says, and why I do not follow it.** Applied literally, `gpu/seqs_isolation.verdict` returns **H2**, because its idle-time criterion fires: GPU busy fraction (step GPU time / wall span, `step_costs.busy_fraction`) is 0.81-0.83 in two 256-seq windows (median inter-step gap about 4.4 ms) against 0.60-0.77 in the two steady 1024-seq windows (median gaps 20-22 ms), a difference of 14 points against the rule's 10.
 I do not accept that as the cause: (a) those windows are profiled, and kernel coverage in the two steady ones is only 72-89% (against 97-100% for the 256-seq and 8B windows), i.e. the profiler's own overhead and unattributed time inflate exactly the arm with the most kernels; (b) if per-step overhead per running sequence were the cause, the loss would be largest in decode-dominated runs, but there it is absent (+3.8% at 128 x 512, -2.0% at 512 x 512); (c) swapping the attention backend removes the whole loss. The rule's idle-time criterion should have been measured without a profiler; that was a flaw in my pre-registration, so both the literal output and my reading are recorded here. Per-token pure-decode cost at 1024 is about equal to 256's in the unprofiled ITLs (p50 ITL / running sequences: 0.038-0.045 vs 0.041-0.047 ms).
+**Correction from round 4 (9.12):** the backend swap removes the loss at 512x128 on the A40 for 0.5B, 1.5B and 3B (Triton +0.4%, +2.9%, +2.8%), but not at 128x128 with 6 repeats (Triton -5.7%, t = -2.7) nor on an H100 at 512x128 (Triton -5.3%); a part of the loss is therefore not the attention penalty.
 Limits: 0.5B, one A40, one pod; the 1,024-seq windows are 100 steps each; n = 3 per cell and some cells have a 10% spread. The Day 4 1.5B run (-4.9%) was not re-examined.
 
 ### 9.11 Llama-3.1-8B under vLLM: step costs and the 0.5B rule
@@ -389,14 +390,86 @@ Limits: 0.5B, one A40, one pod; the 1,024-seq windows are 100 steps each; n = 3 
 | 2048 in, 64 seqs | 0.99 | 62.2 ms (64 decodes: GEMM 29, attention 32) | 65 x 407-410 ms (1,985; 61) | 126-127 / 259-261 ms | not stable (windows differ: context grows) |
 
 Pre-registered predictions: **prefill coefficient 100-180 ms per 1k tokens: held** (122-138 vs the 9 ms of the 0.5B). **Pure decode about 23 ms plus KV reads: held in structure, 48 ms measured**: the GEMMs take 29 ms (floor 21.9-23 ms for 16 GB at 0.696 TB/s) and attention 17 ms (128 sequences x about 576 tokens x 128 KiB = 9.7 GB, 14 ms at peak bandwidth). **GPU busy fraction close to 1: held** (0.98-0.99, against 0.13 for the launch-bound 0.5B Day 1 loop in 9.5).
-**Mixed-decode cost about 4x its pure value: not testable from the traces** (decodes constant, 118-120 and 61, so not identified); the microbenchmark gives 3.65x at 3584 and 6.3x at 512 cached tokens for the 8B geometry. In an 8B mixed step attention is only 19% of the time at 512 context (67 of 343 ms) against 70% for the 0.5B at 3584, which fits Day 4's observation that the `max_num_seqs=1024` loss shrinks with model size (-4.9% at 1.5B); I did not test the 8B at 1024 seqs.
+**Mixed-decode cost about 4x its pure value: not testable from the traces** (decodes constant, 118-120 and 61, so not identified); the microbenchmark gives 3.65x at 3584 and 6.3x at 512 cached tokens for the 8B geometry. In an 8B mixed step attention is only 19% of the time at 512 context (67 of 343 ms) against 70% for the 0.5B at 3584, which fits Day 4's observation that the `max_num_seqs=1024` loss shrinks with model size (-4.9% at 1.5B); the 8B cannot run 1,024 sequences (KV pool 173-176k tokens against 655k needed); 9.12 compares 64 and 192 seqs instead.
 The 0.5B rule (9 ms per 1k prefill tokens + 0.1 ms per decode) is a 0.5B/A40 fit and does not transfer to 8B (about 15x the prefill coefficient).
 
-### 9.12 What was not done
+### 9.12 Round 4: output check, other models, Hopper, the ratio of 18, loose ends (A40 pod 4, H100 PCIe pod)
 
-- **Nsight Compute counters (DRAM bytes, occupancy, waves)**: blocked, `ERR_NVGPUCTRPERM`, on the third pod (a RunPod container cannot lift the host's counter restriction). So the byte-level mechanism of 9.9 is inferred from timings and the GQA-group dependence, not observed. It needs a host where `NVreg_RestrictProfilingToAdminUsers=0` or a bare-metal machine.
-- **Other hardware and models for the 9.9 / 9.10 finding**: Hopper (FlashAttention 3), other GQA ratios end to end, the 8B at 1024 seqs, and output quality or correctness of `TRITON_ATTN` against FlashAttention 2 were not tested.
-- E1-E3 at models above 0.5B under vLLM (9.5 covers the Day 1 loop up to 7B; 9.11 covers vLLM step costs for 8B only); one host CPU per model sweep and n = 1-6 repeats throughout.
+Predictions and decision rules were written first ([PREREGISTRATION_ROUND4.md](PREREGISTRATION_ROUND4.md)); refuted ones come first below. Data: [results/measured/a40-round4/](results/measured/a40-round4/) and [results/measured/h100-round4/](results/measured/h100-round4/). Same stack as before: vLLM 0.34.0, torch 2.14.0+cu132, an A40 (sm86) and an H100 PCIe (sm90). Every bench run below has 0 failed requests; runs with failures are rejected by `gpu/backend_ab_summary.py`.
+
+**Refuted or partly refuted**
+
+| prediction | result |
+|---|---|
+| E2 (TTFT 2048 / 512 in [3.8, 5.0]) refuted at 1.5B, borderline at 3B, confirmed at 8B | **refuted at every size**: 1.99 / 1.76 / 2.02 / 2.22 (0.5B / 1.5B / 3B / 8B). TTFT(128 / 512 / 1024 / 2048) is 26 / 32 / 34 / 64 ms (0.5B), 38 / 48 / 56 / 85 (1.5B), 49 / 55 / 68 / 112 (3B), 55 / 89 / 107 / 197 (8B). A fixed per-request cost of about 25-50 ms (HTTP, tokenization, the weight read of a step) keeps TTFT(512) well above the prefill-only share; 512 to 2048 tokens adds about 70 ms per 1k tokens at 8B, against the 122-138 ms of the mixed steps of 9.11 (inferred difference: a mixed step also carries the decodes) |
+| Q4: excess cost is the same at ctx 512 and 3584, linear in decodes x P (R^2 >= 0.9) | **refuted as written** (R^2 0.27; excess at ctx 3584 is about zero). See Q4 below for what the data do show |
+| 128x128 spread at most 4% with 4,000-prompt runs | **refuted**: 4.6-5.2% at 256 seqs, 10-12% at 1024 seqs (n = 6 per cell) |
+| Triton stays within +-1.5% when going to 1024 seqs | **partly refuted**: +2.9% (1.5B) and +2.8% (3B) at 512x128, i.e. Triton benefits from the larger batch while FA2 loses; and at 128x128 on the A40 Triton lost 5.7% (see below) |
+| 1.5B Triton gain at 512x128 of +8 to +13% | +6.0%, a little below the range |
+| 8B at 1024 seqs | **not testable**: 1,024 sequences of 640 tokens need 655k KV tokens, the pool is 173-176k. I ran 64 and 192 seqs, where FA2 gains +17.8% and Triton +30.0% from the larger batch |
+| FA2 on the H100 at least 10% slower than Triton at 512x128 and at least 40% at 3584x128 | **refuted**: +1.6% (not slower) and -16.6% (4,277 / 3,568 = Triton 20% faster). The 0.5B on this H100 PCIe is probably limited by something other than attention (13.6k tok/s against 10.7k on the A40, for a GPU with about 3x the bandwidth; inferred, I did not measure the busy fraction) |
+
+**Held**
+
+- **Q1 Triton is numerically equivalent to FlashAttention 2 (0.5B, A40).** 200 prompts of 64-3,000 tokens cut from this folder's markdown, greedy, 64 new tokens, 2,048-token budget so decodes and prefill chunks share steps; control = FA2 with an 8,192-token budget (same kernel, different chunking = the noise floor); reference = HF float32 prompt log-probs on 20 prompts of at most 1,024 tokens ([quality/](results/measured/a40-round4/quality/)).
+
+| | exact-match of completions | mean abs delta chosen-token log-prob | mean abs delta prompt log-prob | divergences that are near-ties (gap < 0.5 nats) |
+|---|---|---|---|---|
+| Triton vs FA2 | 58% | 0.0132 | 0.0286 | 84 of 84 |
+| FA2 vs FA2, other chunking (control) | 54% | 0.0131 | 0.0292 | 92 of 92 |
+
+  Mean prompt-log-prob error against the fp32 reference: FA2 0.0269, Triton 0.0273 (1.4% higher). All five pre-registered criteria hold. The point worth knowing: even the same kernel agrees on only 54% of 64-token greedy completions (fp16 drift flips near-ties, first divergence at token 16-19 on average), so exact-match is not a usable quality bar; the log-prob differences are. Scope: Qwen2.5-0.5B only, 200 prompts, completions of 64 tokens; I did not check Triton against FA2 on the larger models or on the H100.
+- **Q2 the Triton gain and the FA2 loss hold at other GQA ratios** (unprofiled, 2 repeats per cell, spread 0.0-0.4%, KV pools 0.83-1.25M tokens for 1.5B / 3B and 173-176k for 8B, demand at most 79% of the pool). tok/s:
+
+| model (GQA group) | seqs | workload | FA2 | Triton | Triton over FA2 | pre-registered |
+|---|---|---|---|---|---|---|
+| 1.5B (6) | 256 | 512x128 | 4,409 | 4,675 | +6.0% | +8 to +13% (slightly low) |
+| 1.5B (6) | 1024 | 512x128 | 4,168 | 4,812 | +15.5% | |
+| 1.5B (6) | 256 | 3584x128 | 562 | 745 | +32.5% | +30 to +55% (held, low end) |
+| 3B (8) | 256 | 512x128 | 2,485 | 2,662 | +7.1% | +4 to +10% (held) |
+| 3B (8) | 1024 | 512x128 | 2,356 | 2,736 | +16.1% | |
+| 3B (8) | 128 | 3584x128 | 367 | 425 | +15.6% | +15 to +40% (held, low end) |
+| 8B (4) | 64 | 512x128 | 816 | 857 | +4.9% | +1 to +5% (held, top) |
+| 8B (4) | 192 | 512x128 | 962 | 1,114 | +15.8% | |
+
+  Going from 256 to 1024 seqs: FA2 loses 5.5% (1.5B) and 5.2% (3B), inside the predicted -4 to -8% and -2 to -6%; Triton gains 2.9% and 2.8%. For the 8B the gain of Triton over FA2 grows with the batch (+4.9% at 64 seqs, +15.8% at 192), the same direction as the 0.5B: the more decodes ride in mixed steps, the more the FA2 penalty costs. p50 ITL at 3584x128 on 1.5B: 513 ms (FA2) against 365 ms (Triton).
+- **Q3 Hopper: FlashAttention 3 does not have the penalty** (H100 PCIe, [h100-round4/](results/measured/h100-round4/)). Microbenchmark, 0.5B geometry, 256 decodes, 3584 cached tokens, one 7,600-token chunk, mixed over pure per decode: **FA2 on the H100 6.78** (A40: 6.58; pre-registered 5-8), **FA3 1.28** (at most 2). For the 8B geometry: FA2 4.16, FA3 1.00. At ctx 512 FA3 is below 1 (0.18-0.71): the mixed batch is cheaper per decode than the pure one, i.e. its kernel overlaps the decodes with the prefill. So the behaviour belongs to the FA2 kernel version, not to the A40.
+
+  End to end on the H100 (0.5B, 2 repeats, tok/s; "vs Triton" = gain over TRITON_ATTN):
+
+| seqs | workload | FA3 (default) | FA2 | Triton | FA3 vs Triton | FA2 vs Triton |
+|---|---|---|---|---|---|---|
+| 256 | 3584x128 | 6,523 | 3,568 | 4,277 | **+52.5%** | -16.6% |
+| 256 | 512x128 | 13,249 | 13,859 | 13,637 | -2.8% (spread 7.3%) | +1.6% |
+| 1024 | 512x128 | 13,029 | 12,973 | 12,916 | +0.9% | +0.4% |
+
+  On Hopper the default (FA3) is the right choice and Triton would cost 34% at 3584x128 (not pre-registered: 4,277 vs 6,523). Within the runs of the table FA3 at 512x128 is within 5% of Triton, as predicted; FA3's 1024-seq change is -1.7% against FA2 -6.4% and Triton -5.3% (the FA2 and FA3 cells have 4-7% spread, so only Triton's drop, with 0.8% and 1.8% spread, is resolved).
+- **Q4b refined model of the ratio of 18 (post hoc, then tested).** The first sweep ([sweep/fa2_0.5b.json](results/measured/a40-round4/sweep/fa2_0.5b.json), FA2, 0.5B geometry) shows what happens to d(P) = mixed(P) - prefill_only(P) as the prefill chunk P grows. At ctx 512 d rises linearly with decodes x P (256 decodes: 0.99 ms for P <= 512, then 1.14 / 1.41 / 2.00 / 2.89 ms at P = 1,024 / 2,048 / 4,096 / 7,600; 512 decodes: 2.31 to 5.78 ms; about 1.0e-6 ms per decode-token). At ctx 3584 d is flat or slightly falling (6.01 to 5.87 ms at 256 decodes). The ratio of 18 of 9.9 is this rise divided by a very small pure-decode time (0.15 ms). Model written down before the follow-up: d(P) = max(d_live, n (a + k P)), the cost of the blocks that FA2 launches for every decode sequence when the longest query is long, which exit at once, and which only show when the live decode work does not keep the SMs busy. Fitted on ctx 512 only (a = 3.4 us per decode, k = 1.03e-6 ms per decode-token), it predicts the unseen contexts 1024 and 2048 at 128 and 384 decodes with **median error 0.7% and maximum 19.5%** (limits 15% and 30%), and the excess falls with context at every decode count (n = 256, P = 7,600: 1.71 / 1.40 / 0.67 ms at ctx 512 / 1024 / 2048). On the wider set that also includes 64, 256 and 512 decodes the median is 1.4% and the maximum 30.8%, 0.8 points over the limit I had set for the registered set. Supported, with that qualification; it is a mechanism consistent with the data, not an observed one (no counters). Practical weight is small: the server's longest query is the 512-token prompt, where the model gives 1-4% of the attention time.
+
+**Q5 loose ends**
+
+- **128x128 with 4,000 prompts per run, 6 repeats (A40, 0.5B, [noise/](results/measured/a40-round4/noise/)).** The first attempt failed 75% of its requests because the client ran out of file descriptors (limit 1,024; fixed with `ulimit -n 65536`, run repeated, nothing from the failed run is used). tok/s: 256 seqs FA2 16,474 [15,940-16,764], Triton 17,010 [16,624-17,396] (+3.3%, Welch t = 3.0); 1024 seqs FA2 16,207 [15,528-17,093], Triton 16,033 [15,235-17,117] (-1.1%, t = -0.4). The 1024 arm against its own 256 arm: FA2 -1.6% (t = -0.95), **Triton -5.7% (t = -2.7)**. So at 128x128 a 1024-seq loss survives the backend switch (and on the H100 at 512x128 too, Triton -5.3%).
+- **E1-E3 under vLLM** ([e123/](results/measured/a40-round4/e123/); concurrency 1-8 for E1, TTFT at 128-2048 input tokens for E2, TPOT at 32-256 output tokens for E3, `vllm bench serve`, one default server per model, A40):
+
+| model | E1 tok/s at 8 vs 1 (>= 5x) | E1 TPOT at 8 vs 1 (<= 1.5x) | E2 TTFT 2048/512 ([3.8, 5.0]) | E3 TPOT 256 vs 32 (within 5%) |
+|---|---|---|---|---|
+| 0.5B | 6.33x | 1.17x | 1.99 (refuted) | +1.9% |
+| 1.5B | 7.42x | 1.04x | 1.76 (refuted) | +0.9% |
+| 3B | 7.32x | 1.06x | 2.02 (refuted) | +0.7% |
+| 8B | 7.22x | 1.08x | 2.22 (refuted) | +0.1% |
+
+  E1 and E3 confirmed at every size (TPOT at 1 sequence: 2.8 / 7.0 / 12.6 / 28.1 ms), E2 refuted at every size as on the Day 1 loop (9.2) and for the same reason: a per-request floor hides prefill growth. Concurrency 1 only, 12-24 requests per point.
+
+**What this changes in 9.9-9.11.** (1) The advice "use `TRITON_ATTN`" is now backed by an output check (0.5B), by 1.5B / 3B / 8B throughput and by two GPUs, but only for FA2: on an H100 the default is FA3 and it is the fastest of the three. (2) The statement of 9.10 that swapping the backend removes the whole 1024-seq loss holds at 512x128 on the A40 (0.5B, 1.5B, 3B) and does not hold at 128x128 (Triton -5.7%, n = 6) or on the H100 (Triton -5.3%); the likely extra part is per-step host cost that grows with running sequences (H2), more visible when the GPU is not the limit. That is an inference from throughput, not a measurement (no busy fraction was taken on these runs). (3) The ratio of 18 is explained to the degree described under Q4b.
+
+### 9.13 What was not done
+
+- **Nsight Compute counters (DRAM bytes, occupancy, waves)**: blocked, `ERR_NVGPUCTRPERM`, on the third pod (a RunPod container cannot lift the host's counter restriction); not retried on the fourth and fifth. The byte-level mechanism of 9.9 and the block-launch mechanism of 9.12 (Q4b) are inferred from timings and fits, not observed. It needs a host where `NVreg_RestrictProfilingToAdminUsers=0` or a bare-metal machine.
+- **A100 items**: 8B data-parallel on NVLink and a same-GPU PCIe/NVLink pair.
+- **Triton output check beyond the 0.5B on an A40**: larger models, the H100, longer completions and non-greedy sampling were not compared.
+- **The 8B at 1,024 sequences**: impossible on this KV pool; would need fp8 KV or a larger GPU. **The 3584-token workload on the 8B** (about 7 minutes a run) and models above 8B.
+- **A busy-fraction (unprofiled) measurement at 1,024 seqs** to separate the per-step host cost from the attention penalty (9.12, what this changes (2)); and E1-E3 at concurrency above 8 or with more than 12-24 requests per point.
+- Hopper: one H100 PCIe, 0.5B only end to end, 2 repeats; no SXM, no larger models, no profiled windows.
 The first trace attempt (delay 20) only captured the benchmark's warm-up request, and my first window (delay 150) held 20 steps; the 9.3 numbers come from the 100-step windows after a 135-iteration delay.
 
 ## 8. Reproduce
@@ -423,4 +496,14 @@ REPS=2 bash gpu/run_backend_ab.sh results/raw/r3-backend-ab                     
 REPS=3 bash gpu/run_seqs_isolation.sh results/raw/r3-seqs && python -m gpu.seqs_isolation results/raw/r3-seqs
 MODEL=NousResearch/Meta-Llama-3.1-8B-Instruct SEQS=128 BT=2048 LENS=512 DELAYS="150 400" bash gpu/run_itl_study.sh results/raw/r3-itl-8b
 bash gpu/run_ncu.sh        # needs readable GPU counters; ERR_NVGPUCTRPERM in a RunPod container
+```
+
+GPU round 4 (A40 pod, then a Hopper pod; same venv; `bash gpu/preflight_round4.sh` first; `ulimit -n` is raised by the scripts):
+
+```bash
+bash gpu/run_round4_a40.sh results/raw/round4-a40     # output check, ratio-of-18 sweep, 128x128 noise, 1.5B/3B/8B matrix, E1-E3, Q4b sweep (about 3.5 h)
+python -m gpu.quality_compare results/raw/round4-a40/quality
+python -m gpu.backend_ab_summary results/raw/round4-a40/models                  # --base TRITON_ATTN on a Hopper pod
+python -m gpu.e123_summary results/raw/round4-a40/e123
+bash gpu/run_round4_h100.sh results/raw/round4-h100   # FA2 / FA3 microbenchmark and FA3 vs FA2 vs Triton end to end (about 45 min)
 ```
