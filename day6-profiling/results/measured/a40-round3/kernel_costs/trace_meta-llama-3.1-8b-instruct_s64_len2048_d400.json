@@ -1,0 +1,146 @@
+{
+  "trace_meta-llama-3.1-8b-instruct_s64_len2048_d400": {
+    "steps": 100,
+    "coverage": {
+      "mean": 0.9969892770770815,
+      "min": 0.9706860832726228
+    },
+    "pure": {
+      "n": 35,
+      "mean_ms_by_family": {
+        "attention": 32.20029991428571,
+        "gemm": 28.72273088571429,
+        "norm_act": 0.9172744285714289,
+        "kv_write": 0.08058414285714284,
+        "sampling": 0.0050597142857142854,
+        "comm": 0.0,
+        "other": 0.016834
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<128, 64, 64, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<128, 64, 64, 4, cutlass::bfloat16_t> >, false, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          32.2003
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x64_ldg8_f2f_tn",
+          15.6713
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_stages_64x3_tn",
+          13.0514
+        ],
+        [
+          "void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1}>(at::TensorIteratorBase&, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#12}::operator()() const::{lambda(c10::BFloat16)#1} const&)::{lambda(int)#1})",
+          0.2086
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          0.2046
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 65,
+      "mean_ms_by_family": {
+        "attention": 127.13344835384616,
+        "gemm": 260.8322485846154,
+        "norm_act": 20.822219307692308,
+        "kv_write": 1.0527402923076923,
+        "sampling": 0.005471523076923078,
+        "comm": 0.0,
+        "other": 0.04156498461538461
+      },
+      "top_kernels": [
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8::Params)",
+          134.8897
+        ],
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<128, 64, 128, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<128, 64, 128, 4, cutlass::bfloat16_t> >, true, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          127.1334
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8::Params)",
+          94.9531
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          30.9895
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          9.7492
+        ]
+      ],
+      "fits": {
+        "attention": {
+          "intercept_ms": -13.920048456994387,
+          "ms_per_1000_prefill_tokens": 18.68896523638225,
+          "ms_per_decode": 1.701196435560334
+        },
+        "gemm": {
+          "intercept_ms": 238.5078112804531,
+          "ms_per_1000_prefill_tokens": 13.240525589643955,
+          "ms_per_decode": -0.06476766085288874
+        },
+        "norm_act": {
+          "intercept_ms": -1.3403424668784194,
+          "ms_per_1000_prefill_tokens": 10.82047885495645,
+          "ms_per_decode": 0.011194625268176009
+        },
+        "kv_write": {
+          "intercept_ms": 0.18484361238337577,
+          "ms_per_1000_prefill_tokens": 0.46668524232153685,
+          "ms_per_decode": -0.0009567755564484989
+        },
+        "sampling": {
+          "intercept_ms": 0.012523678136904807,
+          "ms_per_1000_prefill_tokens": -0.0006558440197077984,
+          "ms_per_decode": -9.410132429507385e-05
+        },
+        "comm": {
+          "intercept_ms": 0.0,
+          "ms_per_1000_prefill_tokens": 0.0,
+          "ms_per_decode": 0.0
+        },
+        "other": {
+          "intercept_ms": -0.21118676852438842,
+          "ms_per_1000_prefill_tokens": 0.16603969041545422,
+          "ms_per_decode": -0.0012573617981063252
+        }
+      },
+      "decode_identifiable": false,
+      "decode_slope_share": {}
+    },
+    "warnings": [
+      "per-decode slope not identified: the number of decodes barely varies across mixed steps, so the per-decode fits (and decode_slope_share) only reflect a constant; use a controlled sweep over decodes"
+    ],
+    "dominant_decode_family": null,
+    "unclassified_top": [
+      [
+        "_apply_write_kernel",
+        1.461
+      ],
+      [
+        "_gather_block_tables_kernel",
+        0.595
+      ],
+      [
+        "_prepare_prefill_inputs_kernel",
+        0.516
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.472
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.188
+      ],
+      [
+        "memcpy32_post",
+        0.058
+      ]
+    ]
+  }
+}

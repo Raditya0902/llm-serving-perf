@@ -1,0 +1,154 @@
+{
+  "trace_len512_d135": {
+    "steps": 100,
+    "coverage": {
+      "mean": 0.9873193112056542,
+      "min": 0.6735544926093543
+    },
+    "pure": {
+      "n": 86,
+      "mean_ms_by_family": {
+        "attention": 3.571096151162791,
+        "gemm": 2.3859703837209296,
+        "norm_act": 0.718138511627907,
+        "kv_write": 0.06288127906976744,
+        "sampling": 0.005408732558139535,
+        "comm": 0.0,
+        "other": 0.014466058139534879
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 128, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 128, 4, cutlass::bfloat16_t> >, false, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          3.5711
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          1.0891
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_32x5_tn",
+          0.7025
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_64x64_ldg8_relu_f2f_stages_64x5_tn",
+          0.2651
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          0.2337
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 14,
+      "mean_ms_by_family": {
+        "attention": 21.890776500000005,
+        "gemm": 53.98142842857143,
+        "norm_act": 16.618356357142854,
+        "kv_write": 0.4921811428571428,
+        "sampling": 0.006064142857142858,
+        "comm": 0.0,
+        "other": 0.05215807142857143
+      },
+      "top_kernels": [
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          31.5917
+        ],
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 256, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 256, 4, cutlass::bfloat16_t> >, true, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          21.8908
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8::Params)",
+          17.6734
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          9.918
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_relu_f2f_stages_32x3_tn",
+          4.0416
+        ]
+      ],
+      "fits": {
+        "attention": {
+          "intercept_ms": -1.888319927190087,
+          "ms_per_1000_prefill_tokens": 1.0887224815185004,
+          "ms_per_decode": 0.10863941212728784
+        },
+        "gemm": {
+          "intercept_ms": 4.907786608366678,
+          "ms_per_1000_prefill_tokens": 6.074680104748324,
+          "ms_per_decode": 0.0059266314027570394
+        },
+        "norm_act": {
+          "intercept_ms": -0.23658034775826173,
+          "ms_per_1000_prefill_tokens": 2.0819490491242623,
+          "ms_per_decode": 0.0022906612057657515
+        },
+        "kv_write": {
+          "intercept_ms": 0.04231092836574005,
+          "ms_per_1000_prefill_tokens": 0.055113769913602534,
+          "ms_per_decode": 8.708069607005342e-05
+        },
+        "sampling": {
+          "intercept_ms": 0.004309742357874133,
+          "ms_per_1000_prefill_tokens": 6.263109681251718e-06,
+          "ms_per_decode": 1.2238554107054015e-05
+        },
+        "comm": {
+          "intercept_ms": 0.0,
+          "ms_per_1000_prefill_tokens": 0.0,
+          "ms_per_decode": 0.0
+        },
+        "other": {
+          "intercept_ms": 0.0428776332464851,
+          "ms_per_1000_prefill_tokens": -0.0006506141505506594,
+          "ms_per_decode": 0.00010372880770240464
+        }
+      },
+      "decode_identifiable": true,
+      "decode_slope_share": {
+        "attention": 0.9280680125709595,
+        "gemm": 0.050629112579814894,
+        "norm_act": 0.019568307220013407,
+        "kv_write": 0.0007438995384137469,
+        "sampling": 0.00010454963226023239,
+        "comm": 0.0,
+        "other": 0.0008861184585381759
+      }
+    },
+    "warnings": [
+      "coverage below 80% in 2 of 100 steps; kernel ms / step ms min 67%, so the attribution misses time"
+    ],
+    "dominant_decode_family": "attention",
+    "unclassified_top": [
+      [
+        "_gather_block_tables_kernel",
+        0.63
+      ],
+      [
+        "_apply_write_kernel",
+        0.559
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.372
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.175
+      ],
+      [
+        "memcpy32_post",
+        0.128
+      ],
+      [
+        "_prepare_prefill_inputs_kernel",
+        0.111
+      ]
+    ]
+  }
+}

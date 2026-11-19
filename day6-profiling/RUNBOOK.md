@@ -2,7 +2,7 @@
 
 > **Status (updated): run on RunPod A40 pods.** Sections 1, 3, 4 and 5 produced the measurements in [performance-report.md](performance-report.md) section 9; section 2 (nsys) ran in a second round
 > (nsys 2026.5.2 from the CUDA apt repo; `gpu/run_nsys.sh` now passes `--sample=none --cpuctxsw=none`, needed in a container). New in that round: `profile_run.py --model` and `--probe-only` (unprofiled launch probe),
-> `gpu/step_costs.py` (per-step GPU time vs prefill tokens and decodes), `gpu/run_itl_study.sh`, `gpu/run_e6_cap.sh` (E6 with a pool the workload can exhaust). The text below is the original procedure.
+> `gpu/step_costs.py` (per-step GPU time vs prefill tokens and decodes), `gpu/run_itl_study.sh`, `gpu/run_e6_cap.sh` (E6 with a pool the workload can exhaust). Round 3: `gpu/kernel_costs.py`, `gpu/attn_microbench.py`, `gpu/run_backend_ab.sh`, `gpu/run_seqs_isolation.sh`, `gpu/run_ncu.sh` (counters need host permission; `ERR_NVGPUCTRPERM` in a RunPod container), commands in the report's Reproduce section. The text below is the original procedure.
 > The vLLM flags were read out of the pinned v0.34.0 source in `../day4-vllm-internals/vllm_src/`. If the host's `--help` disagrees with this file, trust the host.
 
 Hypotheses for every experiment are fixed in [experiments.py](experiments.py) *before* any run.

@@ -1,0 +1,30 @@
+{
+  "results/raw/r3-itl-s1024/trace_s1024_len512_d100": {
+    "steps": 98,
+    "pure": {
+      "n": 30,
+      "mean_ms": 3.1541636666666673,
+      "median_ms": 2.242225,
+      "p90_ms": 2.2719659,
+      "mean_decodes": 34.266666666666666,
+      "mean_prefill_tokens": 0.0
+    },
+    "mixed": {
+      "n": 68,
+      "mean_ms": 130.75972920588237,
+      "median_ms": 132.15333149999998,
+      "p90_ms": 171.450381,
+      "mean_decodes": 493.9264705882353,
+      "mean_prefill_tokens": 7495.529411764706,
+      "decode_identifiable": true,
+      "fit": {
+        "intercept_ms": 39.167739722437126,
+        "ms_per_1000_prefill_tokens": 5.0709846909413985,
+        "ms_per_decode": 0.10848228992884786,
+        "mean_rule_of_thumb_ms": 116.85241176470588
+      }
+    },
+    "busy_fraction": 0.8569131201152744,
+    "mixed_share_of_steps": 0.6938775510204082
+  }
+}

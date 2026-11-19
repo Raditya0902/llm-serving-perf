@@ -1,0 +1,146 @@
+{
+  "trace_meta-llama-3.1-8b-instruct_s128_len512_d150": {
+    "steps": 100,
+    "coverage": {
+      "mean": 0.9965062097165814,
+      "min": 0.9570612851538804
+    },
+    "pure": {
+      "n": 66,
+      "mean_ms_by_family": {
+        "attention": 17.299773590909087,
+        "gemm": 29.00345516666667,
+        "norm_act": 1.4913223939393938,
+        "kv_write": 0.09901910606060606,
+        "sampling": 0.005372621212121213,
+        "comm": 0.0,
+        "other": 0.01559960606060606
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<128, 64, 64, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<128, 64, 64, 4, cutlass::bfloat16_t> >, false, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          17.2998
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_32x5_tn",
+          15.2253
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x64_ldg8_f2f_stages_32x6_tn",
+          9.7697
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          4.0084
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          0.5016
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 34,
+      "mean_ms_by_family": {
+        "attention": 65.70309582352941,
+        "gemm": 256.4993863529412,
+        "norm_act": 20.36908494117647,
+        "kv_write": 1.0405116764705884,
+        "sampling": 0.005584058823529411,
+        "comm": 0.0,
+        "other": 0.041609058823529416
+      },
+      "top_kernels": [
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8::Params)",
+          134.7542
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8::Params)",
+          88.6117
+        ],
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<128, 64, 128, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<128, 64, 128, 4, cutlass::bfloat16_t> >, true, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          65.7031
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          30.5516
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          9.6861
+        ]
+      ],
+      "fits": {
+        "attention": {
+          "intercept_ms": -94.99255262710159,
+          "ms_per_1000_prefill_tokens": 7.376340033837206,
+          "ms_per_decode": 1.2469384320643533
+        },
+        "gemm": {
+          "intercept_ms": -124.07645781087453,
+          "ms_per_1000_prefill_tokens": 134.54156249595044,
+          "ms_per_decode": 1.048573465557429
+        },
+        "norm_act": {
+          "intercept_ms": 0.528263482083763,
+          "ms_per_1000_prefill_tokens": 10.029027023409265,
+          "ms_per_decode": 0.005619333609954385
+        },
+        "kv_write": {
+          "intercept_ms": 0.0803114864909998,
+          "ms_per_1000_prefill_tokens": 0.4487390403018276,
+          "ms_per_decode": 0.0008676505135651636
+        },
+        "sampling": {
+          "intercept_ms": -0.00024319728674207592,
+          "ms_per_1000_prefill_tokens": 0.00105354258088748,
+          "ms_per_decode": 3.242961095061371e-05
+        },
+        "comm": {
+          "intercept_ms": 0.0,
+          "ms_per_1000_prefill_tokens": 0.0,
+          "ms_per_decode": 0.0
+        },
+        "other": {
+          "intercept_ms": 0.010786535561312113,
+          "ms_per_1000_prefill_tokens": 0.010832216602998884,
+          "ms_per_decode": 8.596741018813819e-05
+        }
+      },
+      "decode_identifiable": false,
+      "decode_slope_share": {}
+    },
+    "warnings": [
+      "per-decode slope not identified: the number of decodes barely varies across mixed steps, so the per-decode fits (and decode_slope_share) only reflect a constant; use a controlled sweep over decodes"
+    ],
+    "dominant_decode_family": null,
+    "unclassified_top": [
+      [
+        "_apply_write_kernel",
+        0.895
+      ],
+      [
+        "_gather_block_tables_kernel",
+        0.639
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.37
+      ],
+      [
+        "_prepare_prefill_inputs_kernel",
+        0.232
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.183
+      ],
+      [
+        "memcpy128",
+        0.125
+      ]
+    ]
+  }
+}

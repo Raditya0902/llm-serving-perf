@@ -1,0 +1,77 @@
+{
+  "trace_s1024_len512_d200": {
+    "steps": 100,
+    "coverage": {
+      "mean": 0.7239893235113618,
+      "min": 0.5323723030322263
+    },
+    "pure": {
+      "n": 100,
+      "mean_ms_by_family": {
+        "attention": 11.72031463,
+        "gemm": 7.160634859999999,
+        "norm_act": 2.0504852199999997,
+        "kv_write": 0.0838279,
+        "sampling": 0.013096149999999999,
+        "comm": 0.0,
+        "other": 0.028025510000000003
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 128, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 128, 4, cutlass::bfloat16_t> >, false, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          11.7203
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8::Params)",
+          3.8971
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_64x3_tn",
+          1.5371
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          1.0766
+        ],
+        [
+          "ampere_bf16_s1688gemm_bf16_128x128_ldg8_f2f_stages_32x1_tn",
+          0.6775
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 0,
+      "mean_ms_by_family": {},
+      "top_kernels": [],
+      "fits": null,
+      "decode_identifiable": false,
+      "decode_slope_share": {}
+    },
+    "warnings": [
+      "coverage below 80% in 92 of 100 steps; kernel ms / step ms min 53%, so the attribution misses time"
+    ],
+    "dominant_decode_family": null,
+    "unclassified_top": [
+      [
+        "_gather_block_tables_kernel",
+        1.115
+      ],
+      [
+        "_apply_write_kernel",
+        0.821
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.63
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.221
+      ],
+      [
+        "memcpy32_post",
+        0.016
+      ]
+    ]
+  }
+}

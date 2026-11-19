@@ -24,6 +24,17 @@ STEP = re.compile(r"execute_context_(\d+)\((\d+)\)_generation_(\d+)\((\d+)\)")
 GPU_CAT, CPU_CAT = "gpu_user_annotation", "user_annotation"
 MIN_MIXED_FOR_FIT = 4
 RULE_MS_PER_1000_PREFILL, RULE_MS_PER_DECODE = 9.0, 0.1
+# The decode slope of the fit is only meaningful when the number of running decodes actually varies across the mixed steps.
+# With a saturated batch (e.g. 249-255 decodes in every step) `decodes` is a constant and the slope cannot be separated from the
+# intercept: only `intercept + slope * decodes` is determined. Require a spread of at least this fraction of the mean.
+MIN_DECODE_SPREAD = 0.2
+
+
+def decodes_identifiable(decodes: list[int]) -> bool:
+    if len(decodes) < MIN_MIXED_FOR_FIT:
+        return False
+    mean = float(np.mean(decodes))
+    return mean > 0 and (max(decodes) - min(decodes)) / mean >= MIN_DECODE_SPREAD
 
 
 @dataclass(frozen=True)
@@ -56,6 +67,21 @@ def parse_steps(events: list[dict]) -> list[Step]:
     return sorted(steps, key=lambda s: s.ts)
 
 
+def busy_fraction(steps: list[Step]) -> float | None:
+    """Share of the wall span (first step start to last step end) covered by step GPU time, capped at 1.
+
+    About 1.0 means the GPU never waited between steps (device-bound); clearly below 1 means gaps (CPU, scheduler or
+    output processing between steps). None with fewer than two steps, where no gap can exist.
+    """
+    if len(steps) < 2:
+        return None
+    ordered = sorted(steps, key=lambda s: s.ts)
+    span_us = max(s.ts + s.ms * 1000 for s in ordered) - ordered[0].ts
+    if span_us <= 0:
+        return None
+    return float(min(1.0, sum(s.ms for s in ordered) * 1000 / span_us))
+
+
 def _stats(steps: list[Step]) -> dict:
     if not steps:
         return {"n": 0}
@@ -68,7 +94,8 @@ def _stats(steps: list[Step]) -> dict:
 def summarize(steps: list[Step]) -> dict:
     pure = [s for s in steps if s.prefill_tokens == 0]
     mixed = [s for s in steps if s.prefill_tokens > 0]
-    out = {"steps": len(steps), "pure": _stats(pure), "mixed": _stats(mixed)}
+    out = {"steps": len(steps), "pure": _stats(pure), "mixed": _stats(mixed), "busy_fraction": busy_fraction(steps),
+           "mixed_share_of_steps": len(mixed) / len(steps) if steps else None}
     fit = None
     if len(mixed) >= MIN_MIXED_FOR_FIT:
         design = np.c_[np.ones(len(mixed)), [s.prefill_tokens for s in mixed], [s.decodes for s in mixed]]
@@ -77,6 +104,11 @@ def summarize(steps: list[Step]) -> dict:
                "ms_per_decode": float(coef[2])}
         predicted = [rule_of_thumb_ms(prefill_tokens=s.prefill_tokens, decodes=s.decodes) for s in mixed]
         fit["mean_rule_of_thumb_ms"] = float(np.mean(predicted))
+    identifiable = decodes_identifiable([s.decodes for s in mixed])
+    if fit is not None and not identifiable:
+        fit["note"] = ("ms_per_decode is not identified: the number of decodes barely varies across these mixed steps, so only "
+                       "intercept + ms_per_decode x mean decodes is determined")
+    out["mixed"]["decode_identifiable"] = identifiable
     out["mixed"]["fit"] = fit
     return out
 
