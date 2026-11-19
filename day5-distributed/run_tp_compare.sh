@@ -19,6 +19,11 @@ REPS="${REPS:-3}"
 PORT_A=18000
 PORT_B=18001
 ONLY_DP="${ONLY_DP:-}"                       # set to 1 to rerun just the data-parallel baseline
+# Extra serve flags for the main TP=2 arms only, e.g. TP2_EXTRA="--disable-custom-all-reduce" when the custom kernel crashes
+# on a PCIe host (then the "tp2" label means NCCL-only all-reduce; say so in the results).
+read -r -a TP2_EXTRA_ARGS <<< "${TP2_EXTRA:-}"
+MAX_CONSEC_START_FAILS="${MAX_CONSEC_START_FAILS:-3}"   # abort instead of burning pod time on a broken host
+CONSEC_START_FAILS=0
 HEALTH_TIMEOUT_S="${HEALTH_TIMEOUT_S:-900}"
 SERVE_FLAGS=(--max-model-len 4096 --gpu-memory-utilization 0.85)
 mkdir -p "$OUT"
@@ -114,13 +119,24 @@ run_one() {  # run_one LABEL GPUS CONC REP [serve args...]  (single server)
   local tag="${label}_c${c}_r${rep}"
   log "RUN $tag"
   if start_server "$tag" "$PORT_A" "$gpus" "$@"; then
+    CONSEC_START_FAILS=0
     mem_log_start "$tag"
     bench "$tag" "$PORT_A" "$c" "$(prompts_for "$c")" $((100 + rep)) || FAILURES+=("$tag")
     mem_log_stop
   else
     FAILURES+=("$tag")
+    note_start_failure
   fi
   stop_servers
+}
+
+note_start_failure() {
+  CONSEC_START_FAILS=$((CONSEC_START_FAILS + 1))
+  if (( CONSEC_START_FAILS >= MAX_CONSEC_START_FAILS )); then
+    log "ABORT: $CONSEC_START_FAILS consecutive server start failures (GPU wedged? check: CUDA_VISIBLE_DEVICES=1 python -c 'import torch;torch.ones(1).cuda()')"
+    log "failures so far: ${FAILURES[*]}"
+    exit 3
+  fi
 }
 
 run_dp() {  # two TP=1 replicas, each gets half the prompts and half the concurrency, run in parallel
@@ -139,6 +155,7 @@ run_dp() {  # two TP=1 replicas, each gets half the prompts and half the concurr
     mem_log_stop
   else
     FAILURES+=("$tag")
+    note_start_failure
   fi
   stop_servers
 }
@@ -151,7 +168,7 @@ nccl_baseline
 for rep in $(seq 0 $((REPS - 1))); do          # repeat-major order: slow drift does not align with one config
   for c in $CONCS; do
     run_one tp1 0 "$c" "$rep" --tensor-parallel-size 1
-    run_one tp2 0,1 "$c" "$rep" --tensor-parallel-size 2
+    run_one tp2 0,1 "$c" "$rep" --tensor-parallel-size 2 ${TP2_EXTRA_ARGS[@]+"${TP2_EXTRA_ARGS[@]}"}
   done
 done
 NOCUSTOM_C="${NOCUSTOM_C:-8}"                  # RUNBOOK 3b: one concurrency, small messages

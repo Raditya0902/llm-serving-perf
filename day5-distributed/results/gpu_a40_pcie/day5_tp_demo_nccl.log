@@ -1,0 +1,14 @@
+W1118 20:54:45.691000 5103 torch/distributed/run.py:982] 
+W1118 20:54:45.691000 5103 torch/distributed/run.py:982] *****************************************
+W1118 20:54:45.691000 5103 torch/distributed/run.py:982] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1118 20:54:45.691000 5103 torch/distributed/run.py:982] *****************************************
+[rank 0] world=2: each rank holds 1/2 of every weight matrix
+[rank 0] column_parallel+all_gather: comm=1 all_gather, max|err|=0.00e+00 (rel 0.0e+00) -> PASS
+[rank 0] row_parallel+all_reduce: comm=1 all_reduce, max|err|=1.91e-06 (rel 1.0e-07) -> PASS
+[rank 0] mlp(column->gelu->row): comm=1 all_reduce, max|err|=5.72e-06 (rel 8.3e-08) -> PASS
+[rank 1] world=2: each rank holds 1/2 of every weight matrix
+[rank 1] column_parallel+all_gather: comm=1 all_gather, max|err|=0.00e+00 (rel 0.0e+00) -> PASS
+[rank 1] row_parallel+all_reduce: comm=1 all_reduce, max|err|=1.91e-06 (rel 1.0e-07) -> PASS
+[rank 1] mlp(column->gelu->row): comm=1 all_reduce, max|err|=5.72e-06 (rel 8.3e-08) -> PASS
+/root/llm-infrastructure-lab/day4-vllm-internals/.venv-gpu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: UserWarning: barrier(): using the device under current context. You can specify `device_id` in `init_process_group` to mute this warning.
+  return func(*args, **kwargs)

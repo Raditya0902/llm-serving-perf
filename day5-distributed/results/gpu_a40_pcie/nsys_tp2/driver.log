@@ -1,0 +1,4 @@
+[22:09:08] ARM tp2_custom_c8
+[22:11:16] tp2_custom_c8: all-reduce share of busy GPU time = 0.1889476594185142
+[22:11:16] ARM tp2_nocustom_c8
+[22:13:22] tp2_nocustom_c8: all-reduce share of busy GPU time = 0.23139870301582793

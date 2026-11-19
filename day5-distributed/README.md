@@ -1,7 +1,7 @@
 # Day 5 — distributed collectives and tensor parallelism
 
 > **Update:** the NCCL path and the TP=1 vs TP=2 vLLM experiment have now run on 2x A100-80GB over NVLink; see
-> [RESULTS.md](RESULTS.md). The "not run / empty stub" lines below describe the state before that run (PCIe and `nsys` are still not done).
+> [RESULTS.md](RESULTS.md); the PCIe case (2x A40) and an `nsys` measurement of the all-reduce share have run too. The "not run / empty stub" lines below describe the state before those runs.
 >
 > **What is and isn't done (before the GPU run).**
 > - **Done and measured (CPU, Gloo backend, Apple M4, 2–4 processes):** `collectives.py`
