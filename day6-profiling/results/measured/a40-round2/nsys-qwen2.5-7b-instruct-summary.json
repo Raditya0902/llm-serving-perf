@@ -1,0 +1,61 @@
+{
+  "allreduce_share_of_busy": 0.0,
+  "graph_launches": 0,
+  "kernels_from_graph_nodes": 0,
+  "graph_contents_visible": true,
+  "per_device": {
+    "0": {
+      "kernel_instances": 37472,
+      "busy_ns": 910044356,
+      "window_ns": 1310659048,
+      "busy_fraction_of_window": 0.6943410320088066,
+      "allreduce_ns": 0,
+      "nccl_other_ns": 0,
+      "allreduce_instances": 0,
+      "sampler_launches": 0,
+      "allreduce_share_of_busy": 0.0
+    }
+  },
+  "top_kernels": [
+    {
+      "name": "ampere_fp16_s16816gemm_fp16_64x64_ldg8_f2f_stages_64x5_tn",
+      "total_ns": 664421921,
+      "instances": 2688
+    },
+    {
+      "name": "void gemv2T_kernel_val<int, int, __half, __half, __half, float, (int)128, (int)16, (int)4, (int)4, (bool)0, (bool)0, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<__half>, float>>(T13, T6, T6)",
+      "total_ns": 61608670,
+      "instances": 32
+    },
+    {
+      "name": "ampere_fp16_s16816gemm_fp16_64x64_sliced1x2_ldg8_f2f_stages_64x5_tn",
+      "total_ns": 46018742,
+      "instances": 896
+    },
+    {
+      "name": "void gemv2T_kernel_val<int, int, __half, __half, __half, float, (int)128, (int)16, (int)4, (int)4, (bool)0, (bool)1, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<__half>, float>>(T13, T6, T6)",
+      "total_ns": 43827256,
+      "instances": 896
+    },
+    {
+      "name": "std::enable_if<!T7, void>::type internal::gemvx::kernel<int, int, __half, __half, __half, float, (bool)0, (bool)1, (bool)1, (bool)0, (int)7, (bool)0, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<const __half>, cublasGemvTensorStridedBatched<__half>, float>>(T13)",
+      "total_ns": 17040525,
+      "instances": 1792
+    },
+    {
+      "name": "void at::native::elementwise_kernel<(int)128, (int)4, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::Half, c10::Half, c10::Half, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)",
+      "total_ns": 9107000,
+      "instances": 3584
+    },
+    {
+      "name": "void pytorch_flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<(int)128, (int)64, (int)128, (int)4, (bool)0, (bool)0, cutlass::half_t, Flash_kernel_traits<(int)128, (int)64, (int)128, (int)4, cutlass::half_t>>, (bool)0, (bool)0, (bool)0, (bool)0, (bool)1, (bool)0, (bool)1, (bool)0>(pytorch_flash::Flash_fwd_params)",
+      "total_ns": 7056053,
+      "instances": 896
+    },
+    {
+      "name": "void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, (int)4, (int)4>>(T3)",
+      "total_ns": 6547342,
+      "instances": 1824
+    }
+  ]
+}

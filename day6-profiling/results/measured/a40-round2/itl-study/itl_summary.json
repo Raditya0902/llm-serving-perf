@@ -1,0 +1,42 @@
+{
+  "len512_d135": {
+    "output_throughput_tok_s": 6262.259950118657,
+    "failed": 0,
+    "completed": 1000,
+    "itl_ms_p50": 11.229604002437554,
+    "itl_ms_p90": 63.39220669906361,
+    "itl_ms_p99": 114.47762270894599,
+    "n_itl_samples": 126700,
+    "note": "torch profiler window active: throughput is not comparable with unprofiled runs"
+  },
+  "len512_d500": {
+    "output_throughput_tok_s": 6219.360190829891,
+    "failed": 0,
+    "completed": 1000,
+    "itl_ms_p50": 11.17694099957589,
+    "itl_ms_p90": 78.3850594045362,
+    "itl_ms_p99": 110.03977603075327,
+    "n_itl_samples": 126735,
+    "note": "torch profiler window active: throughput is not comparable with unprofiled runs"
+  },
+  "len3584_d135": {
+    "output_throughput_tok_s": 1062.4461423685575,
+    "failed": 0,
+    "completed": 1000,
+    "itl_ms_p50": 232.81801400298718,
+    "itl_ms_p90": 240.545391003252,
+    "itl_ms_p99": 255.43773870012956,
+    "n_itl_samples": 126971,
+    "note": "torch profiler window active: throughput is not comparable with unprofiled runs"
+  },
+  "len3584_d500": {
+    "output_throughput_tok_s": 1067.8813866206401,
+    "failed": 0,
+    "completed": 1000,
+    "itl_ms_p50": 233.18088900123257,
+    "itl_ms_p90": 241.57262600783724,
+    "itl_ms_p99": 256.8756032007514,
+    "n_itl_samples": 126921,
+    "note": "torch profiler window active: throughput is not comparable with unprofiled runs"
+  }
+}

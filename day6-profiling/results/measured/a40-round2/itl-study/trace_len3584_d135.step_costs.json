@@ -1,0 +1,22 @@
+{
+  "results/raw/itl-study/trace_len3584_d135": {
+    "steps": 100,
+    "pure": {
+      "n": 0
+    },
+    "mixed": {
+      "n": 100,
+      "mean_ms": 155.05757652,
+      "median_ms": 154.63958350000001,
+      "p90_ms": 206.41697030000003,
+      "mean_decodes": 115.71,
+      "mean_prefill_tokens": 8076.29,
+      "fit": {
+        "intercept_ms": 7.156675145517119e-05,
+        "ms_per_1000_prefill_tokens": 10.956443451926551,
+        "ms_per_decode": 0.575318384468834,
+        "mean_rule_of_thumb_ms": 84.25761
+      }
+    }
+  }
+}

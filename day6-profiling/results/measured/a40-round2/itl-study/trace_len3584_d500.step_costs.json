@@ -1,0 +1,27 @@
+{
+  "results/raw/itl-study/trace_len3584_d500": {
+    "steps": 100,
+    "pure": {
+      "n": 11,
+      "mean_ms": 24.845403181818178,
+      "median_ms": 24.852657999999998,
+      "p90_ms": 24.926866999999998,
+      "mean_decodes": 255.72727272727272,
+      "mean_prefill_tokens": 0.0
+    },
+    "mixed": {
+      "n": 89,
+      "mean_ms": 231.0182296741573,
+      "median_ms": 233.74012,
+      "p90_ms": 234.263783,
+      "mean_decodes": 250.8876404494382,
+      "mean_prefill_tokens": 7641.38202247191,
+      "fit": {
+        "intercept_ms": 23.05560394615514,
+        "ms_per_1000_prefill_tokens": 10.51251919072314,
+        "ms_per_decode": 0.508723547897691,
+        "mean_rule_of_thumb_ms": 93.86120224719097
+      }
+    }
+  }
+}

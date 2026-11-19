@@ -219,11 +219,95 @@ E4-E6 against the Day 3 simulator, using Day 4's real 1000-prompt sweep (differe
 | E5 seqs 16 / 64 / 256 | plateau by 64 | 3,513 / 6,926 / 9,445 tok/s (+36% from 64 to 256); at 1024 it drops to 8,399 | **Refuted** (no plateau at 64; a decline at 1024) |
 | E6 KV capacity | preemptions below peak demand | no preemption in any run; KV pool was 3-19x above demand | **Untested** |
 
-### 9.5 What was not done
+### 9.5 Larger models: the Day 1 loop stops being launch-bound between 3B and 7B (round 2, second A40 pod)
 
-nsys (not installed in the RunPod container), the RUNBOOK section 5 sweeps (redundant with Day 4's), a trace of the Day 4 `input_len=3584` 234 ms p50 ITL (the step-cost rule above predicts about 100 ms, so it is **still unexplained**; long contexts likely add attention cost), an isolating experiment for the 1024-seq throughput loss, and any model larger than 0.5B.
-The first trace attempt (delay 20) only captured the benchmark's warm-up request, and my first window (delay 150) held 20 steps; the numbers above come from the 100-step windows after a 135-iteration delay.
-Everything is one A40, one 0.5B model, n=3 or n=6 repeats.
+`profile_run.py --model <id>` with fp16, sdpa, prompt 512, 32 decode steps. The launch probe is run with **no profiler in the process** (`--probe-only`, 5 passes after 3 warm-ups), because the probe inside a profiled run is inflated (9.1).
+Data: [results/measured/a40-round2/](results/measured/a40-round2/) (`probe-*`, `profile-*` operator tables and summaries, `nsys-*-summary.json`; raw traces stay on the pod).
+
+| model | layers | enqueue ms (5 passes) | synced step ms | enqueue / step | verdict | GPU busy in the decode window: nsys / torch profiler | kernels per step |
+|---|---|---|---|---|---|---|---|
+| Qwen2.5-0.5B | 24 | 20.2-25.3 | 20.6-25.7 | 0.98 | cpu-bound | 13.2% / 10.8% | 1,055 |
+| Qwen2.5-1.5B | 28 | 20.1-20.7 | 20.9-21.4 | 0.96 | cpu-bound | 25.3% / 21.4% | 1,283 |
+| Qwen2.5-3B | 36 | 25.0-25.3 | 26.0-26.4 | 0.96 | cpu-bound | 33.0% / 29.4% | 1,643 |
+| **Qwen2.5-7B** | 28 | 18.7-18.9 | **30.0** | **0.62-0.63** | **mixed** | **69.4% / 63.9%** | 1,171 |
+
+- **Launch-bound up to 3B, not at 7B.** From 0.5B to 3B the synced step is 20-26 ms and equals the CPU enqueue time (within about 4%); at 7B the CPU still needs only 18.8 ms but the step takes 30 ms, so the device is now the long pole and the GPU is busy 64-69% of the window.
+  Weight-read floors at the A40's 0.696 TB/s (fp16 weights / bandwidth) are 1.4 / 4.4 / 8.9 / 21.9 ms for the four models: below the ~20-26 ms enqueue for the first three, above it for 7B. That is the arithmetic behind the crossover; it was not isolated by a controlled experiment.
+- **The CPU cost scales with layers, not parameters.** Enqueue time per layer is about 0.7 ms for 1.5B, 3B and 7B (20.4/28, 25.2/36, 18.9/28) and 0.8-1.0 ms for 0.5B, whose step time drifted between passes (25.1 -> 20.2 ms; the earlier 9.1 runs on the first pod saw 15.8-18.8 ms for the same model, so absolute step times depend on the host CPU).
+  The 0.5B and 1.5B steps are nearly equal (about 21 ms) although the 1.5B has 3x the parameters, and 7B has the same layer count as 1.5B but a different regime.
+- **nsys agrees with the torch profiler.** nsys 2026.5.2 (`--trace=cuda,nvtx --sample=none --cpuctxsw=none`, capture range = the profiled window) records the **identical 33,760 kernels** for the 0.5B decode window and a GPU busy fraction of 13.2% against 12.8% from the torch profiler in 9.1
+  (10.8% in this round's torch-profiler run). The nsys numbers include nsys's own overhead, as the torch-profiler ones include Kineto's.
+- **What this changes in 9.1.** The Day 1 findings "decode ms/token is flat across batch size and context" and "TTFT flat below 2048 tokens" were explained there by the launch floor, which this table shows holds up to 3B on this CPU. They should **not** be extrapolated to 7B: there the step has real device time, so batch scaling and context length
+  would matter. E1-E3 were not re-run at 7B.
+- Limits: one host CPU per model sweep, 5 passes each, single 512-token prompt, HF `generate`-style loop (not vLLM), fp16.
+
+### 9.6 The 234 ms p50 ITL at `input_len=3584` is long-context decode cost inside mixed steps
+
+Day 4 saw p50 ITL 234 ms at 3584-token prompts against 11 ms at 512, and the 9.3 step-cost rule predicted about 100 ms. Reproduced and traced here: fresh Day 4 baseline server (256 seqs, 8192-token budget, 0.5B), 1000 prompts, rate inf, `--profile` windows of 100 engine steps
+after delays of 135 and 500 iterations, `--save-detailed` for per-token ITLs; per-step GPU time from `gpu/step_costs.py` (tests in `tests/test_step_costs.py`). Profiler is on, so throughputs below are not for comparison with Day 4.
+
+| run | p50 ITL | pure-decode steps | mixed steps (prefill tokens, decodes) | rule of thumb (9 ms/1k prefill + 0.1 ms/decode) | fitted ms per decode in mixed steps |
+|---|---|---|---|---|---|
+| 512 in, window 135 | 11.2 ms | 86 x 7.3 ms (256 seqs) | 14 x 93.4 ms (8,052; 137) | 86 | 0.11 |
+| 512 in, window 500 | 11.2 ms | 84 x 6.5 ms | 16 x 98.3 ms (7,364; 226) | 89 | not stable (16 steps) |
+| 3584 in, window 135 (ramp-up) | 232.8 ms | none | 100 x 155 ms (8,076; 116) | 84 | 0.58 |
+| **3584 in, window 500 (steady)** | **233.2 ms** | 11 x **24.8 ms** (256 seqs) | 89 x **231 ms** (7,641; 251) | **94** | **0.51** (intercept 23 ms, 10.5 ms/1k prefill tokens) |
+
+- **The 234 ms reproduces** (232.8 and 233.2 ms, p90 241 ms) and equals the mean mixed-step time (231 ms): at 3584 tokens 89 of 100 steps carry about 7.6k prefill tokens, so nearly every decoded token is emitted from a step that takes about 231 ms.
+- **The rule under-predicts by 2.5x here (231 vs 94 ms), but only because its decode coefficient was fitted at 512-token contexts.** The prefill coefficient barely moves (8.8 -> 10.5-11 ms per 1k tokens), while each decode riding in a mixed step costs **0.51-0.58 ms instead of 0.11 ms** (about 5x for 7x the context).
+  Refit for 3584: `mixed ms = 23 + 10.5 x prefill/1000 + 0.51 x decodes`. A cross-window check: the steady-window coefficients applied to the ramp-up window's mean (8,076 prefill, 116 decodes) give 167 ms against 155 ms observed (+8%).
+- **Pure decode shows the same effect directly.** A 256-sequence pure-decode step costs 24.8 ms at 3584 against 6.5-7.3 ms at 512, +18 ms; reading every sequence's KV once is 256 x ~3,650 tokens x 12 KiB (24 layers x 2 x 2 KV heads x 64 x 2 B) = 11.5 GB, which takes 16.5 ms at 0.696 TB/s. That fits.
+- **What remains unexplained:** why a decode costs about 5x more inside a mixed step than in a pure step (0.51 vs 0.097 ms per sequence, the same 4-5x seen at 512 in 9.3). This round shows it grows with context length; it does not identify the kernel path responsible (no per-kernel attribution of the mixed steps was done).
+- Limits: 100-step windows (n = 89-100 mixed steps), least-squares fits, one GPU, one model, profiler overhead present in absolute times.
+
+### 9.7 E6 with a pool the workload can exhaust (`--kv-cache-memory-bytes`, one run per pool)
+
+Day 4's utilization knob never pushed the pool below demand (9.4: E6 untested). Here the pool is set directly (`gpu/run_e6_cap.sh`): 0.5B, 1000 prompts of 512 in / 128 out at once, `max_num_seqs=256`. Computed peak demand is 256 x 640 = 164k tokens (about 2.0 GiB).
+Peak KV, running and waiting come from a 5 Hz `/metrics` sampler; preemptions from the final counter.
+
+| KV pool | pool (tokens) | preemptions | peak KV | peak running | out tok/s | mean TTFT s | p99 ITL ms |
+|---|---|---|---|---|---|---|---|
+| 4,096 MiB | 349,504 | 0 | 47% | 256 | 9,242 | 6.8 | 115 |
+| 2,560 MiB | 218,432 | 0 | 75% | 256 | 9,557 | 6.6 | 117 |
+| 2,048 MiB | 174,720 | 0 | 94% | 256 | 9,396 | 6.8 | 120 |
+| **1,536 MiB** | **131,072** | **71** | 100% | 228 | 8,800 | 7.0 | 109 |
+| 1,024 MiB | 87,360 | 75 | 100% | 152 | 8,359 | 7.5 | 101 |
+| 512 MiB | 43,648 | 85 | 100% | 78 | 7,139 | 9.3 | 83 |
+
+- **Verdict on E6's hypothesis (preemptions only below peak demand; throughput falls, TTFT rises): held.** Preemptions start between a 174,720-token pool (0; peak KV 94%, matching the computed 164k demand) and 131,072 tokens (71). Against the mean of the three non-preempting pools (9,398 tok/s) throughput is
+  -6.4%, -11.1% and -24.0% in the three preempting pools, TTFT rises +4%, +12% and +38%, and p99 ITL falls (fewer sequences run at once: peak running 256 -> 78).
+- **Against the Day 3 simulator (9.4, simulated E6):** direction held; the **magnitude was overstated** (simulated throughput -78% at the smallest pool, measured -24%), and the simulator's preemption counts (0 / 0 / 7 / 17 / 27 / 27) are 3-10x below the real counters (71-85), which count every preemption event, not distinct requests.
+- n = 1 per pool; the three non-preempting pools differ by 3.4% among themselves (single runs), so the -6.4% step at 131k is only marginally outside that spread, while the last two steps are clearly outside it.
+
+### 9.8 RUNBOOK section 5 sweeps (E4-E6 via Day 4's tooling), run again on a second pod
+
+`python run_sweep.py --load saturated --repeat 1 --num-prompts 1000 --only max_num_batched_tokens max_num_seqs gpu_memory_utilization` on a different A40 host, 0.5B, 13 configs x 1 run, 0 failed requests, **0 preemptions in all 13 runs**
+([data](../day4-vllm-internals/results/day6-sweep/), summaries only; raw JSON is git-ignored). This is a replication of Day 4's 1000-prompt saturated sweep (n = 3 there), not new information about the knobs:
+
+| knob = value | out tok/s | p50 ITL ms | p99 ITL ms | p99 TTFT s | vs Day 4 (n=3) tok/s |
+|---|---|---|---|---|---|
+| `max_num_batched_tokens` = 512 | 5,067 | 19.2 | 25 | 24.3 | +0.1% |
+| = 1024 | 5,352 | 36.7 | 46 | 22.7 | +0.4% |
+| = 2048 | 6,711 | 18.3 | 62 | 17.7 | -2.4% |
+| = 4096 | 8,493 | 11.3 | 79 | 13.7 | -0.1% |
+| = 16384 | 9,963 | 11.0 | 180 | 11.4 | +4.0% |
+| `max_num_seqs` = 4 | 1,118 | 3.3 | 7 | 113.1 | -0.5% |
+| = 16 | 3,509 | 3.6 | 18 | 35.4 | -0.1% |
+| = 64 | 6,992 | 5.4 | 78 | 17.6 | +1.0% |
+| = 1024 | 8,149 | 43.2 | 422 | 11.2 | -3.0% |
+| `gpu_memory_utilization` = 0.5 / 0.7 / 0.95 | 9,502 / 9,354 / 9,304 | 11.2-11.3 | 110-112 | 12.1-12.4 | -0.1% / -1.4% / -2.9% |
+| baseline (256 seqs, 8192 tokens, 0.85) | 9,352 | 12.8 | 110 | 12.3 | -1.0% |
+
+- **All 13 configs agree with Day 4 within -3.0% to +4.0%** (Day 4's own repeat noise: about 1% typical, worst case 4.9%), so the E4/E5 rows of 9.4 reproduce on another host: no throughput plateau at 64 seqs (3,509 / 6,992 / 9,352 for 16 / 64 / 256), a decline at 1,024 (-12.9% vs 256 here, -11% in Day 4),
+  throughput 5,067 -> 9,963 (+97%) from the smallest to the largest budget (Day 4: +89%), and the p50 ITL hump at `max_num_batched_tokens` = 1024 (36.7 ms) reproduces, which 9.3 explains by the share of mixed steps.
+- **E6 through `gpu_memory_utilization` is still flat for the reason 9.4 gave** (the pool is far above demand, 0 preemptions), which is why 9.7 shrinks the pool directly.
+- Single repeat per config, so differences under about 3% here are not interpretable on their own.
+
+### 9.9 What was not done
+
+Nsight Compute kernel counters; a kernel-level attribution of *why* a decode costs about 5x more inside a mixed vLLM step (9.6 shows it grows with context length but does not identify the kernel path); an isolating experiment for the `max_num_seqs=1024` throughput loss (still an open hypothesis; it reproduced again at -12.9% in 9.8);
+E1-E3 and the vLLM step-cost rule at models above 0.5B (9.5 covers the Day 1 loop up to 7B, not vLLM); one host CPU per model sweep and n = 1-6 repeats throughout.
+The first trace attempt (delay 20) only captured the benchmark's warm-up request, and my first window (delay 150) held 20 steps; the 9.3 numbers come from the 100-step windows after a 135-iteration delay.
 
 ## 8. Reproduce
 
