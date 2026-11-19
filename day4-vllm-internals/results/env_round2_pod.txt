@@ -1,0 +1,6 @@
+date: 2026-11-18T20:47:56Z
+host: Linux 6.8.0-149-generic x86_64
+gpu: NVIDIA A40, 46068 MiB, 595.112.07;NVIDIA A40, 46068 MiB, 595.112.07
+python: Python 3.12.3
+vllm: 0.34.0
+torch: 2.14.0+cu132 cuda 13.2

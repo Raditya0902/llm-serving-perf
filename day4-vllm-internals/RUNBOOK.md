@@ -138,7 +138,7 @@ yourself, then copy the findings into [CHECKPOINT.md](CHECKPOINT.md) Q6. It refu
 an `--out` file whose Observations you have edited (`--force` overrides), and its default output is
 `results/RESULTS.generated.md`, never the top-level `RESULTS.md`.
 
-## 4. Larger model (optional)
+## 4. Larger model (optional; run: 1.5B, 51 runs, see RESULTS.md)
 
 If memory allows, repeat with a 1.5B–3B model, same everything else:
 

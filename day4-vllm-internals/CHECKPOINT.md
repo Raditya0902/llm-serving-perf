@@ -122,7 +122,7 @@ exception, and these sizes:
   not fully explained: a CUDA-graph capture-range effect was tested and refuted (Day 6 report 9.3), and traces show prefill-carrying steps cost 42-135 ms vs 7 ms for pure decode, which explains the ITL tail but not the throughput loss. A first pass with only 100 prompts missed this because it
   could not use more than 100 sequences. At the brief 2 req/s workload no latency effect is visible.
 - `--gpu-memory-utilization` sets the KV pool as predicted (1.75M to 3.50M tokens for 0.5 to 0.95) and changed no speed (spread 1.4%), because the
-  pool was 3x to 19x larger than the computed peak demand. **No preemption occurred in any of 168 runs, so Q4's behaviour under real KV exhaustion remains unmeasured.**
+  pool was 3x to 19x larger than the computed peak demand. **No preemption occurred in any of 168 runs (nor in the 51-run 1.5B repeat), so these sweeps never reached real KV exhaustion.** It was reached later: Day 6 report 9.7 (0.5B, pool capped by `--kv-cache-memory-bytes`: preemptions start when the pool drops below peak demand, 0 -> 71 preemptions between pools of 174,720 and 131,072 tokens, throughput -6% to -24%) and Day 7 (8B, 62-65 preemptions at B@64 with a full pool).
 - Throughput tracks the arrival rate until saturation; longer prompts raise TTFT and cut throughput (16,343 to 1,231 tok/s from 128 to 3,584 tokens).
 
 Mechanism (Day 6 traces): a step that carries prefill costs 93-132 ms vs 7-26 ms for pure decode, and each decode riding in such a step costs about 4x more; this also explains why p50 ITL at `max_num_batched_tokens=1024` exceeds that at 512.
