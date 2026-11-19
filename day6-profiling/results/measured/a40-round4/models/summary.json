@@ -1,0 +1,305 @@
+{
+  "cells": [
+    {
+      "model": "llama3.1-8b",
+      "seqs": 64,
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "n": 2,
+      "mean_tok_s": 816.4972279677215,
+      "min_tok_s": 816.0990480458787,
+      "max_tok_s": 816.8954078895645,
+      "spread_pct": 0.09758127344867695,
+      "median_itl_ms": 41.434036516875494
+    },
+    {
+      "model": "llama3.1-8b",
+      "seqs": 64,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "n": 2,
+      "mean_tok_s": 856.8424046319337,
+      "min_tok_s": 856.0651459916274,
+      "max_tok_s": 857.6196632722401,
+      "spread_pct": 0.18158866622375314,
+      "median_itl_ms": 40.59598049207125
+    },
+    {
+      "model": "llama3.1-8b",
+      "seqs": 192,
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "n": 2,
+      "mean_tok_s": 961.7522224187059,
+      "min_tok_s": 961.0669487588177,
+      "max_tok_s": 962.437496078594,
+      "spread_pct": 0.14260685184797062,
+      "median_itl_ms": 68.40512725466397
+    },
+    {
+      "model": "llama3.1-8b",
+      "seqs": 192,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "n": 2,
+      "mean_tok_s": 1113.6861382515544,
+      "min_tok_s": 1112.5920286914097,
+      "max_tok_s": 1114.7802478116992,
+      "spread_pct": 0.19667758386361367,
+      "median_itl_ms": 67.19986299867742
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 256,
+      "workload": "3584x128",
+      "backend": "FLASH_ATTN",
+      "n": 2,
+      "mean_tok_s": 562.342242684932,
+      "min_tok_s": 561.8191489480477,
+      "max_tok_s": 562.8653364218163,
+      "spread_pct": 0.18621427833629411,
+      "median_itl_ms": 512.5898980040802
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 256,
+      "workload": "3584x128",
+      "backend": "TRITON_ATTN",
+      "n": 2,
+      "mean_tok_s": 745.0387163801824,
+      "min_tok_s": 744.4982299769533,
+      "max_tok_s": 745.5792027834116,
+      "spread_pct": 0.145194812147742,
+      "median_itl_ms": 364.84625574667007
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 256,
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "n": 2,
+      "mean_tok_s": 4408.652300810489,
+      "min_tok_s": 4408.007206238889,
+      "max_tok_s": 4409.297395382089,
+      "spread_pct": 0.029269215834637485,
+      "median_itl_ms": 22.103901006630622
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 256,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "n": 2,
+      "mean_tok_s": 4675.019119426265,
+      "min_tok_s": 4666.346489555526,
+      "max_tok_s": 4683.691749297004,
+      "spread_pct": 0.3717096400856823,
+      "median_itl_ms": 21.258946748275775
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 1024,
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "n": 2,
+      "mean_tok_s": 4167.988033970822,
+      "min_tok_s": 4162.937659155792,
+      "max_tok_s": 4173.038408785851,
+      "spread_pct": 0.2426351403039595,
+      "median_itl_ms": 77.0581714969012
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 1024,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "n": 2,
+      "mean_tok_s": 4811.989320576817,
+      "min_tok_s": 4803.568660327674,
+      "max_tok_s": 4820.409980825959,
+      "spread_pct": 0.35060018268036064,
+      "median_itl_ms": 75.57474675559206
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 128,
+      "workload": "3584x128",
+      "backend": "FLASH_ATTN",
+      "n": 2,
+      "mean_tok_s": 367.38972121754,
+      "min_tok_s": 367.0769030447702,
+      "max_tok_s": 367.70253939030977,
+      "spread_pct": 0.17043740435591648,
+      "median_itl_ms": 50.524516744189896
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 128,
+      "workload": "3584x128",
+      "backend": "TRITON_ATTN",
+      "n": 2,
+      "mean_tok_s": 424.82584364863067,
+      "min_tok_s": 424.37459918131754,
+      "max_tok_s": 425.27708811594385,
+      "spread_pct": 0.21266327823752373,
+      "median_itl_ms": 49.37859748315532
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 256,
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "n": 2,
+      "mean_tok_s": 2485.1888266893156,
+      "min_tok_s": 2480.923652775354,
+      "max_tok_s": 2489.4540006032767,
+      "spread_pct": 0.34383757913629687,
+      "median_itl_ms": 34.38648999144789
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 256,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "n": 2,
+      "mean_tok_s": 2661.796516305183,
+      "min_tok_s": 2661.2220791240843,
+      "max_tok_s": 2662.370953486282,
+      "spread_pct": 0.043170931550950975,
+      "median_itl_ms": 33.442722997278906
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 1024,
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "n": 2,
+      "mean_tok_s": 2356.3087321207877,
+      "min_tok_s": 2351.895444724388,
+      "max_tok_s": 2360.7220195171867,
+      "spread_pct": 0.37529622384353534,
+      "median_itl_ms": 117.86107750958763
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 1024,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "n": 2,
+      "mean_tok_s": 2735.514262440853,
+      "min_tok_s": 2735.295621364003,
+      "max_tok_s": 2735.732903517703,
+      "spread_pct": 0.01598665059399096,
+      "median_itl_ms": 115.4490980115952
+    }
+  ],
+  "gains": [
+    {
+      "model": "llama3.1-8b",
+      "seqs": 64,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 4.9412509047498165
+    },
+    {
+      "model": "llama3.1-8b",
+      "seqs": 192,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 15.797615257987218
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 256,
+      "workload": "3584x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 32.488484738929934
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 256,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 6.04191032635546
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "seqs": 1024,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 15.451130889943032
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 128,
+      "workload": "3584x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 15.633568146856614
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 256,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 7.1064092884699726
+    },
+    {
+      "model": "qwen2.5-3b",
+      "seqs": 1024,
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 16.09320226805606
+    }
+  ],
+  "seqs_loss": [
+    {
+      "model": "llama3.1-8b",
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "low_seqs": 64,
+      "high_seqs": 192,
+      "loss_pct": 17.790016851928204
+    },
+    {
+      "model": "llama3.1-8b",
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "low_seqs": 64,
+      "high_seqs": 192,
+      "loss_pct": 29.975609543968694
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "low_seqs": 256,
+      "high_seqs": 1024,
+      "loss_pct": -5.458907857066054
+    },
+    {
+      "model": "qwen2.5-1.5b",
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "low_seqs": 256,
+      "high_seqs": 1024,
+      "loss_pct": 2.929831892695245
+    },
+    {
+      "model": "qwen2.5-3b",
+      "workload": "512x128",
+      "backend": "FLASH_ATTN",
+      "low_seqs": 256,
+      "high_seqs": 1024,
+      "loss_pct": -5.185927652033495
+    },
+    {
+      "model": "qwen2.5-3b",
+      "workload": "512x128",
+      "backend": "TRITON_ATTN",
+      "low_seqs": 256,
+      "high_seqs": 1024,
+      "loss_pct": 2.7694733870189614
+    }
+  ],
+  "rejected": []
+}

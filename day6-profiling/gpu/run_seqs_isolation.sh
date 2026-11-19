@@ -10,6 +10,7 @@
 # ARMS is a space-separated list of SEQS:INxOUT. Result files are seqs<S>_<IN>x<OUT>_r<R>.json (what gpu/seqs_isolation.py reads).
 set -uo pipefail
 cd "$(dirname "$0")/.."
+ulimit -n 65536 2>/dev/null || true
 MODEL="${MODEL:-Qwen/Qwen2.5-0.5B-Instruct}"
 OUT="$(mkdir -p "${1:-results/raw/seqs-isolation}" && cd "${1:-results/raw/seqs-isolation}" && pwd)"
 REPS="${REPS:-3}"

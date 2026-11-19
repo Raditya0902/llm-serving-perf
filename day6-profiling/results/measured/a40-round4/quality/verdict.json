@@ -1,0 +1,34 @@
+{
+  "triton_vs_fa2": {
+    "prompts": 200,
+    "exact_match_rate": 0.58,
+    "divergences": 84,
+    "mean_first_divergence": 15.928571428571429,
+    "mean_abs_dlogprob": 0.013194998975892866,
+    "mean_abs_dprompt": 0.028641211303170443,
+    "near_tie_share": 1.0
+  },
+  "control_fa2_vs_fa2_bt8192": {
+    "prompts": 200,
+    "exact_match_rate": 0.54,
+    "divergences": 92,
+    "mean_first_divergence": 19.097826086956523,
+    "mean_abs_dlogprob": 0.013129056045938345,
+    "mean_abs_dprompt": 0.029218273394163073,
+    "near_tie_share": 1.0
+  },
+  "error_vs_fp32_reference": {
+    "fa2": 0.026928701176410354,
+    "triton": 0.02731037155206521
+  },
+  "verdict": {
+    "criteria": {
+      "logprob_within_2x": true,
+      "prompt_logprob_within_2x": true,
+      "exact_match_within_10_points": true,
+      "divergences_are_near_ties": true,
+      "reference_error_within_1_5x": true
+    },
+    "equivalent": true
+  }
+}

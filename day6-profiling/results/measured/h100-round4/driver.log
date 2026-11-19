@@ -1,0 +1,3 @@
+[21:29:31] microbench: ratio table for FA2 and FA3, 0.5B and 8B geometry
+[21:31:58] end to end, 0.5B: FA3, FA2 and Triton; 256 seqs at two workloads, 1024 seqs at 512x128 (18 runs, trimmed to fit the budget)
+[22:05:01] DONE

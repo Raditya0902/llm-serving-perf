@@ -43,6 +43,8 @@ GEOMETRIES = {
     "qwen2.5-0.5b": Geometry(14, 2, 64),
     "qwen2.5-0.5b-mha": Geometry(14, 14, 64),  # control: same query heads and head size, no GQA
     "llama3.1-8b": Geometry(32, 8, 128),
+    "qwen2.5-1.5b": Geometry(12, 2, 128),
+    "qwen2.5-3b": Geometry(16, 2, 128),
 }
 
 
@@ -100,6 +102,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--prefill", type=_positive, default=7600, help="prefill chunk size inside the mixed batch")
     p.add_argument("--prefill-ctx", type=int, default=0, help="cached tokens already in front of the prefill chunk")
     p.add_argument("--block-size", type=_positive, default=DEFAULT_BLOCK_SIZE)
+    p.add_argument("--fa-version", type=int, choices=[2, 3], default=2, help="FlashAttention generation (3 needs Hopper)")
     p.add_argument("--iters", type=_positive, default=50)
     p.add_argument("--warmup", type=_positive, default=10)
     p.add_argument("--batches", nargs="+", default=["pure_decode", "mixed", "prefill_only"],
@@ -116,7 +119,7 @@ def build_specs(args: argparse.Namespace) -> list[BatchSpec]:
     return [by_label[label] for label in args.batches]
 
 
-def _time_batch(spec: BatchSpec, geometry: Geometry, block_size: int, iters: int, warmup: int) -> dict:
+def _time_batch(spec: BatchSpec, geometry: Geometry, block_size: int, iters: int, warmup: int, fa_version: int = 2) -> dict:
     import torch
     from vllm.vllm_flash_attn import flash_attn_varlen_func
 
@@ -139,7 +142,7 @@ def _time_batch(spec: BatchSpec, geometry: Geometry, block_size: int, iters: int
     def call() -> None:
         flash_attn_varlen_func(q=q, k=key_cache, v=value_cache, out=out, cu_seqlens_q=cu_q, max_seqlen_q=max(spec.q_lens),
                                seqused_k=seqused_k, max_seqlen_k=max(spec.kv_lens), softmax_scale=geometry.head_dim ** -0.5,
-                               causal=True, block_table=table, fa_version=2)
+                               causal=True, block_table=table, fa_version=fa_version)
 
     for _ in range(warmup):
         call()
@@ -173,9 +176,9 @@ def main(argv: list[str]) -> int:
     geometry = GEOMETRIES[args.model]
     specs = build_specs(args)
     report = {"model": args.model, "geometry": vars(geometry) | {"gqa_group": geometry.gqa_group}, "ctx": args.ctx, "decodes": args.decodes,
-              "prefill": args.prefill, "block_size": args.block_size, "batches": [describe(s, geometry, args.block_size) for s in specs]}
+              "prefill": args.prefill, "block_size": args.block_size, "fa_version": args.fa_version, "batches": [describe(s, geometry, args.block_size) for s in specs]}
     if not args.dry_run:
-        results = {s.label: _time_batch(s, geometry, args.block_size, args.iters, args.warmup) for s in specs}
+        results = {s.label: _time_batch(s, geometry, args.block_size, args.iters, args.warmup, args.fa_version) for s in specs}
         for batch in report["batches"]:
             batch.update(results[batch["label"]])
         report["per_decode"] = _per_decode(results, args.decodes)

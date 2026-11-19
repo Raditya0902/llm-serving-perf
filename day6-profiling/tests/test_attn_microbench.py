@@ -55,3 +55,15 @@ def test_dry_run_prints_the_three_batches_without_touching_torch(capsys):
 def test_main_rejects_nonpositive_sizes():
     with pytest.raises(SystemExit):
         ab.main(["--dry-run", "--decodes", "0"])
+
+
+def test_geometries_include_the_other_qwen_sizes_for_the_end_to_end_runs():
+    assert ab.GEOMETRIES["qwen2.5-1.5b"] == ab.Geometry(12, 2, 128) and ab.GEOMETRIES["qwen2.5-1.5b"].gqa_group == 6
+    assert ab.GEOMETRIES["qwen2.5-3b"].gqa_group == 8 and ab.GEOMETRIES["qwen2.5-3b"].head_dim == 128
+
+
+def test_fa_version_flag_defaults_to_two_and_accepts_three():
+    assert ab.parse_args([]).fa_version == 2
+    assert ab.parse_args(["--fa-version", "3"]).fa_version == 3
+    with pytest.raises(SystemExit):
+        ab.parse_args(["--fa-version", "1"])
