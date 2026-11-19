@@ -1,0 +1,150 @@
+{
+  "trace_s1024_len512_d160": {
+    "steps": 100,
+    "coverage": {
+      "mean": 0.8872032468845957,
+      "min": 0.6709259811897877
+    },
+    "pure": {
+      "n": 61,
+      "mean_ms_by_family": {
+        "attention": 13.05838831147541,
+        "gemm": 7.8675735245901635,
+        "norm_act": 2.309108606557376,
+        "kv_write": 0.08772488524590165,
+        "sampling": 0.012143803278688524,
+        "comm": 0.0,
+        "other": 0.030381475409836066
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 128, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 128, 4, cutlass::bfloat16_t> >, false, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          13.0584
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32x3_tn_align8::Params)",
+          4.2008
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_64x3_tn",
+          2.3169
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          1.2273
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x128_32x4_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x128_32x4_tn_align8::Params)",
+          0.7006
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 39,
+      "mean_ms_by_family": {
+        "attention": 82.61195028205127,
+        "gemm": 53.66570841025639,
+        "norm_act": 16.910160897435897,
+        "kv_write": 0.5062837435897437,
+        "sampling": 0.012361179487179488,
+        "comm": 0.0,
+        "other": 0.08705800000000001
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 256, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 256, 4, cutlass::bfloat16_t> >, true, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          82.612
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          31.4217
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8::Params)",
+          17.9065
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          10.1098
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_relu_f2f_stages_32x3_tn",
+          4.1809
+        ]
+      ],
+      "fits": {
+        "attention": {
+          "intercept_ms": -3.1964212280122433,
+          "ms_per_1000_prefill_tokens": 1.192124582345338,
+          "ms_per_decode": 0.10814103497960517
+        },
+        "gemm": {
+          "intercept_ms": 8.02028683974106,
+          "ms_per_1000_prefill_tokens": 5.699389934080308,
+          "ms_per_decode": 0.004459175625366992
+        },
+        "norm_act": {
+          "intercept_ms": -1.0137982642096042,
+          "ms_per_1000_prefill_tokens": 2.186803830232012,
+          "ms_per_decode": 0.002287647930551977
+        },
+        "kv_write": {
+          "intercept_ms": -0.0055616016814706,
+          "ms_per_1000_prefill_tokens": 0.06108398858534473,
+          "ms_per_decode": 7.961138732324036e-05
+        },
+        "sampling": {
+          "intercept_ms": -0.004728241449205379,
+          "ms_per_1000_prefill_tokens": 0.001306820935315559,
+          "ms_per_decode": 1.0333583977356732e-05
+        },
+        "comm": {
+          "intercept_ms": 0.0,
+          "ms_per_1000_prefill_tokens": 0.0,
+          "ms_per_decode": 0.0
+        },
+        "other": {
+          "intercept_ms": 0.016516791887432068,
+          "ms_per_1000_prefill_tokens": 0.007330262698736149,
+          "ms_per_decode": 2.2372103521453842e-05
+        }
+      },
+      "decode_identifiable": true,
+      "decode_slope_share": {
+        "attention": 0.940355389943214,
+        "gemm": 0.038775381008773126,
+        "norm_act": 0.019892560323587584,
+        "kv_write": 0.0006922718761142307,
+        "sampling": 8.98571147610235e-05,
+        "comm": 0.0,
+        "other": 0.00019453973355012074
+      }
+    },
+    "warnings": [
+      "coverage below 80% in 25 of 100 steps; kernel ms / step ms min 67%, so the attribution misses time"
+    ],
+    "dominant_decode_family": "attention",
+    "unclassified_top": [
+      [
+        "_apply_write_kernel",
+        2.701
+      ],
+      [
+        "_gather_block_tables_kernel",
+        1.14
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.655
+      ],
+      [
+        "_prepare_prefill_inputs_kernel",
+        0.524
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.229
+      ]
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "results/raw/r3-itl-s1024b/trace_s1024_len512_d200": {
+    "steps": 100,
+    "pure": {
+      "n": 100,
+      "mean_ms": 29.62914785,
+      "median_ms": 30.614725,
+      "p90_ms": 33.8090029,
+      "mean_decodes": 879.07,
+      "mean_prefill_tokens": 0.0
+    },
+    "mixed": {
+      "n": 0,
+      "decode_identifiable": false,
+      "fit": null
+    },
+    "busy_fraction": 0.5961788649589005,
+    "mixed_share_of_steps": 0.0
+  }
+}

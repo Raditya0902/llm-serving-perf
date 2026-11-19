@@ -180,7 +180,7 @@ Server: baseline flags (256 seqs, 8192 tokens), 1000-prompt burst, profiler wind
 ([window 150](results/measured/cuda-vllm/trace_window150/), [window 500](results/measured/cuda-vllm/trace_window500/)). Only the rank-0 operator tables are kept in git; the traces stay on the pod volume.
 
 - **Pure decode steps are cheap, steps carrying any prefill are not.** Two profiled windows of 100 engine steps taken after the benchmark's warm-up request ([trace_step_costs_output.txt](results/measured/cuda-vllm/rerun/trace_step_costs_output.txt)): with `max_num_seqs=256`, 85 pure-decode steps (256 sequences) averaged **7.3 ms** of GPU time and 15 mixed steps (about 7k prefill tokens, 134 decodes) averaged **93 ms**. With `max_num_seqs=1024`, 34 pure-decode steps (999 sequences) averaged **26 ms** and 66 mixed steps (about 7k prefill tokens, 516 decodes) averaged **132 ms**.
-- **Decodes riding in a mixed step cost about 4x more each.** Same prefill size (about 7k tokens), 134 vs 516 decodes: 93 vs 132 ms, so about 0.10 ms per extra decode sequence, against 0.026-0.029 ms per sequence in pure decode steps (7.3 ms / 256, 26 ms / 999). One sampled step with only about 1.5k prefill tokens but 995 decodes also took 133 ms (n=1). An earlier narrower window saw the attention kernel take 1.23 ms per layer call in mixed steps vs 0.16 ms in pure decode (2 steps), which fits. Rule of thumb that fits five vLLM configs: mixed step ms about 9 x (prefill tokens / 1000) + 0.1 x (running decodes) (e.g. bt=512 with 115 running: 16 ms predicted vs 19 ms median ITL; bt=1024 with 227 running: 32 vs 37; bt=2048 with 256 running: 44 vs 50). It is a rough fit, not a validated model.
+- **Decodes riding in a mixed step cost about 4x more each** (cause: the attention kernel, see 9.9). Same prefill size (about 7k tokens), 134 vs 516 decodes: 93 vs 132 ms, so about 0.10 ms per extra decode sequence, against 0.026-0.029 ms per sequence in pure decode steps (7.3 ms / 256, 26 ms / 999). One sampled step with only about 1.5k prefill tokens but 995 decodes also took 133 ms (n=1). An earlier narrower window saw the attention kernel take 1.23 ms per layer call in mixed steps vs 0.16 ms in pure decode (2 steps), which fits. Rule of thumb that fits five vLLM configs: mixed step ms about 9 x (prefill tokens / 1000) + 0.1 x (running decodes) (e.g. bt=512 with 115 running: 16 ms predicted vs 19 ms median ITL; bt=1024 with 227 running: 32 vs 37; bt=2048 with 256 running: 44 vs 50). It is a rough fit, not a validated model.
 - **This is the mechanism behind Day 4's ITL tails and the p50 ITL oddity.** Inter-token latency follows the step time, and a step that includes prefill is 5-18x a pure-decode step. The non-monotonic p50 ITL (bt=512 19 ms, bt=1024 37 ms, bt=2048 20 ms, bt=8192 11 ms) is explained by the *share of tokens emitted in mixed steps*: with budgets 512 and 1024 almost every step is mixed (88% and 90% of ITL samples exceed 15 ms), whereas with 2048 only 54% do, so the median falls back toward the pure-decode regime even though its mixed steps are slower than at 1024.
 - **Measured (not computed) KV and concurrency from a 5 Hz `/metrics` sampler** (1000-prompt burst, [analysis_output.txt](results/measured/cuda-vllm/rerun/analysis_output.txt)): `max_num_seqs=256`: peak running 256, peak waiting about 485, **peak KV 5.3%**; `max_num_seqs=1024`: **peak running 996-999**, peak waiting about 550, **peak KV 21.5%**; budgets 512 / 1024 / 2048: peak running 115 / 227 / 256, peak KV 2.2% / 4.4% / 5.1%. 0 preemptions in all. These match Day 4's computed demand (5.3% and 21.8%).
 - **Sampling is a large share of a pure-decode step** for this model: top-k/softmax/temperature/top-p kernels sum to roughly 3.3 of the 7.3 ms (about 45%, window 150), because the vocabulary is 151k and the model is tiny. Larger models would dilute this.
@@ -192,7 +192,7 @@ Server: baseline flags (256 seqs, 8192 tokens), 1000-prompt burst, profiler wind
 | `max_num_seqs=1024` | 8,512 / 8,432 / 8,515 (mean 8,487, **-8.6%**) | 39-42 ms | 432-481 ms |
 | `max_num_seqs=1024` + capture size 1024 | 8,499 / 8,548 / 8,567 (mean 8,538) | 40 ms | 426-450 ms |
 
-  The slowdown reproduces (-8.6% here, -11% in Day 4) and the graph setting does not move it. The slowdown is therefore not a graph effect. All 1000 requests are concurrent at 1024 (peak running 999) and the decodes spend more of the run riding in expensive mixed steps, which is consistent with the lower throughput, but I did not isolate it, so its cause stays an **open hypothesis**. A second interleaved pair with live metrics reproduced it: 256 seqs 9,445 / 9,457 tok/s vs 1024 seqs 8,218 / 8,581 (about -11%), p99 ITL 112-119 vs 415-423 ms.
+  The slowdown reproduces (-8.6% here, -11% in Day 4) and the graph setting does not move it. The slowdown is therefore not a graph effect. All 1000 requests are concurrent at 1024 (peak running 999) and the decodes spend more of the run riding in expensive mixed steps, which is consistent with the lower throughput, and round 3 isolated it (9.10): it is the FlashAttention 2 mixed-step penalty of 9.9, because the loss disappears with `--attention-backend TRITON_ATTN` (-9.4% to +0.4%). A second interleaved pair with live metrics reproduced it: 256 seqs 9,445 / 9,457 tok/s vs 1024 seqs 8,218 / 8,581 (about -11%), p99 ITL 112-119 vs 415-423 ms.
 
 ### 9.4 Baseline vs modified on vLLM (RUNBOOK section 4) and the simulated E4-E6
 
@@ -257,7 +257,7 @@ after delays of 135 and 500 iterations, `--save-detailed` for per-token ITLs; pe
 - **The rule under-predicts by 2.5x here (231 vs 94 ms), but only because its decode coefficient was fitted at 512-token contexts.** The prefill coefficient barely moves (8.8 -> 10.5-11 ms per 1k tokens), while each decode riding in a mixed step costs **0.51-0.58 ms instead of 0.11 ms** (about 5x for 7x the context).
   Refit for 3584: `mixed ms = 23 + 10.5 x prefill/1000 + 0.51 x decodes`. A cross-window check: the steady-window coefficients applied to the ramp-up window's mean (8,076 prefill, 116 decodes) give 167 ms against 155 ms observed (+8%).
 - **Pure decode shows the same effect directly.** A 256-sequence pure-decode step costs 24.8 ms at 3584 against 6.5-7.3 ms at 512, +18 ms; reading every sequence's KV once is 256 x ~3,650 tokens x 12 KiB (24 layers x 2 x 2 KV heads x 64 x 2 B) = 11.5 GB, which takes 16.5 ms at 0.696 TB/s. That fits.
-- **What remains unexplained:** why a decode costs about 5x more inside a mixed step than in a pure step (0.51 vs 0.097 ms per sequence, the same 4-5x seen at 512 in 9.3). This round shows it grows with context length; it does not identify the kernel path responsible (no per-kernel attribution of the mixed steps was done).
+- **Why a decode costs about 5x more inside a mixed step (0.51 vs 0.097 ms per sequence, the same 4-5x seen at 512 in 9.3) is explained in 9.9**: the attention kernel (FlashAttention 2) loses its grouped-query decode path as soon as one sequence in the batch has more than one query token. **Correction:** the 0.51 ms/decode coefficient above is not identified (the decode count is 249-255 in every window step); only the constant 151 ms is, see 9.9.
 - Limits: 100-step windows (n = 89-100 mixed steps), least-squares fits, one GPU, one model, profiler overhead present in absolute times.
 
 ### 9.7 E6 with a pool the workload can exhaust (`--kv-cache-memory-bytes`, one run per pool)
@@ -303,10 +303,100 @@ Peak KV, running and waiting come from a 5 Hz `/metrics` sampler; preemptions fr
 - **E6 through `gpu_memory_utilization` is still flat for the reason 9.4 gave** (the pool is far above demand, 0 preemptions), which is why 9.7 shrinks the pool directly.
 - Single repeat per config, so differences under about 3% here are not interpretable on their own.
 
-### 9.9 What was not done
+### 9.9 Why a decode costs 4-7x more inside a mixed step: FlashAttention 2 stops using its GQA decode path (round 3, third A40 pod)
 
-Nsight Compute kernel counters; a kernel-level attribution of *why* a decode costs about 5x more inside a mixed vLLM step (9.6 shows it grows with context length but does not identify the kernel path); an isolating experiment for the `max_num_seqs=1024` throughput loss (still an open hypothesis; it reproduced again at -12.9% in 9.8);
-E1-E3 and the vLLM step-cost rule at models above 0.5B (9.5 covers the Day 1 loop up to 7B, not vLLM); one host CPU per model sweep and n = 1-6 repeats throughout.
+9.6 left one thing unexplained: a decode riding in a mixed step costs about 5x what it costs in a pure-decode step. Tools added for this: `gpu/kernel_costs.py` (assigns every profiler kernel to the step annotation that contains its start and totals per kernel family; per-step coverage is checked), `gpu/attn_microbench.py` (vLLM's own `flash_attn_varlen_func` on synthetic paged batches) and `gpu/run_backend_ab.sh`.
+Same server as 9.6 (0.5B, 256 seqs, 8192-token budget, 1000 prompts at 3584 in / 128 out, steady 100-step window after 500 iterations). Data: [results/measured/a40-round3/](results/measured/a40-round3/) (`step_costs/`, `kernel_costs/`, `microbench/`, `backend-ab/`); hypotheses were written down first in [PREREGISTRATION_ROUND3.md](PREREGISTRATION_ROUND3.md).
+
+**1. The extra cost is in the attention kernel.** Kernel coverage (kernel ms / step ms) is 99.9% on average, 98.4% at worst.
+
+| step type (3584 context) | steps | mean step ms | attention ms | GEMM ms | norm/activation ms |
+|---|---|---|---|---|---|
+| pure decode, 256 seqs | 11 | 24.9 | 21.6 | 2.4 | 0.7 |
+| mixed, about 7,640 prefill tokens + 251 decodes | 89 | 232.6 | **162.2** | 53.3 | 16.3 |
+| mixed, `--attention-backend TRITON_ATTN` | 89 | 128.6 | **55.1** | 55.7 | 16.3 |
+
+**A correction to 9.6.** The decode count in these 89 mixed steps is 249-255 (and 118-120 in the 8B windows of 9.11), so the least-squares "ms per decode" is not identified: it can only split a constant between the intercept and the decode term. The 0.51 ms/decode of 9.6 is really "23 + 0.51 x 251 = about 151 ms of cost that does not vary with the prefill size".
+The well-determined fit is on total tokens: step = 151.5 + 10.3 ms per 1k tokens (residual 0.9 ms); attention = 147.7 + 1.84 ms per 1k tokens; GEMM = 3.5 + 6.3 ms per 1k tokens. So a mixed step spends **about 148 ms on attention however much prefill rides along, against 21.6 ms for the same 256 sequences in a pure step: 6.8x**. `gpu/step_costs.py` and `gpu/kernel_costs.py` now warn when the decode count barely varies. The one 1024-sequence window of 9.10 whose decode count varies (mean 711 decodes, 39 mixed steps) gives an identified 0.116 ms per decode, close to the 0.094 ms of the microbenchmark below.
+
+**2. A microbenchmark of the kernel alone reproduces the gap and tracks the GQA group size.** One layer, 256 decodes with 3584 cached tokens each, plus one 7,600-token prefill chunk in the mixed batch; median of 50 calls, CUDA events; times in ms (FlashAttention 2, `fa_version=2`, as on an A40):
+
+| geometry | GQA group (q heads / kv heads) | pure decode | mixed | prefill alone | mixed over pure, per decode | pre-registered |
+|---|---|---|---|---|---|---|
+| Qwen2.5-0.5B | 7 (14 / 2) | 0.888 | 7.337 | 1.500 | **6.58** | about 7 |
+| same, with 14 kv heads (no GQA control) | 1 (14 / 14) | 6.070 | 7.681 | 1.601 | **1.00** | about 1 |
+| Llama-3.1-8B | 4 (32 / 8) | 6.526 | 29.567 | 5.738 | **3.65** | about 4 |
+
+All three predictions held. Cross-checks: the microbenchmark's 0.0228 ms per decode and layer x 24 layers = 0.55 ms per decode against 148 ms / 250 = 0.59 ms measured in the server, and 0.0035 x 24 = 0.084 ms against 21.6 / 256 = 0.084 ms for pure decode. The mixed-batch decode time of the GQA-7 model (7.337 - 1.500 = 5.8 ms) is about the pure-decode time of the no-GQA control (6.07 ms), which reads 7x the KV bytes.
+
+**3. The penalty switches on at a query length of 2, not with the size of the prefill chunk.** 0.5B geometry, 256 decodes, 3584 context, mixed batch with one extra sequence of P query tokens:
+
+| P (longest query in the batch) | 1 | 2 | 16 | 128 | 1,024 | 7,600 |
+|---|---|---|---|---|---|---|
+| mixed batch ms | 0.888 | 6.091 | 6.083 | 6.087 | 6.102 | 7.336 |
+
+With P = 1 the batch is still "all decodes" and costs the same as a pure batch (0.887 ms); the moment one sequence has two query tokens the cost jumps 6.9x and then stays flat from P = 2 to 1,024. Across 32 / 64 / 128 / 256 / 512 decodes the ratio is 5.5 / 6.2 / 6.7 / 6.6 / 6.9. At 512 cached tokens the same step appears (6.5-6.8x for P = 2-1,024; 0.0039 vs 0.0006 ms per decode and layer = **0.094 vs 0.014 ms per decode over 24 layers, which is the "0.1 ms per decode" rule of thumb of 9.3**). With P = 7,600 at 512 context the ratio is 18, an extra effect that does not occur in the server (its longest query is bounded by the 512-token prompt) and which I did not investigate.
+
+**4. Changing the backend removes most of it, end to end.** Unprofiled A/B, fresh server per run, 1000 prompts, 0 failed requests ([backend-ab/](results/measured/a40-round3/backend-ab/)):
+
+| workload (in x out), 256 seqs | FLASH_ATTN (default) tok/s | TRITON_ATTN tok/s | change | p50 ITL ms (FA2 / Triton) |
+|---|---|---|---|---|
+| 3584 x 128 (n = 2 each) | 1,226 (1,228; 1,225) | 1,965 (1,967; 1,962) | **+60%** | 236 / 134 |
+| 512 x 128 (n = 3) | 9,334 | 10,655 | **+14%** | 11.3 / 10.5 |
+| 128 x 128 (n = 3) | 17,052 | 17,291 | +1.4% (within noise, 15,994-18,081) | |
+
+**What is measured and what is inferred.** Measured: where the time goes (attention), that a kernel-only benchmark reproduces it, the step at query length 2, the dependence on the GQA group size (1 / 4 / 7 gives 1.0 / 3.65 / 6.6), and the backend switch. Inferred, not observed: that FlashAttention 2 only uses its grouped-query path (one KV read per KV head) when the longest query in the batch is a single token, and otherwise streams the KV once per query head. It fits every number above (mixed GQA-7 time about equals 7x the bytes at the same bandwidth), but the DRAM byte counters that would confirm it could not be read: Nsight Compute 2026.4.0 installed fine and failed with `ERR_NVGPUCTRPERM` (the container may not read GPU performance counters; the setting is on the host), tested on a small matmul ([ncu_gate_a.txt](results/measured/a40-round3/ncu_gate_a.txt)).
+Scope: A40 (sm86, FlashAttention 2), vLLM 0.34.0, Qwen2.5-0.5B end to end and the 8B and MHA geometries in the microbenchmark only. Hopper uses FlashAttention 3, which I did not test. I did not compare output quality between the two backends. Profiled runs (the first table) are not comparable with unprofiled throughput; the A/B in 4 is unprofiled.
+
+### 9.10 Isolating the `max_num_seqs=1024` loss
+
+Fixed beforehand ([PREREGISTRATION_ROUND3.md](PREREGISTRATION_ROUND3.md)): H1 = decodes riding in expensive mixed steps; H2 = per-step CPU / scheduler / output-processing overhead that grows with running sequences; H3 (KV memory) already excluded (peak KV 21%, 0 preemptions).
+`gpu/run_seqs_isolation.sh`: 0.5B, 1000 prompts at once, 8192-token budget, fresh server per run, repeat-major order, 3 repeats, 27 runs, 0 failed requests ([seqs-isolation/](results/measured/a40-round3/seqs-isolation/)). tok/s, mean [min-max]; this pod's baseline is about 3% below the earlier hosts (9,134 vs 9,282-9,457), so only ratios within this table are compared:
+
+| workload (in x out) | 256 seqs | 1024 seqs | 1024 vs 256 | p50 ITL (256 / 1024) ms |
+|---|---|---|---|---|
+| 512 x 128 (baseline) | 9,134 [8,984-9,253] | 8,321 [8,195-8,459] | **-8.9%** | 11.1 / 41.0 |
+| 128 x 128 | 15,885 [14,748-16,827] | 14,777 [14,628-14,993] | -7.0% | 10.6 / 37.9 |
+| 512 x 512 | 15,201 [14,903-15,400] | 14,899 [13,377-15,670] | -2.0% | 12.1 / 45.4 |
+| 128 x 512 | 20,920 [20,739-21,234] | 21,721 [20,711-23,148] | +3.8% (noise) | 9.9 / 37.9 |
+| 512 x 128 at 512 seqs | | 9,021 [8,834-9,156] | -1.2% (dose-response) | 20.4 |
+
+**The loss shrinks to zero when decode dominates the run** (512 output tokens), which is the H1 shape; at 128 x 128 it stays at -7.0%, which that simple reading does not predict (see the estimate below).
+
+**The decisive test is an intervention on the mechanism of 9.9**: the same comparison with `TRITON_ATTN`, unprofiled, 3 repeats per cell, 0 failures ([backend-ab/](results/measured/a40-round3/backend-ab/)):
+
+| workload | backend | 256 seqs tok/s | 1024 seqs tok/s | 1024 vs 256 |
+|---|---|---|---|---|
+| 512 x 128 | FLASH_ATTN | 9,334 [9,019-9,558] | 8,458 [8,450-8,472] | **-9.4%** |
+| 512 x 128 | TRITON_ATTN | 10,655 [10,521-10,757] | 10,703 [10,613-10,782] | **+0.4%** |
+| 128 x 128 | FLASH_ATTN | 17,052 | 16,528 | -3.1% |
+| 128 x 128 | TRITON_ATTN | 17,291 | 17,172 | -0.7% (noise: runs span 15,994-18,574) |
+
+**Verdict: H1 holds in the form "the FlashAttention 2 mixed-step penalty of 9.9 times the number of decodes that ride in mixed steps".** With a backend that has no such penalty the 1024-sequence arm is no slower than the 256 one, with tight repeats (8,450-8,472 against 10,613-10,782). Why 1024 pays more: its 1000 requests are admitted together, so about 63 prefill-carrying steps each carry hundreds of decodes (profile windows: 494 and 711), whereas with 256 sequences prefill arrives in waves of 16 steps with fewer decodes (139-227 in the windows).
+A rough estimate (inferred, with guessed average decode counts of 500 and 128): about 31k decode-steps in mixed batches at 1024 against about 8k at 256, at 0.094 ms each = 2.9 s against 0.8 s, i.e. about 2 s extra against the 1.4 s actually lost (15.4 vs 14.0 s of run time). The right order of magnitude, not a fit. A similar rough estimate for 128 x 128 gives about -5%, against -7.0% in the grid and -3.1% in the later A/B (both FlashAttention 2): noisy, not contradictory.
+
+**What the pre-registered rule says, and why I do not follow it.** Applied literally, `gpu/seqs_isolation.verdict` returns **H2**, because its idle-time criterion fires: GPU busy fraction (step GPU time / wall span, `step_costs.busy_fraction`) is 0.81-0.83 in two 256-seq windows (median inter-step gap about 4.4 ms) against 0.60-0.77 in the two steady 1024-seq windows (median gaps 20-22 ms), a difference of 14 points against the rule's 10.
+I do not accept that as the cause: (a) those windows are profiled, and kernel coverage in the two steady ones is only 72-89% (against 97-100% for the 256-seq and 8B windows), i.e. the profiler's own overhead and unattributed time inflate exactly the arm with the most kernels; (b) if per-step overhead per running sequence were the cause, the loss would be largest in decode-dominated runs, but there it is absent (+3.8% at 128 x 512, -2.0% at 512 x 512); (c) swapping the attention backend removes the whole loss. The rule's idle-time criterion should have been measured without a profiler; that was a flaw in my pre-registration, so both the literal output and my reading are recorded here. Per-token pure-decode cost at 1024 is about equal to 256's in the unprofiled ITLs (p50 ITL / running sequences: 0.038-0.045 vs 0.041-0.047 ms).
+Limits: 0.5B, one A40, one pod; the 1,024-seq windows are 100 steps each; n = 3 per cell and some cells have a 10% spread. The Day 4 1.5B run (-4.9%) was not re-examined.
+
+### 9.11 Llama-3.1-8B under vLLM: step costs and the 0.5B rule
+
+`gpu/run_itl_study.sh` with `MODEL=NousResearch/Meta-Llama-3.1-8B-Instruct` (fp16, 128 KiB of KV per token; pool 174k-178k tokens, so demand stays at 47-79% of it), `--max-num-batched-tokens 2048` (a step at 8192 would take about a second), 1000 prompts, 100-step windows after 150 and 400 iterations, profiler on, 0 failed requests. The two windows of each arm agree.
+
+| arm | busy fraction | pure-decode step | mixed steps (prefill tokens, decodes) | attention / GEMM in mixed steps | total-token fit (mixed) |
+|---|---|---|---|---|---|
+| 512 in, 128 seqs | 0.98 | 48.1-48.4 ms (128 decodes: GEMM 29, attention 17) | 34-35 x 343-344 ms (1,860-1,910; 118-120) | 66-67 / 254-257 ms | 70-98 ms + 122-138 ms per 1k tokens |
+| 2048 in, 64 seqs | 0.99 | 62.2 ms (64 decodes: GEMM 29, attention 32) | 65 x 407-410 ms (1,985; 61) | 126-127 / 259-261 ms | not stable (windows differ: context grows) |
+
+Pre-registered predictions: **prefill coefficient 100-180 ms per 1k tokens: held** (122-138 vs the 9 ms of the 0.5B). **Pure decode about 23 ms plus KV reads: held in structure, 48 ms measured**: the GEMMs take 29 ms (floor 21.9-23 ms for 16 GB at 0.696 TB/s) and attention 17 ms (128 sequences x about 576 tokens x 128 KiB = 9.7 GB, 14 ms at peak bandwidth). **GPU busy fraction close to 1: held** (0.98-0.99, against 0.13 for the launch-bound 0.5B Day 1 loop in 9.5).
+**Mixed-decode cost about 4x its pure value: not testable from the traces** (decodes constant, 118-120 and 61, so not identified); the microbenchmark gives 3.65x at 3584 and 6.3x at 512 cached tokens for the 8B geometry. In an 8B mixed step attention is only 19% of the time at 512 context (67 of 343 ms) against 70% for the 0.5B at 3584, which fits Day 4's observation that the `max_num_seqs=1024` loss shrinks with model size (-4.9% at 1.5B); I did not test the 8B at 1024 seqs.
+The 0.5B rule (9 ms per 1k prefill tokens + 0.1 ms per decode) is a 0.5B/A40 fit and does not transfer to 8B (about 15x the prefill coefficient).
+
+### 9.12 What was not done
+
+- **Nsight Compute counters (DRAM bytes, occupancy, waves)**: blocked, `ERR_NVGPUCTRPERM`, on the third pod (a RunPod container cannot lift the host's counter restriction). So the byte-level mechanism of 9.9 is inferred from timings and the GQA-group dependence, not observed. It needs a host where `NVreg_RestrictProfilingToAdminUsers=0` or a bare-metal machine.
+- **Other hardware and models for the 9.9 / 9.10 finding**: Hopper (FlashAttention 3), other GQA ratios end to end, the 8B at 1024 seqs, and output quality or correctness of `TRITON_ATTN` against FlashAttention 2 were not tested.
+- E1-E3 at models above 0.5B under vLLM (9.5 covers the Day 1 loop up to 7B; 9.11 covers vLLM step costs for 8B only); one host CPU per model sweep and n = 1-6 repeats throughout.
 The first trace attempt (delay 20) only captured the benchmark's warm-up request, and my first window (delay 150) held 20 steps; the 9.3 numbers come from the 100-step windows after a 135-iteration delay.
 
 ## 8. Reproduce
@@ -322,3 +412,15 @@ cd day6-profiling && uv venv --python 3.12 .venv && uv pip install --python .ven
 ```
 
 Expect your absolute numbers to differ by about 5% across sessions; the verdicts above should hold.
+
+GPU round 3 (a single A40 pod; `source ../day4-vllm-internals/.venv-gpu/bin/activate`, vLLM 0.34.0; run one job at a time, the GPU is shared by all of them):
+
+```bash
+LENS="3584 512" DELAYS=500 bash gpu/run_itl_study.sh results/raw/r3-itl                 # profiled windows; then python -m gpu.step_costs / gpu.kernel_costs <trace dir>
+LENS=3584 DELAYS=500 EXTRA_SERVE="--attention-backend TRITON_ATTN" bash gpu/run_itl_study.sh results/raw/r3-itl-triton
+for m in qwen2.5-0.5b qwen2.5-0.5b-mha llama3.1-8b; do python gpu/attn_microbench.py --model $m --ctx 3584 --decodes 256 --prefill 7600 --out mb_$m.json; done
+REPS=2 bash gpu/run_backend_ab.sh results/raw/r3-backend-ab                              # unprofiled FLASH_ATTN vs TRITON_ATTN; SEQS=1024 for the max_num_seqs arm
+REPS=3 bash gpu/run_seqs_isolation.sh results/raw/r3-seqs && python -m gpu.seqs_isolation results/raw/r3-seqs
+MODEL=NousResearch/Meta-Llama-3.1-8B-Instruct SEQS=128 BT=2048 LENS=512 DELAYS="150 400" bash gpu/run_itl_study.sh results/raw/r3-itl-8b
+bash gpu/run_ncu.sh        # needs readable GPU counters; ERR_NVGPUCTRPERM in a RunPod container
+```

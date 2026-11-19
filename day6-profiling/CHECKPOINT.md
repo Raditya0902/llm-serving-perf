@@ -2,7 +2,7 @@
 
 Evidence tags: **[measured]** = from the Apple M4 / MPS runs in [performance-report.md](performance-report.md);
 **[measured A40]** = from the NVIDIA A40 runs (report section 9); **[mechanism]** = standard reasoning I did not test here;
-**[GPU pending]** = still not run (Nsight Compute kernel counters; a profiled root cause for why decodes cost more inside mixed vLLM steps). nsys timelines and models up to 7B have since been run (report 9.5).
+**[GPU pending]** = still not run (Nsight Compute kernel counters: blocked by the container, `ERR_NVGPUCTRPERM`, report 9.12). nsys timelines, models up to 7B, the kernel-level cause of the mixed-step decode cost (FlashAttention 2 loses its GQA decode path, 9.9), the `max_num_seqs=1024` isolation (9.10) and 8B vLLM step costs (9.11) have since been run.
 
 > **A40 update that changes the answers below.** The Day 1 loop on CUDA is **launch-bound, not memory-bound**: enqueue is 0.97-0.98 of the step (unprofiled), a loop with no syncs takes exactly its enqueue time, GPU device work is at most about 27% of the step, step time is 16.3 ms at every batch size 1-8, and TTFT is flat to 1024 tokens. So Q1's "decode is bandwidth-bound" holds for the roofline *argument* but not for this loop on this GPU (about 1.4 ms of weight reads at 696 GB/s inside a 16 ms step), and Q3's "ask whether the CPU can feed the device" is answered **yes, it cannot** [measured A40]. Q2's utilization point is also confirmed: "GPU busy" was true but the device did at most about 4 ms of work in a 15 ms step. The Mac text below stays as the MPS result.
 
@@ -12,7 +12,7 @@ Compare achieved rates with the hardware's two ceilings (a roofline), then confi
 - **Arithmetic intensity.** Decode at batch 1 does about 2 FLOPs per weight byte read at fp16 (1 FLOP/byte), far below any GPU's FLOPs-per-byte ridge, so it should be bandwidth-bound; prefill reuses each weight across hundreds of tokens, so it should be compute-bound. [mechanism]
 - **Achieved bandwidth.** Replaying the real matmuls gave 51-93 GB/s effective against Day 1's assumed 120 GB/s, at 0.99 GB of weights per step. [measured] Decode time is set by bytes moved.
 - **Scale the work and watch the time.** Eight times the decode work (batch 8) cost only 1.31-1.44x the step time in four independent runs: the weight read is paid once, so the step was memory-bound. [measured] Prefill instead scaled with tokens (TTFT 50 / 162 / 320 / 708 ms for 128 / 512 / 1024 / 2048 tokens, about 3.2k tok/s from 512 up): compute-bound. [measured]
-- **Caveat.** "Memory-bound" at this model size also includes per-op overhead; on MPS I could not read hardware counters (SM/occupancy, DRAM throughput). On NVIDIA, Nsight Compute provides them (not run; nsys busy fraction and kernel counts were measured, report 9.5). [GPU pending for counters]
+- **Caveat.** "Memory-bound" at this model size also includes per-op overhead; on MPS I could not read hardware counters (SM/occupancy, DRAM throughput). On NVIDIA, Nsight Compute provides them (tried in round 3 and refused by the container with `ERR_NVGPUCTRPERM`, so the kernel-level mechanism of 9.9 rests on timings, not counters; nsys busy fraction and kernel counts were measured, report 9.5). [GPU pending for counters]
 
 ## 2. Why can GPU utilization be misleading?
 

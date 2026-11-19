@@ -1,0 +1,147 @@
+{
+  "trace_len512_d500": {
+    "steps": 100,
+    "coverage": {
+      "mean": 0.9704183317740488,
+      "min": 0.674583525215722
+    },
+    "pure": {
+      "n": 83,
+      "mean_ms_by_family": {
+        "attention": 3.2550165421686748,
+        "gemm": 2.3724743373493973,
+        "norm_act": 0.6906190240963855,
+        "kv_write": 0.06325885542168674,
+        "sampling": 0.006329855421686747,
+        "comm": 0.0,
+        "other": 0.014805277108433738
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 128, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 128, 4, cutlass::bfloat16_t> >, false, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          3.255
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          1.0877
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_32x5_tn",
+          0.6974
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_64x64_ldg8_relu_f2f_stages_64x5_tn",
+          0.2629
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_64x64_ldg8_f2f_stages_64x5_tn",
+          0.2208
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 17,
+      "mean_ms_by_family": {
+        "attention": 31.604655235294125,
+        "gemm": 48.61328705882353,
+        "norm_act": 14.707219529411766,
+        "kv_write": 0.4444083529411765,
+        "sampling": 0.00646964705882353,
+        "comm": 0.0,
+        "other": 0.05427476470588236
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 256, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 256, 4, cutlass::bfloat16_t> >, true, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          31.6047
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          28.8623
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8::Params)",
+          14.6475
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          8.787
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_relu_f2f_stages_32x3_tn",
+          3.6108
+        ]
+      ],
+      "fits": {
+        "attention": {
+          "intercept_ms": -16.77775928232722,
+          "ms_per_1000_prefill_tokens": 0.9207366857491095,
+          "ms_per_decode": 0.18502621599840885
+        },
+        "gemm": {
+          "intercept_ms": 11.883490474918313,
+          "ms_per_1000_prefill_tokens": 6.542721615054516,
+          "ms_per_decode": -0.037958820846279946
+        },
+        "norm_act": {
+          "intercept_ms": 0.727393671418065,
+          "ms_per_1000_prefill_tokens": 2.0590072653428915,
+          "ms_per_decode": -0.001281013849667729
+        },
+        "kv_write": {
+          "intercept_ms": 0.6018270539404771,
+          "ms_per_1000_prefill_tokens": 0.04761509956024382,
+          "ms_per_decode": -0.00214727116029393
+        },
+        "sampling": {
+          "intercept_ms": -0.008718031439578217,
+          "ms_per_1000_prefill_tokens": 0.00020986962056757455,
+          "ms_per_decode": 6.049827838794398e-05
+        },
+        "comm": {
+          "intercept_ms": 0.0,
+          "ms_per_1000_prefill_tokens": 0.0,
+          "ms_per_decode": 0.0
+        },
+        "other": {
+          "intercept_ms": 0.1240657868383737,
+          "ms_per_1000_prefill_tokens": 0.0014521791443175348,
+          "ms_per_decode": -0.000351787751166733
+        }
+      },
+      "decode_identifiable": false,
+      "decode_slope_share": {}
+    },
+    "warnings": [
+      "coverage below 80% in 8 of 100 steps; kernel ms / step ms min 67%, so the attribution misses time",
+      "per-decode slope not identified: the number of decodes barely varies across mixed steps, so the per-decode fits (and decode_slope_share) only reflect a constant; use a controlled sweep over decodes"
+    ],
+    "dominant_decode_family": null,
+    "unclassified_top": [
+      [
+        "_apply_write_kernel",
+        0.688
+      ],
+      [
+        "_gather_block_tables_kernel",
+        0.665
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.364
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.175
+      ],
+      [
+        "_prepare_prefill_inputs_kernel",
+        0.138
+      ],
+      [
+        "memcpy32_post",
+        0.122
+      ]
+    ]
+  }
+}

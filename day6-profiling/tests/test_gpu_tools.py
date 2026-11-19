@@ -146,3 +146,23 @@ def test_row_from_result_rejects_memory_from_a_failed_benchmark(tmp_path):
 
     with pytest.raises(ValueError, match="exited with code 137"):
         row_from_result(result, mem)
+
+
+@pytest.mark.parametrize("script", sorted(GPU_DIR.glob("*.sh")), ids=lambda p: p.name)
+def test_every_gpu_shell_script_passes_a_bash_syntax_check(script):
+    result = subprocess.run(["bash", "-n", str(script)], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+
+
+def test_seqs_isolation_script_writes_the_file_names_the_summary_reads():
+    import re
+
+    from gpu import seqs_isolation
+
+    text = (GPU_DIR / "run_seqs_isolation.sh").read_text()
+    arms = re.search(r'ARMS="\$\{ARMS:-([^}]*)\}"', text).group(1).split()
+    assert len(arms) == 9 and "1024:512x128" in arms and "512:512x128" in arms
+    for arm in arms:
+        seqs, workload = arm.split(":")
+        assert seqs_isolation.parse_name(f"seqs{seqs}_{workload}_r0.json") == (int(seqs), workload, 0)
+    assert 'tag="seqs${seqs}_${workload}_r${rep}"' in text

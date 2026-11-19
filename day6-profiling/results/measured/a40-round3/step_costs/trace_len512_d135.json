@@ -1,0 +1,30 @@
+{
+  "results/raw/r3-itl-s256b/trace_len512_d135": {
+    "steps": 100,
+    "pure": {
+      "n": 86,
+      "mean_ms": 6.873095337209306,
+      "median_ms": 6.803743,
+      "p90_ms": 6.9678070000000005,
+      "mean_decodes": 256.0,
+      "mean_prefill_tokens": 0.0
+    },
+    "mixed": {
+      "n": 14,
+      "mean_ms": 93.57452507142857,
+      "median_ms": 94.25815700000001,
+      "p90_ms": 101.42874839999999,
+      "mean_decodes": 139.28571428571428,
+      "mean_prefill_tokens": 7942.5,
+      "decode_identifiable": true,
+      "fit": {
+        "intercept_ms": 16.319870668883055,
+        "ms_per_1000_prefill_tokens": 7.837809174233066,
+        "ms_per_decode": 0.10771280538809812,
+        "mean_rule_of_thumb_ms": 85.41107142857145
+      }
+    },
+    "busy_fraction": 0.8130704410891136,
+    "mixed_share_of_steps": 0.14
+  }
+}

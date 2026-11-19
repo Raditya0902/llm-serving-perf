@@ -1,0 +1,31 @@
+{
+  "results/raw/r3-itl-triton/trace_attention_backend_TRITON_ATTN_len3584_d500": {
+    "steps": 100,
+    "pure": {
+      "n": 11,
+      "mean_ms": 22.368129272727273,
+      "median_ms": 22.320330000000002,
+      "p90_ms": 22.539468,
+      "mean_decodes": 255.9090909090909,
+      "mean_prefill_tokens": 0.0
+    },
+    "mixed": {
+      "n": 89,
+      "mean_ms": 128.57888431460674,
+      "median_ms": 131.888197,
+      "p90_ms": 135.49002199999998,
+      "mean_decodes": 250.86516853932585,
+      "mean_prefill_tokens": 7641.134831460674,
+      "decode_identifiable": false,
+      "fit": {
+        "intercept_ms": 300.9414476980566,
+        "ms_per_1000_prefill_tokens": 13.706803351204577,
+        "ms_per_decode": -1.1045698273368822,
+        "mean_rule_of_thumb_ms": 93.85673033707863,
+        "note": "ms_per_decode is not identified: the number of decodes barely varies across these mixed steps, so only intercept + ms_per_decode x mean decodes is determined"
+      }
+    },
+    "busy_fraction": 0.9627135284833445,
+    "mixed_share_of_steps": 0.89
+  }
+}

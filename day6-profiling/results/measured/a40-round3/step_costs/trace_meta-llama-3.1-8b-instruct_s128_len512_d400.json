@@ -1,0 +1,31 @@
+{
+  "results/raw/r3-itl-8b/trace_meta-llama-3.1-8b-instruct_s128_len512_d400": {
+    "steps": 100,
+    "pure": {
+      "n": 65,
+      "mean_ms": 48.370341107692305,
+      "median_ms": 48.062273,
+      "p90_ms": 49.6107152,
+      "mean_decodes": 127.95384615384616,
+      "mean_prefill_tokens": 0.0
+    },
+    "mixed": {
+      "n": 35,
+      "mean_ms": 342.5115932,
+      "median_ms": 350.98429200000004,
+      "p90_ms": 354.3773674,
+      "mean_decodes": 120.02857142857142,
+      "mean_prefill_tokens": 1857.8285714285714,
+      "decode_identifiable": false,
+      "fit": {
+        "intercept_ms": 79.11630098227981,
+        "ms_per_1000_prefill_tokens": 137.3360507002174,
+        "ms_per_decode": 0.06872074908099624,
+        "mean_rule_of_thumb_ms": 28.723314285714288,
+        "note": "ms_per_decode is not identified: the number of decodes barely varies across these mixed steps, so only intercept + ms_per_decode x mean decodes is determined"
+      }
+    },
+    "busy_fraction": 0.9799193897969919,
+    "mixed_share_of_steps": 0.35
+  }
+}

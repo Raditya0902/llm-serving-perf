@@ -1,0 +1,20 @@
+[07:20:38] RUN meta-llama-3.1-8b-instruct_s128_len512_d150
+(EngineCore pid=56509) INFO 11-19 07:21:43 [kv_cache_utils.py:1168] GPU KV cache size: 174,080 tokens, Maximum concurrency for 4,096 tokens per request: 42.50x
+36f4dc1cdcfd_56127.async_llm.1795073064656116644.pt.trace.json.gz
+36f4dc1cdcfd_56127.async_llm.profiler_out.txt
+rank0.1795072949708136391.pt.trace.json.gz
+[07:24:36] RUN meta-llama-3.1-8b-instruct_s128_len512_d400
+(EngineCore pid=57361) INFO 11-19 07:25:14 [kv_cache_utils.py:1168] GPU KV cache size: 178,176 tokens, Maximum concurrency for 4,096 tokens per request: 43.50x
+36f4dc1cdcfd_57164.async_llm.1795073280155810225.pt.trace.json.gz
+36f4dc1cdcfd_57164.async_llm.profiler_out.txt
+rank0.1795073199504402440.pt.trace.json.gz
+[07:28:12] RUN meta-llama-3.1-8b-instruct_s64_len2048_d150
+(EngineCore pid=58169) INFO 11-19 07:29:05 [kv_cache_utils.py:1168] GPU KV cache size: 175,616 tokens, Maximum concurrency for 4,096 tokens per request: 42.88x
+36f4dc1cdcfd_57971.async_llm.1795073877289599310.pt.trace.json.gz
+36f4dc1cdcfd_57971.async_llm.profiler_out.txt
+rank0.1795073427033477794.pt.trace.json.gz
+[07:38:09] RUN meta-llama-3.1-8b-instruct_s64_len2048_d400
+(EngineCore pid=59269) INFO 11-19 07:38:45 [kv_cache_utils.py:1168] GPU KV cache size: 179,712 tokens, Maximum concurrency for 4,096 tokens per request: 43.88x
+36f4dc1cdcfd_59071.async_llm.1795074457095103916.pt.trace.json.gz
+36f4dc1cdcfd_59071.async_llm.profiler_out.txt
+rank0.1795074068747678996.pt.trace.json.gz

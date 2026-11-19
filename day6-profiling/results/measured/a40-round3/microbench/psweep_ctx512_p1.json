@@ -1,0 +1,74 @@
+{
+  "model": "qwen2.5-0.5b",
+  "geometry": {
+    "q_heads": 14,
+    "kv_heads": 2,
+    "head_dim": 64,
+    "gqa_group": 7
+  },
+  "ctx": 512,
+  "decodes": 256,
+  "prefill": 1,
+  "block_size": 16,
+  "batches": [
+    {
+      "label": "pure_decode",
+      "sequences": 256,
+      "q_tokens": 256,
+      "max_seqlen_q": 1,
+      "max_seqlen_k": 513,
+      "gqa_group": 7,
+      "block_table_shape": [
+        256,
+        33
+      ],
+      "kv_bytes_read_per_layer": 67239936,
+      "bandwidth_floor_ms": 0.09660910344827586,
+      "median_ms": 0.15328000485897064,
+      "min_ms": 0.15171200037002563,
+      "max_ms": 0.26102399826049805,
+      "iters": 50
+    },
+    {
+      "label": "mixed",
+      "sequences": 257,
+      "q_tokens": 257,
+      "max_seqlen_q": 1,
+      "max_seqlen_k": 513,
+      "gqa_group": 7,
+      "block_table_shape": [
+        257,
+        33
+      ],
+      "kv_bytes_read_per_layer": 67240448,
+      "bandwidth_floor_ms": 0.09660983908045977,
+      "median_ms": 0.1523520052433014,
+      "min_ms": 0.15087999403476715,
+      "max_ms": 0.225600004196167,
+      "iters": 50
+    },
+    {
+      "label": "prefill_only",
+      "sequences": 1,
+      "q_tokens": 1,
+      "max_seqlen_q": 1,
+      "max_seqlen_k": 1,
+      "gqa_group": 7,
+      "block_table_shape": [
+        1,
+        1
+      ],
+      "kv_bytes_read_per_layer": 512,
+      "bandwidth_floor_ms": 7.35632183908046e-07,
+      "median_ms": 0.09779199957847595,
+      "min_ms": 0.09539200365543365,
+      "max_ms": 0.11337599903345108,
+      "iters": 50
+    }
+  ],
+  "per_decode": {
+    "pure_decode_ms_per_decode": 0.0005987500189803541,
+    "mixed_ms_per_decode": 0.00021312502212822437,
+    "mixed_over_pure": 0.3559499212896348
+  }
+}

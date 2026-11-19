@@ -1,0 +1,59 @@
+STEP s1024-windows
+[07:17:10] RUN s1024_len512_d160
+(EngineCore pid=54829) INFO 11-19 07:17:44 [kv_cache_utils.py:1168] GPU KV cache size: 2,932,736 tokens, Maximum concurrency for 4,096 tokens per request: 716.00x
+36f4dc1cdcfd_54642.async_llm.1795072719810393552.pt.trace.json.gz
+36f4dc1cdcfd_54642.async_llm.profiler_out.txt
+rank0.1795072696651539068.pt.trace.json.gz
+[07:18:51] RUN s1024_len512_d200
+(EngineCore pid=55590) INFO 11-19 07:19:29 [kv_cache_utils.py:1168] GPU KV cache size: 2,932,736 tokens, Maximum concurrency for 4,096 tokens per request: 716.00x
+36f4dc1cdcfd_55391.async_llm.1795072826555973461.pt.trace.json.gz
+36f4dc1cdcfd_55391.async_llm.profiler_out.txt
+rank0.1795072804995009438.pt.trace.json.gz
+STEP 8b-a
+[07:20:38] RUN meta-llama-3.1-8b-instruct_s128_len512_d150
+(EngineCore pid=56509) INFO 11-19 07:21:43 [kv_cache_utils.py:1168] GPU KV cache size: 174,080 tokens, Maximum concurrency for 4,096 tokens per request: 42.50x
+36f4dc1cdcfd_56127.async_llm.1795073064656116644.pt.trace.json.gz
+36f4dc1cdcfd_56127.async_llm.profiler_out.txt
+rank0.1795072949708136391.pt.trace.json.gz
+[07:24:36] RUN meta-llama-3.1-8b-instruct_s128_len512_d400
+(EngineCore pid=57361) INFO 11-19 07:25:14 [kv_cache_utils.py:1168] GPU KV cache size: 178,176 tokens, Maximum concurrency for 4,096 tokens per request: 43.50x
+36f4dc1cdcfd_57164.async_llm.1795073280155810225.pt.trace.json.gz
+36f4dc1cdcfd_57164.async_llm.profiler_out.txt
+rank0.1795073199504402440.pt.trace.json.gz
+STEP 8b-b
+[07:28:12] RUN meta-llama-3.1-8b-instruct_s64_len2048_d150
+(EngineCore pid=58169) INFO 11-19 07:29:05 [kv_cache_utils.py:1168] GPU KV cache size: 175,616 tokens, Maximum concurrency for 4,096 tokens per request: 42.88x
+36f4dc1cdcfd_57971.async_llm.1795073877289599310.pt.trace.json.gz
+36f4dc1cdcfd_57971.async_llm.profiler_out.txt
+rank0.1795073427033477794.pt.trace.json.gz
+[07:38:09] RUN meta-llama-3.1-8b-instruct_s64_len2048_d400
+(EngineCore pid=59269) INFO 11-19 07:38:45 [kv_cache_utils.py:1168] GPU KV cache size: 179,712 tokens, Maximum concurrency for 4,096 tokens per request: 43.88x
+36f4dc1cdcfd_59071.async_llm.1795074457095103916.pt.trace.json.gz
+36f4dc1cdcfd_59071.async_llm.profiler_out.txt
+rank0.1795074068747678996.pt.trace.json.gz
+EIGHTBDONE
+[07:47:48] SKIP FLASH_ATTN_512x128_r0 (done)
+[07:47:48] SKIP TRITON_ATTN_512x128_r0 (done)
+[07:47:48] RUN FLASH_ATTN_128x128_r0
+[07:48:54] RUN TRITON_ATTN_128x128_r0
+[07:49:59] SKIP FLASH_ATTN_512x128_r1 (done)
+[07:49:59] SKIP TRITON_ATTN_512x128_r1 (done)
+[07:49:59] RUN FLASH_ATTN_128x128_r1
+[07:51:03] RUN TRITON_ATTN_128x128_r1
+[07:52:05] RUN FLASH_ATTN_512x128_r2
+[07:53:14] RUN TRITON_ATTN_512x128_r2
+[07:54:22] RUN FLASH_ATTN_128x128_r2
+[07:55:24] RUN TRITON_ATTN_128x128_r2
+[07:56:24] RUN FLASH_ATTN_512x128_r0
+[07:57:54] RUN TRITON_ATTN_512x128_r0
+[07:59:23] RUN FLASH_ATTN_128x128_r0
+[08:00:25] RUN TRITON_ATTN_128x128_r0
+[08:01:30] RUN FLASH_ATTN_512x128_r1
+[08:02:41] RUN TRITON_ATTN_512x128_r1
+[08:03:48] RUN FLASH_ATTN_128x128_r1
+[08:04:50] RUN TRITON_ATTN_128x128_r1
+[08:05:51] RUN FLASH_ATTN_512x128_r2
+[08:07:01] RUN TRITON_ATTN_512x128_r2
+[08:08:09] RUN FLASH_ATTN_128x128_r2
+[08:09:10] RUN TRITON_ATTN_128x128_r2
+P6DONE

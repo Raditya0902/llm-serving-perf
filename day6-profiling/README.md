@@ -2,7 +2,7 @@
 
 > **Status.** Measured on an Apple M4 (MPS) and, since 2026-11-18, on one NVIDIA A40 (report section 9): profiling, experiments
 > E1-E3, O1, O2, a vLLM torch-profiler study, and (second A40 pod) nsys captures, models up to 7B, the 3584-token ITL trace and a KV-pool-capped E6
-> sweep (report 9.5-9.8). The simulated E4-E6 rows are compared against Day 4's real sweep in report section 9.4. See [performance-report.md](performance-report.md).
+> sweep (report 9.5-9.8), and (third A40 pod) a kernel-level cause for the mixed-step decode cost, an isolation of the `max_num_seqs=1024` loss and 8B step costs (report 9.9-9.11). The simulated E4-E6 rows are compared against Day 4's real sweep in report section 9.4. See [performance-report.md](performance-report.md).
 
 ## Headline findings (details and caveats in the report)
 
@@ -11,7 +11,7 @@
 - In vLLM, a step that carries prefill costs 93-132 ms vs 7.3 ms (256 seqs) or 26 ms (999 seqs) for a pure decode step, and each decode riding in a mixed step costs about 4x more; that is the mechanism behind Day 4's ITL tails and its non-monotonic p50 ITL.
 - **The loop stops being launch-bound between 3B and 7B**: enqueue/step is 0.96-0.98 up to 3B and 0.63 at 7B (30 ms step, GPU 64-69% busy); CPU cost is about 0.7 ms per layer (9.5).
 - **The 234 ms p50 ITL at 3584-token prompts is explained**: 89% of steps are mixed, each ~231 ms, because a decode riding in a mixed step costs ~0.5 ms at 3584 context vs 0.11 ms at 512 (9.6).
-- `max_num_seqs=1024` being slower than 256 is **not** a CUDA-graph capture-range effect (tested and refuted); the 9% throughput loss is still unexplained.
+- `max_num_seqs=1024` being slower than 256 is **not** a CUDA-graph capture-range effect (tested and refuted). It is the next finding's consequence: a **mixed step costs a decode about 4-7x more because FlashAttention 2 (A40, vLLM 0.34.0) loses its grouped-query decode path as soon as any sequence in the batch has more than one query token** (kernel-only microbenchmark: ratio 6.6 / 3.65 / 1.00 for GQA groups 7 / 4 / 1; step function at query length 2; 9.9). With `--attention-backend TRITON_ATTN` the 1024-seq loss goes from -9.4% to +0.4% (9.10) and the 3584-token workload runs **+60%** faster (9.9). Nsight Compute counters were blocked by the container, so the byte-level story is inferred.
 
 **Apple M4 (MPS) findings:**
 
@@ -37,7 +37,8 @@
 | [run_local_experiments.py](run_local_experiments.py) | Runs E1-E3, O1, O2 with controls and token validation |
 | [sim_predictions.py](sim_predictions.py) | SIMULATED E4-E6 from the Day 3 simulator |
 | [make_performance_report.py](make_performance_report.py), [plot_results.py](plot_results.py) | Generated tables and figures |
-| `gpu/` | `run_nsys.sh`, `gpu_mem_sampler.py`, `report_from_vllm.py`: written for a GPU host, tested with stand-ins only |
+| `gpu/` | `run_nsys.sh`, `gpu_mem_sampler.py`, `report_from_vllm.py`; round 2: `step_costs.py`, `run_itl_study.sh`, `run_e6_cap.sh`; round 3: `kernel_costs.py` (per-kernel-family attribution of vLLM profiler steps, with a coverage check), `attn_microbench.py` (vLLM's attention call on pure / mixed batches), `run_backend_ab.sh`, `run_seqs_isolation.sh` + `seqs_isolation.py`, `run_ncu.sh` + `ncu_summary.py` (counters blocked in the container, untested on real output) |
+| [PREREGISTRATION_ROUND3.md](PREREGISTRATION_ROUND3.md) | Round 3 hypotheses and decision rules, written before the runs, with the outcomes appended |
 | `results/measured/` | Real result JSON/CSV (includes the two archived biased runs); `results/sim/` simulated; `results/raw/` gitignored traces |
 
 Day 1 is used unchanged via [_day1.py](_day1.py) (appends `../day1-inference` to `sys.path`).

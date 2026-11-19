@@ -1,0 +1,77 @@
+{
+  "trace_s1024_len512_d30": {
+    "steps": 99,
+    "coverage": {
+      "mean": 0.9532464595808036,
+      "min": 0.559018042462328
+    },
+    "pure": {
+      "n": 99,
+      "mean_ms_by_family": {
+        "attention": 0.3593226161616162,
+        "gemm": 1.515847313131313,
+        "norm_act": 0.22856393939393949,
+        "kv_write": 0.05264223232323231,
+        "sampling": 0.0035947575757575754,
+        "comm": 0.0,
+        "other": 0.03776417171717172
+      },
+      "top_kernels": [
+        [
+          "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x1_tn_align8>(cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x1_tn_align8::Params)",
+          0.7968
+        ],
+        [
+          "std::enable_if<!(false), void>::type internal::gemvx::kernel<int, int, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, float, false, true, true, false, 7, false, cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<__nv_bfloat16 const>, cublasGemvTensorStridedBatched<__nv_bfloat16 const>, cublasGemvTensorStridedBatched<__nv_bfloat16>, float> >(cublasGemvParamsEx<int, cublasGemvTensorStridedBatched<__nv_bfloat16 const>, cublasGemvTensorStridedBatched<__nv_bfloat16 const>, cublasGemvTensorStridedBatched<__nv_bfloat16>, float>)",
+          0.7191
+        ],
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 256, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 256, 4, cutlass::bfloat16_t> >, false, false, false, false, true, false, true, false>(flash::Flash_fwd_params)",
+          0.2046
+        ],
+        [
+          "void flash::flash_fwd_splitkv_combine_kernel<Flash_fwd_kernel_traits<64, 64, 256, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 256, 4, cutlass::bfloat16_t> >, 8, 4, true>(flash::Flash_fwd_params)",
+          0.1547
+        ],
+        [
+          "triton_per_fused_fused_add_rms_norm_2",
+          0.056
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 0,
+      "mean_ms_by_family": {},
+      "top_kernels": [],
+      "fits": null,
+      "decode_identifiable": false,
+      "decode_slope_share": {}
+    },
+    "warnings": [
+      "coverage below 80% in 5 of 99 steps; kernel ms / step ms min 56%, so the attribution misses time"
+    ],
+    "dominant_decode_family": null,
+    "unclassified_top": [
+      [
+        "memcpy32_post",
+        2.851
+      ],
+      [
+        "_gather_block_tables_kernel",
+        0.424
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.309
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.151
+      ],
+      [
+        "_apply_write_kernel",
+        0.004
+      ]
+    ]
+  }
+}

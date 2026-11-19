@@ -1,0 +1,146 @@
+{
+  "trace_len3584_d500": {
+    "steps": 100,
+    "coverage": {
+      "mean": 0.9985712180552908,
+      "min": 0.983604522481098
+    },
+    "pure": {
+      "n": 11,
+      "mean_ms_by_family": {
+        "attention": 21.59188881818182,
+        "gemm": 2.436528909090909,
+        "norm_act": 0.7425719090909091,
+        "kv_write": 0.06550118181818182,
+        "sampling": 0.006798636363636364,
+        "comm": 0.0,
+        "other": 0.019494
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 128, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 128, 4, cutlass::bfloat16_t> >, false, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          21.5919
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          1.1045
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_32x5_tn",
+          0.7096
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_64x64_ldg8_relu_f2f_stages_64x5_tn",
+          0.2774
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          0.2363
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 89,
+      "mean_ms_by_family": {
+        "attention": 162.16520331460674,
+        "gemm": 53.32357701123596,
+        "norm_act": 16.271451078651687,
+        "kv_write": 0.4816998314606742,
+        "sampling": 0.006686629213483145,
+        "comm": 0.0,
+        "other": 0.05645444943820225
+      },
+      "top_kernels": [
+        [
+          "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 256, 4, false, false, cutlass::bfloat16_t, Flash_kernel_traits<64, 64, 256, 4, cutlass::bfloat16_t> >, true, false, false, false, true, false, false, false>(flash::Flash_fwd_params)",
+          162.1652
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          30.7348
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8::Params)",
+          17.2017
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          9.6845
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_relu_f2f_stages_32x3_tn",
+          4.2388
+        ]
+      ],
+      "fits": {
+        "attention": {
+          "intercept_ms": 93.27945218792253,
+          "ms_per_1000_prefill_tokens": 1.9910383942896674,
+          "ms_per_decode": 0.21390839463115968
+        },
+        "gemm": {
+          "intercept_ms": -75.58814308717193,
+          "ms_per_1000_prefill_tokens": 6.540715276474353,
+          "ms_per_decode": 0.3145853473378676
+        },
+        "norm_act": {
+          "intercept_ms": 0.9361953088359378,
+          "ms_per_1000_prefill_tokens": 2.0789676795272496,
+          "ms_per_decode": -0.002194425119108716
+        },
+        "kv_write": {
+          "intercept_ms": -0.32144431836538656,
+          "ms_per_1000_prefill_tokens": 0.05476284290844618,
+          "ms_per_decode": 0.0015331743997410083
+        },
+        "sampling": {
+          "intercept_ms": -0.002406501842889871,
+          "ms_per_1000_prefill_tokens": 4.688511392332523e-05,
+          "ms_per_decode": 3.481275139834692e-05
+        },
+        "comm": {
+          "intercept_ms": 0.0,
+          "ms_per_1000_prefill_tokens": 0.0,
+          "ms_per_decode": 0.0
+        },
+        "other": {
+          "intercept_ms": -0.03524507545235793,
+          "ms_per_1000_prefill_tokens": 0.0030653535747410666,
+          "ms_per_decode": 0.00027211525570012076
+        }
+      },
+      "decode_identifiable": false,
+      "decode_slope_share": {}
+    },
+    "warnings": [
+      "per-decode slope not identified: the number of decodes barely varies across mixed steps, so the per-decode fits (and decode_slope_share) only reflect a constant; use a controlled sweep over decodes"
+    ],
+    "dominant_decode_family": null,
+    "unclassified_top": [
+      [
+        "_apply_write_kernel",
+        2.351
+      ],
+      [
+        "_prepare_prefill_inputs_kernel",
+        1.03
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.873
+      ],
+      [
+        "_gather_block_tables_kernel",
+        0.737
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.231
+      ],
+      [
+        "memcpy32_post",
+        0.017
+      ]
+    ]
+  }
+}

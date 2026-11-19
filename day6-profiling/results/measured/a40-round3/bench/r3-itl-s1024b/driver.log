@@ -1,0 +1,10 @@
+[07:17:10] RUN s1024_len512_d160
+(EngineCore pid=54829) INFO 11-19 07:17:44 [kv_cache_utils.py:1168] GPU KV cache size: 2,932,736 tokens, Maximum concurrency for 4,096 tokens per request: 716.00x
+36f4dc1cdcfd_54642.async_llm.1795072719810393552.pt.trace.json.gz
+36f4dc1cdcfd_54642.async_llm.profiler_out.txt
+rank0.1795072696651539068.pt.trace.json.gz
+[07:18:51] RUN s1024_len512_d200
+(EngineCore pid=55590) INFO 11-19 07:19:29 [kv_cache_utils.py:1168] GPU KV cache size: 2,932,736 tokens, Maximum concurrency for 4,096 tokens per request: 716.00x
+36f4dc1cdcfd_55391.async_llm.1795072826555973461.pt.trace.json.gz
+36f4dc1cdcfd_55391.async_llm.profiler_out.txt
+rank0.1795072804995009438.pt.trace.json.gz

@@ -73,3 +73,40 @@ def test_load_events_reads_gzip_traces(tmp_path):
 def test_load_events_names_the_missing_trace(tmp_path):
     with pytest.raises(FileNotFoundError, match="rank0"):
         sc.load_events(tmp_path)
+
+
+def test_busy_fraction_is_step_time_over_the_span_between_first_start_and_last_end():
+    # two 10 ms steps starting 10 ms apart with a 10 ms gap between them: 20 busy ms over a 30 ms span
+    steps = sc.parse_steps([_ev(_step_name(0, 8), 10_000, ts=1_000), _ev(_step_name(0, 8), 10_000, ts=21_000)])
+    assert sc.busy_fraction(steps) == pytest.approx(20 / 30)
+
+
+def test_busy_fraction_never_exceeds_one_and_is_none_without_two_steps():
+    overlapping = sc.parse_steps([_ev(_step_name(0, 8), 10_000, ts=0), _ev(_step_name(0, 8), 10_000, ts=5_000)])
+    assert sc.busy_fraction(overlapping) == pytest.approx(1.0)
+    assert sc.busy_fraction(sc.parse_steps([_ev(_step_name(0, 8), 10_000)])) is None
+    assert sc.busy_fraction([]) is None
+
+
+def test_summary_reports_the_busy_fraction_and_the_mixed_share_of_steps():
+    events = [_ev(_step_name(0, 8), 10_000, ts=0), _ev(_step_name(2000, 8), 30_000, ts=10_000),
+              _ev(_step_name(0, 8), 10_000, ts=40_000), _ev(_step_name(0, 8), 10_000, ts=60_000)]
+    out = sc.summarize(sc.parse_steps(events))
+    assert out["busy_fraction"] == pytest.approx(60 / 70)
+    assert out["mixed_share_of_steps"] == pytest.approx(0.25)
+
+
+def test_decode_coefficient_is_flagged_not_identified_when_decodes_barely_vary_across_mixed_steps():
+    events = [_ev(_step_name(8000 - i, 250 + i % 3), (151 + 10.3 * (8000 - i) / 1000) * 1000, ts=i) for i in range(10)]
+    out = sc.summarize(sc.parse_steps(events))
+    assert out["mixed"]["decode_identifiable"] is False
+    assert "not identified" in out["mixed"]["fit"]["note"]
+
+
+def test_decode_coefficient_is_identified_when_decodes_vary_widely():
+    events = []
+    for i in range(12):
+        prefill, decodes = 1000 + 500 * (i % 5), 40 * (1 + i % 6)
+        events.append(_ev(_step_name(prefill, decodes), (5 + 9 * prefill / 1000 + 0.1 * decodes) * 1000, ts=i))
+    out = sc.summarize(sc.parse_steps(events))
+    assert out["mixed"]["decode_identifiable"] is True and "note" not in out["mixed"]["fit"]

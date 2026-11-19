@@ -1,0 +1,146 @@
+{
+  "trace_attention_backend_TRITON_ATTN_len3584_d500": {
+    "steps": 100,
+    "coverage": {
+      "mean": 0.9975209719453642,
+      "min": 0.9759174181648952
+    },
+    "pure": {
+      "n": 11,
+      "mean_ms_by_family": {
+        "attention": 19.30128272727273,
+        "gemm": 2.429543272727273,
+        "norm_act": 0.5281178181818181,
+        "kv_write": 0.06402299999999998,
+        "sampling": 0.005876454545454546,
+        "comm": 0.0,
+        "other": 0.019666000000000003
+      },
+      "top_kernels": [
+        [
+          "kernel_unified_attention",
+          19.3013
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          1.102
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_32x5_tn",
+          0.7093
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_64x64_ldg8_relu_f2f_stages_64x5_tn",
+          0.2755
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          0.2365
+        ]
+      ]
+    },
+    "mixed": {
+      "n": 89,
+      "mean_ms_by_family": {
+        "attention": 55.13343782022473,
+        "gemm": 55.72724794382023,
+        "norm_act": 16.284205157303372,
+        "kv_write": 1.0360354494382022,
+        "sampling": 0.006939022471910113,
+        "comm": 0.0,
+        "other": 0.05454392134831461
+      },
+      "top_kernels": [
+        [
+          "kernel_unified_attention",
+          55.1334
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_f2f_stages_32x3_tn",
+          31.9759
+        ],
+        [
+          "void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8>(cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8::Params)",
+          17.9122
+        ],
+        [
+          "triton_poi_fused_mul_silu_slice_1",
+          9.6829
+        ],
+        [
+          "ampere_bf16_s16816gemm_bf16_256x128_ldg8_relu_f2f_stages_32x3_tn",
+          4.391
+        ]
+      ],
+      "fits": {
+        "attention": {
+          "intercept_ms": 339.7555217722563,
+          "ms_per_1000_prefill_tokens": 5.033010106817004,
+          "ms_per_decode": -1.2878630966087203
+        },
+        "gemm": {
+          "intercept_ms": -71.40749327437332,
+          "ms_per_1000_prefill_tokens": 6.587971626108701,
+          "ms_per_decode": 0.3061212610917776
+        },
+        "norm_act": {
+          "intercept_ms": 3.874567590867951,
+          "ms_per_1000_prefill_tokens": 2.0500051237568333,
+          "ms_per_decode": -0.012974013125562922
+        },
+        "kv_write": {
+          "intercept_ms": -0.1023479304396966,
+          "ms_per_1000_prefill_tokens": 0.12434025998535891,
+          "ms_per_decode": 0.0007505334018555923
+        },
+        "sampling": {
+          "intercept_ms": 0.016955358188671093,
+          "ms_per_1000_prefill_tokens": -3.718508648314245e-05,
+          "ms_per_decode": -3.8794542558020106e-05
+        },
+        "comm": {
+          "intercept_ms": 0.0,
+          "ms_per_1000_prefill_tokens": 0.0,
+          "ms_per_decode": 0.0
+        },
+        "other": {
+          "intercept_ms": 0.3070549093552631,
+          "ms_per_1000_prefill_tokens": 0.0007213626269178214,
+          "ms_per_decode": -0.001028532652037568
+        }
+      },
+      "decode_identifiable": false,
+      "decode_slope_share": {}
+    },
+    "warnings": [
+      "per-decode slope not identified: the number of decodes barely varies across mixed steps, so the per-decode fits (and decode_slope_share) only reflect a constant; use a controlled sweep over decodes"
+    ],
+    "dominant_decode_family": null,
+    "unclassified_top": [
+      [
+        "_apply_write_kernel",
+        2.164
+      ],
+      [
+        "_prepare_prefill_inputs_kernel",
+        1.045
+      ],
+      [
+        "_compute_slot_mappings_kernel",
+        0.915
+      ],
+      [
+        "_gather_block_tables_kernel",
+        0.685
+      ],
+      [
+        "_prepare_pos_seq_lens_kernel",
+        0.244
+      ],
+      [
+        "memcpy32_post",
+        0.017
+      ]
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "results/raw/r3-itl/trace_len3584_d500": {
+    "steps": 100,
+    "pure": {
+      "n": 11,
+      "mean_ms": 24.887849636363637,
+      "median_ms": 24.885484,
+      "p90_ms": 24.940269,
+      "mean_decodes": 255.8181818181818,
+      "mean_prefill_tokens": 0.0
+    },
+    "mixed": {
+      "n": 89,
+      "mean_ms": 232.6487968314607,
+      "median_ms": 235.333269,
+      "p90_ms": 235.89487979999998,
+      "mean_decodes": 250.91011235955057,
+      "mean_prefill_tokens": 7641.224719101124,
+      "decode_identifiable": false,
+      "fit": {
+        "intercept_ms": 33.12755289656885,
+        "ms_per_1000_prefill_tokens": 10.62340602041944,
+        "ms_per_decode": 0.4716645739691311,
+        "mean_rule_of_thumb_ms": 93.86203370786514,
+        "note": "ms_per_decode is not identified: the number of decodes barely varies across these mixed steps, so only intercept + ms_per_decode x mean decodes is determined"
+      }
+    },
+    "busy_fraction": 0.9790348301056965,
+    "mixed_share_of_steps": 0.89
+  }
+}
