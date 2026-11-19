@@ -1,0 +1,87 @@
+{
+  "cells": [
+    {
+      "model": "qwen2.5-0.5b",
+      "seqs": 256,
+      "workload": "128x128",
+      "backend": "FLASH_ATTN",
+      "n": 6,
+      "mean_tok_s": 16473.632073664816,
+      "min_tok_s": 15939.863878277174,
+      "max_tok_s": 16763.63355412725,
+      "spread_pct": 5.167984382681623,
+      "median_itl_ms": 9.261109417517824
+    },
+    {
+      "model": "qwen2.5-0.5b",
+      "seqs": 256,
+      "workload": "128x128",
+      "backend": "TRITON_ATTN",
+      "n": 6,
+      "mean_tok_s": 17010.4719773953,
+      "min_tok_s": 16623.61952468745,
+      "max_tok_s": 17395.975890012534,
+      "spread_pct": 4.646138370636277,
+      "median_itl_ms": 8.919567839863399
+    },
+    {
+      "model": "qwen2.5-0.5b",
+      "seqs": 1024,
+      "workload": "128x128",
+      "backend": "FLASH_ATTN",
+      "n": 6,
+      "mean_tok_s": 16206.686537307962,
+      "min_tok_s": 15527.570606343274,
+      "max_tok_s": 17092.646370714454,
+      "spread_pct": 10.079334392025373,
+      "median_itl_ms": 43.926104165924095
+    },
+    {
+      "model": "qwen2.5-0.5b",
+      "seqs": 1024,
+      "workload": "128x128",
+      "backend": "TRITON_ATTN",
+      "n": 6,
+      "mean_tok_s": 16032.522574066172,
+      "min_tok_s": 15235.484405237597,
+      "max_tok_s": 17117.485616562553,
+      "spread_pct": 12.352749418836773,
+      "median_itl_ms": 44.83712633130684
+    }
+  ],
+  "gains": [
+    {
+      "model": "qwen2.5-0.5b",
+      "seqs": 256,
+      "workload": "128x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": 3.258782892138834
+    },
+    {
+      "model": "qwen2.5-0.5b",
+      "seqs": 1024,
+      "workload": "128x128",
+      "backend": "TRITON_ATTN",
+      "gain_pct_vs_base": -1.0746426349449223
+    }
+  ],
+  "seqs_loss": [
+    {
+      "model": "qwen2.5-0.5b",
+      "workload": "128x128",
+      "backend": "FLASH_ATTN",
+      "low_seqs": 256,
+      "high_seqs": 1024,
+      "loss_pct": -1.6204412916541955
+    },
+    {
+      "model": "qwen2.5-0.5b",
+      "workload": "128x128",
+      "backend": "TRITON_ATTN",
+      "low_seqs": 256,
+      "high_seqs": 1024,
+      "loss_pct": -5.749102109739789
+    }
+  ],
+  "rejected": []
+}

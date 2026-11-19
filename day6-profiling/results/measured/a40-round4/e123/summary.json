@@ -1,0 +1,62 @@
+{
+  "llama3.1-8b": {
+    "E1": {
+      "step_time_ratio": 1.080913006215545,
+      "throughput_ratio": 7.215789696553914,
+      "confirmed": true
+    },
+    "E2": {
+      "ratio": 2.2232243799083076,
+      "confirmed": false
+    },
+    "E3": {
+      "change": 0.0011630102920321406,
+      "confirmed": true
+    }
+  },
+  "qwen2.5-0.5b": {
+    "E1": {
+      "step_time_ratio": 1.1660462688504807,
+      "throughput_ratio": 6.329868106518274,
+      "confirmed": true
+    },
+    "E2": {
+      "ratio": 1.9949027769130032,
+      "confirmed": false
+    },
+    "E3": {
+      "change": 0.019201596996751835,
+      "confirmed": true
+    }
+  },
+  "qwen2.5-1.5b": {
+    "E1": {
+      "step_time_ratio": 1.0371471311012865,
+      "throughput_ratio": 7.416483043613448,
+      "confirmed": true
+    },
+    "E2": {
+      "ratio": 1.7567105112892631,
+      "confirmed": false
+    },
+    "E3": {
+      "change": 0.008934098161199833,
+      "confirmed": true
+    }
+  },
+  "qwen2.5-3b": {
+    "E1": {
+      "step_time_ratio": 1.0612775096127596,
+      "throughput_ratio": 7.319360913800555,
+      "confirmed": true
+    },
+    "E2": {
+      "ratio": 2.022180541134574,
+      "confirmed": false
+    },
+    "E3": {
+      "change": 0.006597402857922319,
+      "confirmed": true
+    }
+  }
+}

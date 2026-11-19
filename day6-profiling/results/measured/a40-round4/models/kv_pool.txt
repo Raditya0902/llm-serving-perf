@@ -1,0 +1,7 @@
+llama3.1-8b/s192/KV: 173,056 tokens, 
+llama3.1-8b/s64/KV: 175,616 tokens, 
+qwen2.5-1.5b/s1024/KV: 1,177,600 tokens, 
+qwen2.5-1.5b/s256/KV: 1,251,328 tokens, 
+qwen2.5-3b/s1024/KV: 829,440 tokens, 
+qwen2.5-3b/s128/KV: 890,880 tokens, 
+qwen2.5-3b/s256/KV: 882,688 tokens, 
