@@ -36,6 +36,8 @@ ARMS: dict[str, tuple[mx.ServingConfig, int, int]] = {
     "tp1_c64": (mx.ServingConfig("tp1", 0.85, 8192), 3, 64),
     "tp2_c16": (mx.ServingConfig("tp2", 0.85, 8192, extra_serve_args=TP2), 3, 16),
     "tp2_c64": (mx.ServingConfig("tp2", 0.85, 8192, extra_serve_args=TP2), 3, 64),
+    "tp2nc_c16": (mx.ServingConfig("tp2nc", 0.85, 8192,
+                                   extra_serve_args=(*TP2, "--disable-custom-all-reduce")), 3, 16),
     "tp2nc_c64": (mx.ServingConfig("tp2nc", 0.85, 8192,
                                    extra_serve_args=(*TP2, "--disable-custom-all-reduce")), 3, 64),
 }
@@ -43,10 +45,12 @@ SINGLE_GPU_ARMS = ("cap16", "cap24", "cap32", "budget2048", "pool092")
 
 
 def build_runs(model: str, model_preset: str, hardware: str, cap_kv_pool: bool,
-               arms: Sequence[str]) -> list[mx.RunSpec]:
+               arms: Sequence[str], reps_override: int | None = None) -> list[mx.RunSpec]:
     runs: list[mx.RunSpec] = []
     for name in arms:
         cfg, reps, concurrency = ARMS[name]
+        if reps_override is not None:
+            reps = reps_override
         case = mx.MatrixCase(mx.WORKLOADS["B"], cfg, concurrency, model, model_preset, hardware, cap_kv_pool)
         runs += [mx.RunSpec(case, rep) for rep in range(reps)]
     return runs
@@ -60,11 +64,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--model-preset", default=mx.DEFAULT_PRESET)
     p.add_argument("--hardware", default=mx.DEFAULT_HARDWARE)
     p.add_argument("--cap-kv-pool", action="store_true")
+    p.add_argument("--reps", type=rm._bounded_int(1, rm.MAX_REPS), default=None, help="override the repeats of every chosen arm")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--port", type=int, default=rm.DEFAULT_PORT)
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    runs = build_runs(args.model, args.model_preset, args.hardware, args.cap_kv_pool, args.arms)
+    runs = build_runs(args.model, args.model_preset, args.hardware, args.cap_kv_pool, args.arms, args.reps)
     if args.dry_run:
         for run in runs:
             print(f"# {run.run_id}")

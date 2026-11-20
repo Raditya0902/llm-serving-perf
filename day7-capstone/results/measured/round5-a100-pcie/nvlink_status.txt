@@ -1,0 +1,4 @@
+GPU 0: NVIDIA A100-PCIE-40GB (UUID: GPU-e7bb6417-c5f1-b4b9-6209-0bd2cbc630f9)
+NVML: Unable to retrieve NVLink information as all links are inActive
+GPU 1: NVIDIA A100-PCIE-40GB (UUID: GPU-a188ad94-2ea6-421e-e729-390adc72b01c)
+NVML: Unable to retrieve NVLink information as all links are inActive

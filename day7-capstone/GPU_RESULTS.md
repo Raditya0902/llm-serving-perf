@@ -82,7 +82,7 @@ Against the pre-run analytic predictions (REPORT section 5; link constants were 
 
 TP=2 also lowers TTFT by ~39% and the custom all-reduce kernel is worth about +2.7% throughput at B@64 (1,844 vs 1,796 tok/s; small but outside the 0.2-0.3% CV).
 The Day 5 1.5B experiment on the same pod (TP=2 +20 to +38% throughput; two TP=1 replicas beat one TP=2 server by 19.5% at concurrency 128) is in
-[../day5-distributed/RESULTS.md](../day5-distributed/RESULTS.md); an 8B data-parallel baseline was not run on that pod; it was run on the 2x A40 PCIe pod (next section), not on NVLink.
+[../day5-distributed/RESULTS.md](../day5-distributed/RESULTS.md); an 8B data-parallel baseline was not run on that pod; it was run on the 2x A40 PCIe pod (next section) and, in round 5, on an A100 NVLink host (last section).
 
 ## Round 2 on a 2x A40 pod (PCIe only): capped TP=2, data-parallel baseline, uncapped single GPU, PCIe step speedup
 
@@ -155,14 +155,38 @@ REPORT section 4 said that on a 48 GB card B@64 reaches ~95% KV with no preempti
 
 **It depends on load.** At 16 concurrent requests TP=2 gives more throughput (plausibly because each replica is only 8 sequences deep and its decode step is the full single-GPU step; not isolated), while replicas still win on TTFT. At 64 the replicas win by 31% on throughput and
 24% on TPOT and never preempt. That is the same direction as the Day 5 1.5B result (replicas ahead at high concurrency). Caveats: the replica numbers are two simultaneous benchmark runs combined as described above (a single client's view would differ slightly);
-the two replicas draw different prompts (seed offset 100); only two load points; PCIe A40 only. An NVLink 8B data-parallel run was not made.
+the two replicas draw different prompts (seed offset 100); only two load points; PCIe A40 only. An NVLink 8B data-parallel run was made in round 5 (below).
+
+## Round 5: the same A100 40GB GPU on PCIe and on NVLink, 8B data-parallel on NVLink (Lambda Cloud)
+
+Pre-registered in [../day6-profiling/PREREGISTRATION_ROUND5.md](../day6-profiling/PREREGISTRATION_ROUND5.md) (outcomes at its end). Driver `run_round5_a100.sh`: Llama-3.1-8B, workload B, c16 and c64, 2 repeats, real 40 GB pools (no `--cap-kv-pool`), GPUs 0 and 1 only. Hosts: 2x A100 40GB PCIe (`nvidia-smi topo`: PHB) and 8x A100 40GB SXM4 (NV12). Data: `results/measured/round5-a100-pcie/` and `round5-a100-sxm4/`. 44 runs, 0 failed requests. The two hosts are different machines, so the pair isolates the interconnect only up to CPU, PCIe root and RAM differences.
+
+| (median of 2; TPOT ms / output tok/s) | PCIe c16 | PCIe c64 | NVLink c16 | NVLink c64 |
+|---|---|---|---|---|
+| TP=1 | 25.4 / 599 | 57.4 / 816 | 23.6 / 645 | 51.1 / 915 |
+| TP=2 | 36.4 / 413 | 123.2 / 505 | 14.3 / 1,063 | 36.5 / 1,705 |
+| TP=2 without custom all-reduce | 36.3 / 415 | 124.0 / 503 | 14.9 / 1,015 | 37.3 / 1,665 |
+| two TP=1 replicas (aggregate, two simultaneous benchmarks) | 18.8 / ~800 | 41.6 / ~1,480 | 17.9 / ~841 | 37.6 / ~1,635 |
+| TP=2 without custom all-reduce, `NCCL_P2P_DISABLE=1` | - | - | 46.0 / 328 | 158.6 / 392 |
+
+| prediction | result |
+|---|---|
+| E1 replicas beat TP=2 at c64 on NVLink by 10-40%; TP=2 wins at c16 | **refuted at c64**: replicas -4.1% (level); c16 TP=2 wins by 26%. The A40 pattern is not reproduced on NVLink (it is on the PCIe host, where TP=2 is slower than one GPU) |
+| E2 TPOT TP=1/TP=2 at c16 in 1.6-1.9x (NVLink) | held: 1.65x (c64: 1.40x). On the PCIe host 0.70x and 0.47x |
+| F1 NVLink minus PCIe speedup >= 0.25x | held: 0.95x |
+| F2 custom all-reduce +1..+4% (NVLink), 0..+2% (PCIe) | held: +2.4% / +0.4% at c64 |
+| F3 NCCL over host memory >= 5% slower than NVLink and within 10% of the PCIe host | **refuted (second clause)**: 3.1x slower than NVLink but 27-28% slower than the PCIe host |
+| F4 256 MiB bus bandwidth >= 150 / <= 30 GB/s; 8 KiB latency <= 30 us on NVLink | bandwidth held (158.1 / 3.1 GB/s); **latency refuted** (47.4 us; PCIe 45.1 us) |
+| F5 TP=1 at c64 preempts >= 20 per run on the real pool, TP=2 zero | held: 62 / 58 (PCIe), 66 / 57 (NVLink) preemptions, KV at 100%; TP=2 and replicas 0 |
+
+The PCIe VM's link is about 3 GB/s whether or not `NCCL_P2P_DISABLE=1` is set, so TP=2 loses to one GPU and the custom all-reduce does nothing there; on NVLink the same GPU gets 1.65x TPOT from TP=2. Tensor parallelism pays only when the link does; measure a 256 MiB all-reduce before choosing TP. Mistakes: a wrong hardware tag on the first NVLink launch (failed in 20 s, nothing measured; output kept as `sxm4_badtag_probe_only/`), and I first read the PCIe replica throughput per replica instead of the aggregate (corrected above).
 
 ## Limits and what was not done
 
 - **One model, A40 and A100 only.** The capped pool is a modeling choice that reproduces the simulator's regime. Uncapped on the 46 GiB A40 it was run in round 2: the real pool is ~12% smaller than modeled and B@64 baseline still preempts (above).
 - **Caps are single runs** (n=1); the gaps are 8-31% against a baseline CV of 0.4%, so the direction is safe but the sizes are soft. `budget2048` and `pool092` have 3 repeats.
 - The bottleneck labels in the generated tables are rule-based and the tool notes that batch size was not measured, so the "compute / prefill-interference bound" labels at c>=16 are unverified. The A100-floor labels in `results/gpu/a40-capped/` are the wrong floor for this GPU; use `results/gpu/a40-capped-a40bw/` (A40 floor) for H4.
-- **Not done**: 8B step-level profiling (nsys or torch profiler on the 8B runs), an 8B data-parallel run on NVLink, and a same-GPU PCIe/NVLink pair (the PCIe results are A40, the NVLink ones A100). The PCIe two-GPU case, a capped-pool TP=2 run, an 8B data-parallel baseline and an uncapped single-GPU run were done in round 2 (above).
+- **Not done**: 8B step-level profiling (nsys or torch profiler on the 8B runs). The 8B data-parallel run on NVLink and the same-GPU PCIe/NVLink pair were done in round 5 (next section; Lambda 2x A100 PCIe and 8x A100 SXM4). The PCIe two-GPU case, a capped-pool TP=2 run, an 8B data-parallel baseline and an uncapped single-GPU run were done in round 2 (above).
 - **Found and fixed while running**: vLLM's "Peak concurrent requests" buckets requests by whole second and read 68 against a client cap of 64, so `ingest_gpu.py` rejected a valid run. The guard now computes exact overlap from `start_times` and `latencies` (2 new tests).
 
 ## Reproduce

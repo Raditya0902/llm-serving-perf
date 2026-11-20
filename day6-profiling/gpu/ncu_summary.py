@@ -1,6 +1,6 @@
 """Parse `ncu --csv --page raw` output into one record per kernel launch, and compare a pure-decode launch with a mixed one.
 
-    python gpu/ncu_summary.py pure.csv mixed.csv          # prints the comparison as JSON
+    python gpu/ncu_summary.py pure.csv mixed.csv [prefill_only.csv]   # prints the comparison as JSON; the third file adds the bytes/grid ratios
 
 Units are converted whatever the unit row says (ncu prints nsecond/usecond/msecond/second and byte/Kbyte/Mbyte/Gbyte).
 A profile that was refused because the container may not read GPU performance counters fails loudly with that error name.
@@ -14,7 +14,7 @@ import re
 import sys
 from dataclasses import dataclass
 
-TIME_TO_US = {"nsecond": 1e-3, "usecond": 1.0, "msecond": 1e3, "second": 1e6}
+TIME_TO_US = {"nsecond": 1e-3, "usecond": 1.0, "msecond": 1e3, "second": 1e6, "ns": 1e-3, "us": 1.0, "ms": 1e3, "s": 1e6}
 BYTES_TO_MB = {"byte": 1e-6, "Kbyte": 1e-3, "Mbyte": 1.0, "Gbyte": 1e3}
 COLUMNS = {
     "kernel": ("Kernel Name",),
@@ -122,12 +122,30 @@ def compare(pure: Record, mixed: Record) -> dict:
     }
 
 
+def extra_over_prefill(pure: Record, mixed: Record, prefill_only: Record) -> dict:
+    """What the decodes add to a mixed launch: mixed minus the same launch without them, as multiples of the pure-decode launch.
+
+    `bytes_ratio` is the decodes' extra DRAM read bytes over the pure-decode launch's (about the GQA group size if the KV is
+    streamed once per query head instead of once per KV head); `grid_ratio` is mixed over pure thread blocks.
+    """
+    out: dict = {"grid_ratio": None, "bytes_ratio": None, "extra_ms": (mixed.duration_us - prefill_only.duration_us) / 1000,
+                 "pure_ms": pure.duration_us / 1000}
+    if mixed.grid_size and pure.grid_size:
+        out["grid_ratio"] = mixed.grid_size / pure.grid_size
+    if None not in (mixed.dram_read_mb, prefill_only.dram_read_mb, pure.dram_read_mb) and pure.dram_read_mb:
+        out["bytes_ratio"] = (mixed.dram_read_mb - prefill_only.dram_read_mb) / pure.dram_read_mb
+    return out
+
+
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
+    if len(argv) not in (2, 3):
         print(__doc__, file=sys.stderr)
         return 2
     longest = [max(parse(open(path).read()), key=lambda r: r.duration_us) for path in argv]
-    print(json.dumps(compare(*longest), indent=2))
+    result = compare(longest[0], longest[1])
+    if len(longest) == 3:
+        result["decodes_added_to_mixed"] = extra_over_prefill(longest[0], longest[1], longest[2])
+    print(json.dumps(result, indent=2))
     return 0
 
 

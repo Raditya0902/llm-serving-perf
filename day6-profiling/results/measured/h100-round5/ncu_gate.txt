@@ -1,0 +1,25 @@
+==PROF== Connected to process 4703 (/home/ubuntu/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12)
+==PROF== Profiling "distribution_elementwise_grid..." - 0 (1/1): 0%....50%....100% - 10 passes
+==PROF== Disconnected from process 4703
+[4703] python3.12@127.0.0.1
+  void unnamed>::distribution_elementwise_grid_stride_kernel<float, 4, void normal_and_transform<float, float, CUDAGeneratorImpl *, void normal_kernel<CUDAGeneratorImpl *>(const TensorBase &, double, double, T1)::[lambda() (instance 1)]::operator ()() lambda() (instance 2)]::operator ()() lambda(float) (instance 1)]>(TensorIteratorBase &, T3, T4)::[lambda(curandStatePhilox4_32_10 *) (instance 2)], void unnamed>::distribution_nullary_kernel<float, float, float4, CUDAGeneratorImpl *, void normal_and_transform<float, float, CUDAGeneratorImpl *, void normal_kernel<CUDAGeneratorImpl *>(const TensorBase &, double, double, T1)::[lambda() (instance 1)]::operator ()() lambda() (instance 2)]::operator ()() lambda(float) (instance 1)]>(TensorIteratorBase &, T3, T4)::[lambda(curandStatePhilox4_32_10 *) (instance 2)], void normal_kernel<CUDAGeneratorImpl *>(const TensorBase &, double, double, T1)::[lambda() (instance 1)]::operator ()() lambda() (instance 2)]::operator ()() lambda(float) (instance 1)]>(TensorIteratorBase &, T4, const T5 &, T6)::[lambda(int, float) (instance 1)]>(long, PhiloxCudaState, T3, T4) (1056, 1, 1)x(256, 1, 1), Context 1, Stream 7, Device 0, CC 9.0
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz         2.61
+    SM Frequency                    Ghz         1.57
+    Elapsed Cycles                cycle        26226
+    Memory Throughput                 %        24.24
+    DRAM Throughput                   %         0.14
+    Duration                         us        16.61
+    L1/TEX Cache Throughput           %        17.52
+    L2 Cache Throughput               %        29.78
+    SM Active Cycles              cycle     22682.64
+    Compute (SM) Throughput           %        63.96
+    ----------------------- ----------- ------------
+
+    OPT   Compute is more heavily utilized than Memory: Look at the Compute Workload Analysis section to see what the   
+          compute pipelines are spending their time doing. Also, consider whether any computation is redundant and      
+          could be reduced or moved to look-up tables.                                                                  
+

@@ -1,0 +1,35 @@
+{
+  "model": "qwen2.5-0.5b",
+  "geometry": {
+    "q_heads": 14,
+    "kv_heads": 2,
+    "head_dim": 64,
+    "gqa_group": 7
+  },
+  "ctx": 512,
+  "decodes": 256,
+  "prefill": 7600,
+  "block_size": 16,
+  "fa_version": 2,
+  "batches": [
+    {
+      "label": "prefill_only",
+      "sequences": 1,
+      "q_tokens": 7600,
+      "max_seqlen_q": 7600,
+      "max_seqlen_k": 7600,
+      "gqa_group": 7,
+      "block_table_shape": [
+        1,
+        475
+      ],
+      "kv_bytes_read_per_layer": 3891200,
+      "bandwidth_floor_ms": 0.005590804597701149,
+      "median_ms": 3.9772160053253174,
+      "min_ms": 1.563647985458374,
+      "max_ms": 833.5595703125,
+      "iters": 3
+    }
+  ],
+  "per_decode": {}
+}

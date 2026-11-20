@@ -1,0 +1,1 @@
+{"run_id": "B-c64-tp2nc__r0", "matrix_config_id": "8a2ae20e9d5f", "poll": {"kv_peak_frac": 0.4825993732475672, "waiting_peak": 53.0, "preemptions": 0.0, "samples": 285, "errors": 0, "thread_error": null}, "gpu_mem": {"peak_mib": 35373, "n_samples": 359, "errors": 0, "gpu_index": 0, "thread_error": null}}

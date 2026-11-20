@@ -1,0 +1,180 @@
+{
+ "cells": [
+  {
+   "backend": "FLASH_ATTN-fa2",
+   "workload": "128x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.23696338491043759,
+   "busy_min": 0.11460542981579518,
+   "busy_max": 0.35932134000508,
+   "gap_p50_us": 1.6800000000000002,
+   "tok_s": 30847.57112365871
+  },
+  {
+   "backend": "FLASH_ATTN-fa2",
+   "workload": "128x128",
+   "seqs": 1024,
+   "windows": 2,
+   "busy_fraction": 0.5370655837484597,
+   "busy_min": 0.4750714195951994,
+   "busy_max": 0.5990597479017199,
+   "gap_p50_us": 1.568,
+   "tok_s": 29714.32398726893
+  },
+  {
+   "backend": "FLASH_ATTN-fa2",
+   "workload": "512x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.3965945457705964,
+   "busy_min": 0.21787640961038182,
+   "busy_max": 0.575312681930811,
+   "gap_p50_us": 1.712,
+   "tok_s": 26199.34570454991
+  },
+  {
+   "backend": "FLASH_ATTN-fa2",
+   "workload": "512x128",
+   "seqs": 1024,
+   "windows": 2,
+   "busy_fraction": 0.9052471971656073,
+   "busy_min": 0.8363356345919184,
+   "busy_max": 0.9741587597392961,
+   "gap_p50_us": 1.488,
+   "tok_s": 22938.43799149762
+  },
+  {
+   "backend": "FLASH_ATTN-fa3",
+   "workload": "128x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.20147026722959144,
+   "busy_min": 0.12086028524691729,
+   "busy_max": 0.2820802492122656,
+   "gap_p50_us": 2.656,
+   "tok_s": 31444.39142556065
+  },
+  {
+   "backend": "FLASH_ATTN-fa3",
+   "workload": "128x128",
+   "seqs": 1024,
+   "windows": 2,
+   "busy_fraction": 0.3980104620752225,
+   "busy_min": 0.37918855448170713,
+   "busy_max": 0.41683236966873793,
+   "gap_p50_us": 1.6,
+   "tok_s": 29699.866980615578
+  },
+  {
+   "backend": "FLASH_ATTN-fa3",
+   "workload": "512x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.29480866896215363,
+   "busy_min": 0.19038437349916956,
+   "busy_max": 0.39923296442513767,
+   "gap_p50_us": 1.584,
+   "tok_s": 25864.39922041529
+  },
+  {
+   "backend": "FLASH_ATTN-fa3",
+   "workload": "512x128",
+   "seqs": 1024,
+   "windows": 2,
+   "busy_fraction": 0.55260963392246,
+   "busy_min": 0.541885129060896,
+   "busy_max": 0.5633341387840238,
+   "gap_p50_us": 1.264,
+   "tok_s": 25847.195147020626
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "128x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.2540885309722711,
+   "busy_min": 0.23607652731805315,
+   "busy_max": 0.27210053462648903,
+   "gap_p50_us": 4.5760000000000005,
+   "tok_s": 30920.351399058127
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "128x128",
+   "seqs": 1024,
+   "windows": 2,
+   "busy_fraction": 0.3444655014066659,
+   "busy_min": 0.3356626674422861,
+   "busy_max": 0.3532683353710456,
+   "gap_p50_us": 2.512,
+   "tok_s": 29749.249728285387
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "512x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.28689365456976257,
+   "busy_min": 0.21119397084033453,
+   "busy_max": 0.3625933382991906,
+   "gap_p50_us": 1.7919999999999998,
+   "tok_s": 24460.454141696697
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "512x128",
+   "seqs": 1024,
+   "windows": 2,
+   "busy_fraction": 0.49349126819396943,
+   "busy_min": 0.4869554094425633,
+   "busy_max": 0.5000271269453755,
+   "gap_p50_us": 1.456,
+   "tok_s": 26211.875917359772
+  }
+ ],
+ "busy_change_low_to_high_seqs": [
+  {
+   "backend": "FLASH_ATTN-fa2",
+   "workload": "128x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 30.010219883802215
+  },
+  {
+   "backend": "FLASH_ATTN-fa2",
+   "workload": "512x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 50.86526513950109
+  },
+  {
+   "backend": "FLASH_ATTN-fa3",
+   "workload": "128x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 19.654019484563108
+  },
+  {
+   "backend": "FLASH_ATTN-fa3",
+   "workload": "512x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 25.780096496030637
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "128x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 9.03769704343948
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "512x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 20.659761362420685
+  }
+ ]
+}

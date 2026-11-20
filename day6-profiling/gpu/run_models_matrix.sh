@@ -20,6 +20,16 @@ GROUPS_LIST=(
   "llama3.1-8b|NousResearch/Meta-Llama-3.1-8B-Instruct|2048|64|512x128"
   "llama3.1-8b|NousResearch/Meta-Llama-3.1-8B-Instruct|2048|192|512x128"
 )
+# PROFILE=h100: the groups for an 80 GB Hopper pod (round 5): a larger 8B KV pool allows 192 and 512 seqs; set BACKENDS="FLASH_ATTN:3 FLASH_ATTN:2 TRITON_ATTN".
+if [[ "${PROFILE:-}" == "h100" ]]; then
+  GROUPS_LIST=(
+    "qwen2.5-1.5b|Qwen/Qwen2.5-1.5B-Instruct|8192|256|512x128 3584x128"
+    "qwen2.5-1.5b|Qwen/Qwen2.5-1.5B-Instruct|8192|1024|512x128"
+    "qwen2.5-3b|Qwen/Qwen2.5-3B-Instruct|8192|1024|512x128"
+    "llama3.1-8b|NousResearch/Meta-Llama-3.1-8B-Instruct|2048|192|512x128"
+    "llama3.1-8b|NousResearch/Meta-Llama-3.1-8B-Instruct|2048|512|512x128"
+  )
+fi
 log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "$OUT/driver.log"; }
 for group in "${GROUPS_LIST[@]}"; do
   IFS='|' read -r slug model bt seqs workloads <<< "$group"

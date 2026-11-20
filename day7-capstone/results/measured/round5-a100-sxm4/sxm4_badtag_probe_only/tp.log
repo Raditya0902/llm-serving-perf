@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/llm-infrastructure-lab/day7-capstone/run_followup_gpu.py", line 91, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/ubuntu/llm-infrastructure-lab/day7-capstone/run_followup_gpu.py", line 72, in main
+    runs = build_runs(args.model, args.model_preset, args.hardware, args.cap_kv_pool, args.arms, args.reps)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/llm-infrastructure-lab/day7-capstone/run_followup_gpu.py", line 54, in build_runs
+    case = mx.MatrixCase(mx.WORKLOADS["B"], cfg, concurrency, model, model_preset, hardware, cap_kv_pool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 12, in __init__
+  File "/home/ubuntu/llm-infrastructure-lab/day7-capstone/matrix.py", line 118, in __post_init__
+    raise ValueError(f"unknown hardware {self.hardware!r}; valid: {sorted(kv_sizing.HARDWARE)}")
+ValueError: unknown hardware 'a100-40gb-sxm4'; valid: ['a100-40gb', 'a100-80gb', 'a10g-24gb', 'a40-48gb', 'l40s-48gb']

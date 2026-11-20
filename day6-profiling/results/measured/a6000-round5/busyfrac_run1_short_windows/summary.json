@@ -1,0 +1,122 @@
+{
+ "cells": [
+  {
+   "backend": "FLASH_ATTN",
+   "workload": "128x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.38799539862914234,
+   "busy_min": 0.28711334805218675,
+   "busy_max": 0.4888774492060979,
+   "gap_p50_us": 0.8160000000000001,
+   "tok_s": 10100.072612994078
+  },
+  {
+   "backend": "FLASH_ATTN",
+   "workload": "128x128",
+   "seqs": 1024,
+   "windows": 1,
+   "busy_fraction": 0.41696295590952775,
+   "busy_min": 0.41696295590952775,
+   "busy_max": 0.41696295590952775,
+   "gap_p50_us": 39.808,
+   "tok_s": 9386.075623544808
+  },
+  {
+   "backend": "FLASH_ATTN",
+   "workload": "512x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.5139613226938412,
+   "busy_min": 0.3308919270388166,
+   "busy_max": 0.6970307183488659,
+   "gap_p50_us": 0.752,
+   "tok_s": 8327.111839988669
+  },
+  {
+   "backend": "FLASH_ATTN",
+   "workload": "512x128",
+   "seqs": 1024,
+   "windows": 1,
+   "busy_fraction": 0.45432816197025183,
+   "busy_min": 0.45432816197025183,
+   "busy_max": 0.45432816197025183,
+   "gap_p50_us": 21.44,
+   "tok_s": 6521.951912660474
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "128x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.37033220181250925,
+   "busy_min": 0.2803748405898627,
+   "busy_max": 0.4602895630351558,
+   "gap_p50_us": 0.8480000000000001,
+   "tok_s": 10089.255697379522
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "128x128",
+   "seqs": 1024,
+   "windows": 1,
+   "busy_fraction": 0.4716046645239131,
+   "busy_min": 0.4716046645239131,
+   "busy_max": 0.4716046645239131,
+   "gap_p50_us": 38.977,
+   "tok_s": 9727.548191650645
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "512x128",
+   "seqs": 256,
+   "windows": 2,
+   "busy_fraction": 0.48261799646515535,
+   "busy_min": 0.32098996193328116,
+   "busy_max": 0.6442460309970296,
+   "gap_p50_us": 0.784,
+   "tok_s": 8734.351687659604
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "512x128",
+   "seqs": 1024,
+   "windows": 1,
+   "busy_fraction": 0.5158951247888964,
+   "busy_min": 0.5158951247888964,
+   "busy_max": 0.5158951247888964,
+   "gap_p50_us": 1.312,
+   "tok_s": 7761.062655331302
+  }
+ ],
+ "busy_change_low_to_high_seqs": [
+  {
+   "backend": "FLASH_ATTN",
+   "workload": "128x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 2.896755728038541
+  },
+  {
+   "backend": "FLASH_ATTN",
+   "workload": "512x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": -5.963316072358937
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "128x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 10.127246271140383
+  },
+  {
+   "backend": "TRITON_ATTN",
+   "workload": "512x128",
+   "low_seqs": 256,
+   "high_seqs": 1024,
+   "busy_change_points": 3.327712832374108
+  }
+ ]
+}

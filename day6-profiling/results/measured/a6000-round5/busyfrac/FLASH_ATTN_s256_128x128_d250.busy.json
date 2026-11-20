@@ -1,0 +1,1 @@
+{"file": "/home/ubuntu/lab/day6-profiling/results/raw/round5-a6000/busyfrac/FLASH_ATTN_s256_128x128_d250.sqlite", "devices": {"0": {"busy_fraction": 0.426015575267659, "span_ms": 5765.617514, "busy_ms": 2456.242862, "intervals": 21867, "gaps": 21866, "gap_p50_us": 40.608, "gap_p95_us": 454.987, "gap_max_us": 14580.383}}}

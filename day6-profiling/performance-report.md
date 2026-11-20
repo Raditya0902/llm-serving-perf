@@ -462,14 +462,52 @@ Predictions and decision rules were written first ([PREREGISTRATION_ROUND4.md](P
 
 **What this changes in 9.9-9.11.** (1) The advice "use `TRITON_ATTN`" is now backed by an output check (0.5B), by 1.5B / 3B / 8B throughput and by two GPUs, but only for FA2: on an H100 the default is FA3 and it is the fastest of the three. (2) The statement of 9.10 that swapping the backend removes the whole 1024-seq loss holds at 512x128 on the A40 (0.5B, 1.5B, 3B) and does not hold at 128x128 (Triton -5.7%, n = 6) or on the H100 (Triton -5.3%); the likely extra part is per-step host cost that grows with running sequences (H2), more visible when the GPU is not the limit. That is an inference from throughput, not a measurement (no busy fraction was taken on these runs). (3) The ratio of 18 is explained to the degree described under Q4b.
 
-### 9.13 What was not done
+### 9.13 What was not done (as of round 4; most items were closed in round 5, section 9.14)
 
-- **Nsight Compute counters (DRAM bytes, occupancy, waves)**: blocked, `ERR_NVGPUCTRPERM`, on the third pod (a RunPod container cannot lift the host's counter restriction); not retried on the fourth and fifth. The byte-level mechanism of 9.9 and the block-launch mechanism of 9.12 (Q4b) are inferred from timings and fits, not observed. It needs a host where `NVreg_RestrictProfilingToAdminUsers=0` or a bare-metal machine.
-- **A100 items**: 8B data-parallel on NVLink and a same-GPU PCIe/NVLink pair.
-- **Triton output check beyond the 0.5B on an A40**: larger models, the H100, longer completions and non-greedy sampling were not compared.
+- ~~Nsight Compute counters~~ (closed in 9.14: blocked on RunPod, `ERR_NVGPUCTRPERM`; read on Lambda Cloud VMs with `sudo`).
+- ~~A100 items: 8B data-parallel on NVLink and a same-GPU PCIe/NVLink pair~~ (closed in 9.14).
+- ~~Triton output check beyond the 0.5B on an A40~~ (closed for 1.5B / 3B / 8B on an RTX A6000 and for 0.5B-8B on an H100 in 9.14; longer completions and non-greedy sampling are still not compared).
 - **The 8B at 1,024 sequences**: impossible on this KV pool; would need fp8 KV or a larger GPU. **The 3584-token workload on the 8B** (about 7 minutes a run) and models above 8B.
-- **A busy-fraction (unprofiled) measurement at 1,024 seqs** to separate the per-step host cost from the attention penalty (9.12, what this changes (2)); and E1-E3 at concurrency above 8 or with more than 12-24 requests per point.
-- Hopper: one H100 PCIe, 0.5B only end to end, 2 repeats; no SXM, no larger models, no profiled windows.
+- ~~A busy-fraction (unprofiled) measurement at 1,024 seqs~~ (done in 9.14 with Nsight Systems; the result is that H2 is not supported at 512x128 on the A6000, but the measure is noisy); E1-E3 at concurrency above 8 or with more than 12-24 requests per point are still open.
+- Hopper: now one H100 SXM5 with all four model sizes (9.14); still no profiled end-to-end windows and no non-Qwen model other than Llama-3.1-8B.
+
+### 9.14 Round 5 (Lambda Cloud: RTX A6000, H100 SXM5, 2x A100 PCIe, 8x A100 SXM4): counters, busy fraction, output check at 1.5B-8B, interconnect
+
+Predictions and decision rules were written first ([PREREGISTRATION_ROUND5.md](PREREGISTRATION_ROUND5.md), which ends with the outcome of each, errors included). Data: [a6000-round5](results/measured/a6000-round5/), [h100-round5](results/measured/h100-round5/), and for the A100 pair `../day7-capstone/results/measured/round5-a100-pcie/` and `round5-a100-sxm4/`. Nsight Compute counters are readable on a Lambda VM with `sudo -E`; FA3 kernels need a demangled-name filter.
+
+**Refuted or partly refuted**
+
+| prediction | result |
+|---|---|
+| B1: FA2 busy fraction falls >= 10 points from 256 to 1,024 seqs (512x128) | **refuted**: the clean re-run gives 0.72 -> 0.84. H2 (host idle growing with running sequences) is not supported at 512x128 on the A6000; the loss is in device time. The Nsight Systems busy fraction is an interval union, noisy (+-0.07, up to 0.2) and not comparable to round 3's step-based number |
+| B2: Triton busy fraction within 5 points at 512x128 | **refuted**: 0.68 -> 0.79 |
+| B3 (Triton 128x128 loss is host-side) | **not testable**: the A6000's untraced A/B did not reproduce the A40's Triton loss at 1,024 seqs |
+| D2: Triton output-equivalent to FA3 at 0.5B-8B | **refuted as written**: passes at 8B, fails the five criteria at 0.5B, 1.5B, 3B. The cause is the yardstick: on the H100 the same-kernel control is nearly exact (73-90% exact match, prompt-logprob difference 0.0001-0.0005), so "within 2x of the control" is unsatisfiable by another kernel; fp32 reference errors are equal at every size and every divergence is a near-tie |
+| D3: Triton busy fraction falls >= 5 points where tok/s falls; FA2/FA3 within 5 | **refuted** (moves of 20-50 points on a mostly idle H100 at 0.5B; windows too noisy to separate H2 from the attention penalty) |
+| E1: replicas beat TP=2 at c64 on NVLink by 10-40% | **refuted**: -4.1% (1,635 vs 1,705 tok/s); at c16 TP=2 wins by 26% (rule -5..-20%, measured -20.9%). The A40 pattern (replicas win at c64) is not reproduced on NVLink |
+| F3: NCCL over host memory lands within 10% of the PCIe host | **refuted**: 27-28% slower (46.0 vs 36.3 ms c16; 158.6 vs 124.0 ms c64); the first clause (>= 5% slower than NVLink) held at 3.1x |
+| F4: 8 KiB all-reduce latency <= 30 us on NVLink | **refuted**: 47.4 us (PCIe 45.1 us); the probe sees launch overhead at that size. Bandwidth held |
+
+**Held**
+
+- **The mixed-step penalty is observed at kernel level (A1-A3, D1).** FA2's mixed launch reads the KV about once per query head: extra DRAM bytes / pure-decode bytes = 7.04 (GQA 7) and 4.11 (GQA 4) at ctx 3,584 (7.40 and 4.14 at ctx 512), with 836x / 478x the thread blocks of the pure-decode launch, and the achieved DRAM share is 72% at ctx 3,584 against 20% at ctx 512 (so it is hidden at long context). FA3 on the H100 uses 132 blocks (the SM count) in every batch, bytes ratio 1.00, and its mixed/pure time is 1.7-3.1x at ctx 3,584 against FA2's 5.3-11.0x on the same GPU. 9.9's inference and 9.12's Q4b are now measurements.
+- **Triton is output-equivalent to FA2 at 1.5B, 3B and 8B (A6000, C):** all five criteria hold; fp32 reference error 0.0272 vs 0.0273, 0.0252 vs 0.0253, 0.0191 vs 0.0191.
+- **D4:** FA3 is within 2% of the fastest backend at 6 of 6 cells on the H100; FA2 forced is 44.1% slower than FA3 at 1.5B 3584x128.
+- **Interconnect decides whether TP=2 helps (Llama-3.1-8B, workload B, A100 40GB, medians of 2):**
+
+| | PCIe host c16 / c64 | NVLink host c16 / c64 |
+|---|---|---|
+| TPOT TP=1 / TP=2 | 0.70x / 0.47x | **1.65x** / 1.40x |
+| output tok/s TP=1 / TP=2 / 2 replicas (aggregate) | 599 / 413 / ~800; 816 / 505 / ~1,480 | 645 / 1,063 / ~841; 915 / 1,705 / ~1,635 |
+| custom all-reduce gain (tok/s) | -0.5% / +0.4% | +4.7% / +2.4% |
+| 256 MiB all-reduce bus bandwidth | 3.1 GB/s (same with `NCCL_P2P_DISABLE=1`) | 158.1 GB/s (2.2 GB/s with `NCCL_P2P_DISABLE=1`) |
+
+  TP=1 at c64 on the real 40 GB pool preempts 57-66 times per run (KV 100%) on both hosts; TP=2 and each replica at c32 never do. The PCIe VM's link is about 3 GB/s with or without P2P, so TP=2 loses to a single GPU there, and two replicas are 1.8x TP=1 at c64. On NVLink the replicas are level with TP=2 at c64 (a replica at c32 has TPOT 37.6 ms, TP=2 at c64 has 36.5 ms) and 21% behind at c16.
+
+**What this changes.** (1) "Use TRITON_ATTN" is now supported for output equivalence at 1.5B-8B on sm86, and the advice stands only for FA2 hosts; on Hopper keep FA3. (2) Report 9.12's "likely extra part is per-step host cost (H2)" for the 1,024-seq loss is not supported by the busy-fraction measurement at 512x128; it remains open at 128x128 (not testable on the A6000). (3) Day 5's and Day 7's tensor-parallel advice depends on the link, not the model: measure a 256 MiB all-reduce first.
+
+**Caveats.** One A6000, one H100 SXM5, one PCIe host and one SXM4 host (different CPUs and RAM, so the pair isolates the interconnect only up to that); two repeats on the A100 arms (TPOT spread under 1% on the TP arms); busy-fraction windows are short and noisy; the H100 output-check criteria cannot be satisfied by a different kernel (see D2).
+
 The first trace attempt (delay 20) only captured the benchmark's warm-up request, and my first window (delay 150) held 20 steps; the 9.3 numbers come from the 100-step windows after a 135-iteration delay.
 
 ## 8. Reproduce
@@ -506,4 +544,12 @@ python -m gpu.quality_compare results/raw/round4-a40/quality
 python -m gpu.backend_ab_summary results/raw/round4-a40/models                  # --base TRITON_ATTN on a Hopper pod
 python -m gpu.e123_summary results/raw/round4-a40/e123
 bash gpu/run_round4_h100.sh results/raw/round4-h100   # FA2 / FA3 microbenchmark and FA3 vs FA2 vs Triton end to end (about 45 min)
+```
+
+GPU round 5 (Lambda Cloud VMs, user `ubuntu`; `bash gpu/setup_lambda.sh` once per VM, then `bash gpu/preflight_round4.sh`):
+
+```bash
+bash gpu/run_round5_a6000.sh results/raw/round5-a6000     # Nsight Compute counters, A/B, busy fraction (nsys), output check at 1.5B/3B/8B
+bash gpu/run_round5_h100.sh  results/raw/round5-h100      # same on an H100 with FA3 / FA2 forced / Triton
+cd ../day7-capstone && HW=a100-40gb STEPS="probe tp dp p2poff" bash run_round5_a100.sh results/raw/round5-a100/<host>   # 2x A100 PCIe: STEPS="probe tp dp"
 ```

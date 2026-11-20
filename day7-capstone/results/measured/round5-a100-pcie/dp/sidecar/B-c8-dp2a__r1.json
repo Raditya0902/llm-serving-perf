@@ -1,0 +1,1 @@
+{"run_id": "B-c8-dp2a__r1", "matrix_config_id": "8bdae589641b", "poll": {"kv_peak_frac": 0.17724494593323925, "waiting_peak": 0.0, "preemptions": 0.0, "samples": 225, "errors": 0, "thread_error": null}, "gpu_mem": {"peak_mib": 35225, "n_samples": 290, "errors": 0, "gpu_index": 0, "thread_error": null}}

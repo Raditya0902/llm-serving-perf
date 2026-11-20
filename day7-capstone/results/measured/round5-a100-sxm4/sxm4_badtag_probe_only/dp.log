@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/llm-infrastructure-lab/day7-capstone/run_dp_gpu.py", line 171, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/ubuntu/llm-infrastructure-lab/day7-capstone/run_dp_gpu.py", line 148, in main
+    groups = [replica_cases(args.model, args.model_preset, args.hardware, args.cap_kv_pool, t) for t in args.totals]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/llm-infrastructure-lab/day7-capstone/run_dp_gpu.py", line 48, in replica_cases
+    mx.MatrixCase(mx.WORKLOADS["B"], mx.ServingConfig(f"dp2{'ab'[i]}", 0.85, 8192), half, model, model_preset,
+  File "<string>", line 12, in __init__
+  File "/home/ubuntu/llm-infrastructure-lab/day7-capstone/matrix.py", line 118, in __post_init__
+    raise ValueError(f"unknown hardware {self.hardware!r}; valid: {sorted(kv_sizing.HARDWARE)}")
+ValueError: unknown hardware 'a100-40gb-sxm4'; valid: ['a100-40gb', 'a100-80gb', 'a10g-24gb', 'a40-48gb', 'l40s-48gb']

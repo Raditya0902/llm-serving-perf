@@ -48,3 +48,30 @@ def test_parse_of_a_profile_that_failed_names_the_counter_permission_error():
 def test_parse_of_empty_output_is_an_error_not_an_empty_list():
     with pytest.raises(ValueError, match="no kernel records"):
         ns.parse("==PROF== Disconnected from process\n")
+
+
+def test_short_unit_names_as_real_ncu_prints_them_are_converted():
+    text = ('"ID","Kernel Name","gpu__time_duration.sum","dram__bytes_read.sum"\n'
+            '"","","ns","byte"\n"0","k","846336","554119552"\n')
+    record = ns.parse(text)[0]
+    assert record.duration_us == pytest.approx(846.336)
+    assert record.dram_read_mb == pytest.approx(554.119552)
+
+
+def _rec(grid, ms, mb):
+    return ns.Record("k", grid, 128, ms * 1000, None, None, None, mb)
+
+
+def test_extra_over_prefill_gives_the_bytes_and_grid_ratios():
+    pure = _rec(512, 0.85, 554.0)
+    prefill = _rec(1666, 1.69, 22.9)
+    mixed = _rec(428162, 7.9, 3925.3)
+    result = ns.extra_over_prefill(pure, mixed, prefill)
+    assert result["grid_ratio"] == pytest.approx(836.25, rel=1e-3)
+    assert result["bytes_ratio"] == pytest.approx((3925.3 - 22.9) / 554.0)
+    assert result["extra_ms"] == pytest.approx(7.9 - 1.69)
+
+
+def test_extra_over_prefill_tolerates_missing_byte_counters():
+    result = ns.extra_over_prefill(_rec(10, 1, None), _rec(100, 2, None), _rec(5, 1, None))
+    assert result["bytes_ratio"] is None and result["grid_ratio"] == 10

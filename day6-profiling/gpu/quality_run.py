@@ -63,6 +63,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--model", default=MODEL)
     p.add_argument("--backend", help="vLLM attention backend name, e.g. FLASH_ATTN or TRITON_ATTN")
     p.add_argument("--reference", action="store_true", help="HF float32 prompt log-probs instead of a vLLM run")
+    p.add_argument("--fa-version", type=int, choices=[2, 3], default=None, help="force the FlashAttention generation (with --backend FLASH_ATTN)")
     p.add_argument("--bt", type=int, default=2048, help="--max-num-batched-tokens")
     p.add_argument("--seqs", type=int, default=256)
     p.add_argument("--out", required=True)
@@ -75,12 +76,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def run_vllm(args: argparse.Namespace) -> dict:
     from vllm import LLM, SamplingParams
 
-    llm = LLM(model=args.model, attention_backend=args.backend, max_num_batched_tokens=args.bt, max_num_seqs=args.seqs,
+    backend_args = ({"attention_config": {"backend": args.backend, "flash_attn_version": args.fa_version}} if args.fa_version
+                    else {"attention_backend": args.backend})
+    llm = LLM(model=args.model, **backend_args, max_num_batched_tokens=args.bt, max_num_seqs=args.seqs,
               max_model_len=4096, gpu_memory_utilization=0.85, seed=SEED, enable_prefix_caching=False)
     prompts = prompt_token_ids(llm.get_tokenizer())
     params = SamplingParams(temperature=0.0, max_tokens=NEW_TOKENS, logprobs=TOP_LOGPROBS, prompt_logprobs=1)
     outputs = llm.generate([{"prompt_token_ids": ids} for ids in prompts], params)
-    return {"config": {"model": args.model, "backend": args.backend, "bt": args.bt, "seqs": args.seqs, "new_tokens": NEW_TOKENS},
+    return {"config": {"model": args.model, "backend": args.backend, "fa_version": args.fa_version, "bt": args.bt, "seqs": args.seqs, "new_tokens": NEW_TOKENS},
             "prompts": [record_from_output(i, o) for i, o in enumerate(outputs)]}
 
 
