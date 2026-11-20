@@ -5,7 +5,7 @@
 > H2 half refuted (the simulator had the wrong sign for the token-budget knob), H4 borderline. The decision is unchanged (keep baseline).
 > **Two-GPU update.** The tensor-parallel predictions were also run: on 2x A100 NVLink (TP=2 +62-77% tok/s, step 1.61-1.77x) and on 2x A40 over PCIe (+35-52%, step 1.29-1.53x), with the KV pool capped to the modeled size
 > (TP=2 removes the preemptions: 62 -> 0, pool 2.88x), an 8B data-parallel baseline (replicas +31% over TP=2 at 64 concurrent, TP=2 +16% at 16) and the uncapped A40 (the simulator's no-pressure prediction fails because the real pool is ~12% smaller than modeled);
-> see GPU_RESULTS.md. Still not done: 8B step-level profiling, an NVLink data-parallel run, a same-GPU PCIe/NVLink pair. The paragraph below is the **pre-run** status and is kept for the record.
+> see GPU_RESULTS.md. Round 5 (Lambda Cloud) ran the NVLink data-parallel arm and the same-GPU PCIe/NVLink pair (GPU_RESULTS.md, last section; `run_round5_a100.sh`). Still not done: 8B step-level profiling. The paragraph below is the **pre-run** status and is kept for the record.
 >
 > **What was and wasn't done before the GPU run.** The 12-case benchmark matrix, the optimization decision and the report are **done on the Day 3
 > simulator and are SIMULATED**: no GPU produced any number in `results/sim/`. The vLLM runner that would produce real numbers is
