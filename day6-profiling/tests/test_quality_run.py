@@ -51,3 +51,8 @@ def test_corpus_is_long_enough_for_the_longest_prompt_and_skips_virtualenvs():
     text = qr.corpus_text()
     assert len(text) > 5 * qr.MAX_LEN * 3  # several times the longest prompt in characters
     assert "site-packages" not in qr.CORPUS_ROOT.as_posix()
+
+
+def test_fa_version_flag_is_parsed_and_defaults_to_none():
+    assert qr.parse_args(["--backend", "FLASH_ATTN", "--out", "x"]).fa_version is None
+    assert qr.parse_args(["--backend", "FLASH_ATTN", "--fa-version", "2", "--out", "x"]).fa_version == 2

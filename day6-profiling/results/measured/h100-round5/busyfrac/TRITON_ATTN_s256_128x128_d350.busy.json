@@ -1,0 +1,1 @@
+{"file": "/home/ubuntu/lab/day6-profiling/results/raw/round5-h100/busyfrac/TRITON_ATTN_s256_128x128_d350.sqlite", "devices": {"0": {"busy_fraction": 0.23607652731805315, "span_ms": 1362.926059, "busy_ms": 321.754851, "intervals": 13458, "gaps": 13457, "gap_p50_us": 7.36, "gap_p95_us": 165.08719999999983, "gap_max_us": 4650.888}}}

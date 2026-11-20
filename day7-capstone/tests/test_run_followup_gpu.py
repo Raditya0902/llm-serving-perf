@@ -41,3 +41,16 @@ def test_capped_tp_arms_both_get_a_pool_cap_and_tp2_gets_more_per_gpu():
     assert caps["B-c64-tp2"] > caps["B-c64-tp1"]
     cmd = next(r.case.serve_command(8000) for r in runs if r.case.case_id == "B-c64-tp2")
     assert "--kv-cache-memory-bytes" in cmd and "--tensor-parallel-size" in cmd
+
+
+def test_reps_override_sets_every_arm_and_the_c16_no_custom_arm_exists():
+    runs = rf.build_runs("m", "llama3-8b", "a100-40gb", False, ["tp2nc_c16", "tp1_c64", "cap16"], reps_override=2)
+    names = [r.case.case_id for r in runs]
+    assert names.count("B-c16-tp2nc") == 2 and names.count("B-c64-tp1") == 2 and names.count("B-c64-cap16") == 2
+    nc = next(r for r in runs if r.case.case_id == "B-c16-tp2nc").case.serve_command(8000)
+    assert "--disable-custom-all-reduce" in nc
+
+
+def test_without_override_the_registered_rep_counts_stand():
+    runs = rf.build_runs("m", "llama3-8b", "a100-40gb", False, ["tp1_c64", "cap16"])
+    assert [r.case.config.name for r in runs].count("tp1") == 3 and [r.case.config.name for r in runs].count("cap16") == 1

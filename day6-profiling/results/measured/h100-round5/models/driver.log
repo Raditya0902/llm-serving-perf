@@ -1,0 +1,5 @@
+[03:42:34] GROUP qwen2.5-1.5b seqs=256 workloads=512x128 3584x128
+[04:18:48] GROUP qwen2.5-1.5b seqs=1024 workloads=512x128
+[04:27:07] GROUP qwen2.5-3b seqs=1024 workloads=512x128
+[04:37:11] GROUP llama3.1-8b seqs=192 workloads=512x128
+[04:51:46] GROUP llama3.1-8b seqs=512 workloads=512x128

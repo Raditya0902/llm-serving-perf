@@ -1,0 +1,8 @@
+[07:22:51] probe
+[07:23:13] tp
+[07:23:13] tp step reported failures (see tp.log)
+[07:23:13] dp
+[07:23:13] dp step reported failures (see dp.log)
+[07:23:13] p2poff
+[07:23:13] p2poff step reported failures (see p2poff.log)
+[07:23:13] DONE

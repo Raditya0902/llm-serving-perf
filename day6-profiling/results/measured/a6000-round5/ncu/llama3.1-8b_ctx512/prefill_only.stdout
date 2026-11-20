@@ -1,0 +1,35 @@
+{
+  "model": "llama3.1-8b",
+  "geometry": {
+    "q_heads": 32,
+    "kv_heads": 8,
+    "head_dim": 128,
+    "gqa_group": 4
+  },
+  "ctx": 512,
+  "decodes": 256,
+  "prefill": 7600,
+  "block_size": 16,
+  "fa_version": 2,
+  "batches": [
+    {
+      "label": "prefill_only",
+      "sequences": 1,
+      "q_tokens": 7600,
+      "max_seqlen_q": 7600,
+      "max_seqlen_k": 7600,
+      "gqa_group": 4,
+      "block_table_shape": [
+        1,
+        475
+      ],
+      "kv_bytes_read_per_layer": 31129600,
+      "bandwidth_floor_ms": 0.044726436781609195,
+      "median_ms": 7.6308159828186035,
+      "min_ms": 4.923391819000244,
+      "max_ms": 875.3377075195312,
+      "iters": 3
+    }
+  ],
+  "per_decode": {}
+}

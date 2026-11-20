@@ -1,0 +1,26 @@
+==PROF== Connected to process 3813 (/home/ubuntu/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12)
+==PROF== Profiling "distribution_elementwise_grid..." - 0 (1/1): 0%....50%....100% - 7 passes
+==PROF== Disconnected from process 3813
+[3813] python3.12@127.0.0.1
+  void unnamed>::distribution_elementwise_grid_stride_kernel<float, 4, void normal_and_transform<float, float, CUDAGeneratorImpl *, void normal_kernel<CUDAGeneratorImpl *>(const TensorBase &, double, double, T1)::[lambda() (instance 1)]::operator ()() lambda() (instance 2)]::operator ()() lambda(float) (instance 1)]>(TensorIteratorBase &, T3, T4)::[lambda(curandStatePhilox4_32_10 *) (instance 2)], void unnamed>::distribution_nullary_kernel<float, float, float4, CUDAGeneratorImpl *, void normal_and_transform<float, float, CUDAGeneratorImpl *, void normal_kernel<CUDAGeneratorImpl *>(const TensorBase &, double, double, T1)::[lambda() (instance 1)]::operator ()() lambda() (instance 2)]::operator ()() lambda(float) (instance 1)]>(TensorIteratorBase &, T3, T4)::[lambda(curandStatePhilox4_32_10 *) (instance 2)], void normal_kernel<CUDAGeneratorImpl *>(const TensorBase &, double, double, T1)::[lambda() (instance 1)]::operator ()() lambda() (instance 2)]::operator ()() lambda(float) (instance 1)]>(TensorIteratorBase &, T4, const T5 &, T6)::[lambda(int, float) (instance 1)]>(long, PhiloxCudaState, T3, T4) (504, 1, 1)x(256, 1, 1), Context 1, Stream 7, Device 0, CC 8.6
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz         7.58
+    SM Frequency                    Ghz         1.38
+    Elapsed Cycles                cycle        46442
+    Memory Throughput                 %        74.86
+    DRAM Throughput                   %        74.86
+    Duration                         us        33.54
+    L1/TEX Cache Throughput           %        29.45
+    L2 Cache Throughput               %        25.00
+    SM Active Cycles              cycle     37772.83
+    Compute (SM) Throughput           %        61.76
+    ----------------------- ----------- ------------
+
+    OPT   Memory is more heavily utilized than Compute: Look at the Memory Workload Analysis section to identify the    
+          DRAM bottleneck. Check memory replay (coalescing) metrics to make sure you're efficiently utilizing the       
+          bytes transferred. Also consider whether it is possible to do more work per memory access (kernel fusion) or  
+          whether there are values you can (re)compute.                                                                 
+

@@ -1,0 +1,37 @@
+{
+  "kernels": {
+    "pure": "void device_kernel<enable_sm90_or_later<FlashAttnFwdSm90<CollectiveMainloopFwdSm90<2, tuple<C<1>, C<1>, C<1>>, tuple<C<64>, C<192>, C<64>>, 64, half_t, float, Sm90, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, bfloat16_t, 1>, CollectiveEpilogueFwd<tuple<C<64>, C<64>, C<192>>, tuple<C<1>, C<1>, C<1>>, half_t, Sm90, 128, 1, 1, 0, 0, 1>, VarlenDynamicPersistentTileScheduler<64, 192, 128, 128, 0, 1, 1, 0, 0, 1>>>>(Params)",
+    "mixed": "void device_kernel<enable_sm90_or_later<FlashAttnFwdSm90<CollectiveMainloopFwdSm90<2, tuple<C<1>, C<1>, C<1>>, tuple<C<192>, C<128>, C<64>>, 64, half_t, float, Sm90, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, bfloat16_t, 1>, CollectiveEpilogueFwd<tuple<C<192>, C<64>, C<128>>, tuple<C<1>, C<1>, C<1>>, half_t, Sm90, 384, 1, 1, 0, 0, 1>, VarlenDynamicPersistentTileScheduler<192, 128, 384, 128, 0, 1, 1, 1, 0, 1>>>>(Params)"
+  },
+  "duration_us": {
+    "pure": 41.28,
+    "mixed": 346.848
+  },
+  "slowdown": 8.402325581395349,
+  "dram_pct_of_peak": {
+    "pure": 50.86,
+    "mixed": 7.76
+  },
+  "achieved_bandwidth_gb_s": {
+    "pure": 1642.4,
+    "mixed": 246.16071593320416
+  },
+  "warps_active_pct": {
+    "pure": 12.2,
+    "mixed": 24.97
+  },
+  "waves_per_sm": {
+    "pure": 1.0,
+    "mixed": 1.0
+  },
+  "grid_size": {
+    "pure": 132,
+    "mixed": 132
+  },
+  "decodes_added_to_mixed": {
+    "grid_ratio": 1.0,
+    "bytes_ratio": 0.9996110815331696,
+    "extra_ms": 0.055072,
+    "pure_ms": 0.041280000000000004
+  }
+}

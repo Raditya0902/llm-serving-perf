@@ -1,0 +1,1 @@
+{"run_id": "B-c32-dp2b__r0", "matrix_config_id": "f57fc8e02ed4", "poll": {"kv_peak_frac": 0.7014574518100611, "waiting_peak": 21.0, "preemptions": 0.0, "samples": 291, "errors": 0, "thread_error": null}, "gpu_mem": {"peak_mib": 34979, "n_samples": 327, "errors": 0, "gpu_index": 1, "thread_error": null}}

@@ -1,0 +1,37 @@
+{
+  "kernels": {
+    "pure": "void flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<128, 64, 64, 4, 0, 0, half_t, Flash_kernel_traits<128, 64, 64, 4, half_t>>, 0, 0, 0, 0, 1, 0, 0, 0>(Flash_fwd_params)",
+    "mixed": "void flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<128, 64, 128, 4, 0, 0, half_t, Flash_kernel_traits<128, 64, 128, 4, half_t>>, 1, 0, 0, 0, 1, 0, 0, 0>(Flash_fwd_params)"
+  },
+  "duration_us": {
+    "pure": 915.104,
+    "mixed": 14459.52
+  },
+  "slowdown": 15.800958142462497,
+  "dram_pct_of_peak": {
+    "pure": 94.4,
+    "mixed": 26.73
+  },
+  "achieved_bandwidth_gb_s": {
+    "pure": 682.8534461656816,
+    "mixed": 189.3488160049573
+  },
+  "warps_active_pct": {
+    "pure": 16.51,
+    "mixed": 8.27
+  },
+  "waves_per_sm": {
+    "pure": 12.19,
+    "mixed": 11650.67
+  },
+  "grid_size": {
+    "pure": 2048,
+    "mixed": 978656
+  },
+  "decodes_added_to_mixed": {
+    "grid_ratio": 477.859375,
+    "bytes_ratio": 4.1404208206248,
+    "extra_ms": 8.18192,
+    "pure_ms": 0.915104
+  }
+}
