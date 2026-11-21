@@ -1,4 +1,4 @@
-# Day 3: Continuous-batching scheduler simulator
+# Continuous-batching scheduler simulator
 
 > **Simulation caveat.** Everything here is a discrete-event simulation driven by an analytic cost
 > model ([cost_model.py](cost_model.py)). Times are *simulated* milliseconds, not measurements from a

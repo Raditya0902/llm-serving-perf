@@ -1,4 +1,4 @@
-# Day 7: capstone benchmark, optimization decision, and final report
+# Capacity study: 8B serving benchmark, optimization decision, and report
 
 > **Update (A40 run).** The matrix has now been run on a real GPU (one NVIDIA A40, vLLM 0.34.0, Llama-3.1-8B, KV pool capped to the
 > modeled A100-40GB size): 49 runs, 0 failures. **Results and verdicts are in [GPU_RESULTS.md](GPU_RESULTS.md)**: H1, H3, H5, H6 held,
@@ -7,10 +7,10 @@
 > (TP=2 removes the preemptions: 62 -> 0, pool 2.88x), an 8B data-parallel baseline (replicas +31% over TP=2 at 64 concurrent, TP=2 +16% at 16) and the uncapped A40 (the simulator's no-pressure prediction fails because the real pool is ~12% smaller than modeled);
 > see GPU_RESULTS.md. Round 5 (Lambda Cloud) ran the NVLink data-parallel arm and the same-GPU PCIe/NVLink pair (GPU_RESULTS.md, last section; `run_round5_a100.sh`). Still not done: 8B step-level profiling. The paragraph below is the **pre-run** status and is kept for the record.
 >
-> **What was and wasn't done before the GPU run.** The 12-case benchmark matrix, the optimization decision and the report are **done on the Day 3
+> **What was and wasn't done before the GPU run.** The 12-case benchmark matrix, the optimization decision and the report are **done on the [`03-batching-simulator`](../03-batching-simulator/)
 > simulator and are SIMULATED**: no GPU produced any number in `results/sim/`. The vLLM runner that would produce real numbers is
 > built and tested only with stand-in server/bench/`nvidia-smi` processes; **it has never run against vLLM**, because this was built
-> on a Mac with no NVIDIA GPU (same limit as Days 4-6). The decision in [REPORT.md](REPORT.md) section 8 is a **hypothesis** until
+> on a Mac with no NVIDIA GPU (same limit as folders 04-06). The decision in [REPORT.md](REPORT.md) section 8 is a **hypothesis** until
 > [RUNBOOK.md](RUNBOOK.md) is executed on a GPU host. Peak GPU memory is *not measured* anywhere. The two-GPU / multi-node numbers
 > are an analytic model with **assumed** link constants.
 
@@ -22,8 +22,8 @@
 | [ANSWERS.md](ANSWERS.md) | The ten closed-book questions, each answered with an equation, diagram, example or pointer to code |
 | [RUNBOOK.md](RUNBOOK.md) | How to run the matrix on a Linux GPU host, and the predictions the real run will confirm or refute |
 | `matrix.py` | The 12-case matrix (2 workloads x 3 concurrencies x 2 configs), the A/A control, and the exact `vllm serve` / `vllm bench serve` commands |
-| `kv_sizing.py` | Day 2 byte counts -> KV pool size, a hardware-derived cost model, and the analytic capacity-pressure check |
-| `closed_loop_sim.py`, `run_matrix_sim.py` | Fixed-concurrency client on the Day 3 engine; runs the matrix and an ablation (**SIMULATED**) |
+| `kv_sizing.py` | [`02-kv-cache-memory`](../02-kv-cache-memory/) byte counts -> KV pool size, a hardware-derived cost model, and the analytic capacity-pressure check |
+| `closed_loop_sim.py`, `run_matrix_sim.py` | Fixed-concurrency client on the [`03-batching-simulator`](../03-batching-simulator/) engine; runs the matrix and an ablation (**SIMULATED**) |
 | `run_matrix_gpu.py`, `prom_metrics.py`, `gpu_mem.py`, `periodic.py` | Real vLLM runner: fresh server per run, rotating case order, background `/metrics` poller (peak KV use, queue, preemptions) and `nvidia-smi` sampler |
 | `ingest_gpu.py` | vLLM bench JSON (+ sidecar) -> the same row schema the simulator emits; rejects failed, partial or mismatched runs |
 | `verify_flags.py` | Checks every CLI flag the matrix emits against the pinned vLLM v0.34.0 source (all 26 present) |
@@ -48,7 +48,7 @@ uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requi
 .venv/bin/python verify_flags.py                            # needs 04-vllm-internals/vllm_src (fetch_vllm_source.sh)
 ```
 
-Earlier days are imported from their own folders by `_prior.py` (Days 2-5). **Day 6 is not imported** (it was developed on a separate branch and is now merged); its GPU-memory sampler was re-implemented in
+Earlier folders (02-05) are imported by `_prior.py`. **[`06-profiling`](../06-profiling/) is not imported** (it was developed on a separate branch and is now merged); its GPU-memory sampler was re-implemented in
 `gpu_mem.py` and its report is cited as [../06-profiling/performance-report.md](../06-profiling/performance-report.md).
 
 ## Experiment design in one paragraph
@@ -60,7 +60,7 @@ P95 end-to-end <= 3 x the baseline's P95 at concurrency 4. Details and results: 
 
 ## Limitations
 
-- **No GPU numbers.** Everything in `results/sim/` comes from the Day 3 roofline cost model with constants derived from *illustrative*
+- **No GPU numbers.** Everything in `results/sim/` comes from the [`03-batching-simulator`](../03-batching-simulator/) roofline cost model with constants derived from *illustrative*
   A100-40GB peaks (`kv_sizing.HARDWARE`). Magnitudes will differ on real hardware; the report names which predictions are structural
   (where KV pressure appears) and which are magnitude-sensitive.
 - **Simulator simplifications:** no attention-quadratic prefill cost, no prefix cache, no CUDA-graph or host overhead beyond a fixed 0.3 ms,
@@ -68,13 +68,13 @@ P95 end-to-end <= 3 x the baseline's P95 at concurrency 4. Details and results: 
 - **`tuned` was chosen a priori, not searched**, and the objective factor `k = 3.0` is a judgment call, not derived. Both are fixed in
   `matrix.py` / `objective.py` before the runs; the ablation attributes `tuned` but does not tune it.
 - **Two-GPU / multi-node is analytic only.** `matrix.py` has no `--tensor-parallel-size` knob, so a TP run is not automated (RUNBOOK section 5
-  gives the manual procedure). Link constants are assumptions; Day 5 measured only Gloo/CPU AllReduce.
+  gives the manual procedure). Link constants are assumptions; [`05-tensor-parallel`](../05-tensor-parallel/) measured only Gloo/CPU AllReduce.
 - **Server-side metrics depend on vLLM v0.34.0 names** (`vllm:kv_cache_usage_perc`, `vllm:num_preemptions`, `vllm:num_requests_waiting`).
   `verify_flags.py` checks CLI flags only, not metric names; a mismatch shows up as "not measured", never as zero.
-- **Reviewed (code + security) and fixed** for the findings that were Day 7's: untrusted result/sidecar files (types, sizes, symlinks, filename vs
+- **Reviewed (code + security) and fixed** for the findings that were this folder's: untrusted result/sidecar files (types, sizes, symlinks, filename vs
   metadata, duplicate reps), CSV formula injection, atomic writes, telemetry threads that could die silently, resume reusing incomplete results,
-  `select` comparing against an infeasible baseline, stale-analysis and mislabelled-provenance reports. **Not fixed:** Day 4's teardown under a second
-  signal and unbounded `/metrics` read (Day 4 code), and the A/A noise floor below.
+  `select` comparing against an infeasible baseline, stale-analysis and mislabelled-provenance reports. **Not fixed:** [`04-vllm-internals`](../04-vllm-internals/)'s teardown under a second
+  signal and unbounded `/metrics` read ([`04-vllm-internals`](../04-vllm-internals/) code), and the A/A noise floor below.
 - **The A/A noise floor is one draw.** It comes from a single control case (B@16 baseline, 5 repeats) and is widened per comparison by each case's own CV;
   with 3-5 repeats both estimates are noisy, and the "ranges do not overlap" test is weak at that size. Treat a "real" verdict near the floor as
   suggestive, and treat "within noise" as "not shown", not "equal".

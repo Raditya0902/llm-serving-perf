@@ -1,4 +1,4 @@
-# Day 5 — distributed collectives and tensor parallelism
+# Distributed collectives and tensor parallelism
 
 > **Update:** the NCCL path and the TP=1 vs TP=2 vLLM experiment have now run on 2x A100-80GB over NVLink; see
 > [RESULTS.md](RESULTS.md); the PCIe case (2x A40) and an `nsys` measurement of the all-reduce share have run too. Round 5 (Lambda Cloud) ran the same 8B arms on a 2x A100 PCIe host and an 8x A100 SXM4 host: TP=2 is 0.70x of TP=1 on the PCIe host (link about 3 GB/s) and 1.65x on NVLink (158 GB/s); see [../07-capacity-study/GPU_RESULTS.md](../07-capacity-study/GPU_RESULTS.md). The "not run / empty stub" lines below describe the state before those runs.

@@ -1,4 +1,4 @@
-# Day 1: Autoregressive inference from scratch
+# Autoregressive inference from scratch
 
 A hand-written greedy decoding loop for **Qwen2.5-0.5B-Instruct** (PyTorch + Hugging Face Transformers), with and without a KV cache, plus three timing experiments.
 
@@ -139,7 +139,7 @@ Prompt = 512 tokens, same model, same prompts, same greedy procedure, EOS suppre
 - **Decode is not compute-bound.** A step does ~1/512 of prefill's FLOPs yet takes ~10% of its wall time. Each step has to stream all ~0.99 GB of fp16 weights (plus the KV cache) from memory to produce one token, and a matrix-vector product has almost no arithmetic per byte. Rough floor: 0.99 GB ÷ M4's ~120 GB/s ≈ 8 ms, versus the observed ~16 ms. I did not profile the other ~8 ms, but candidates are per-layer kernel-launch and framework overhead on a 24-layer model at batch size 1. This is why decode is "slower than expected" for how little it computes.
 - **Decode latency is nearly independent of prompt length here** because the KV cache (≤ 25 MB) is dwarfed by the weights being read each step. At longer contexts or larger batches the cache read would start to matter.
 - **Without a cache, every decode step is a mini prefill**, which makes total cost quadratic. This produced a 16.5× slowdown at 256 tokens, and the gap keeps widening with output length.
-- **Batching is the lever for decode efficiency.** Reading the weights once for B sequences amortises the same memory traffic. That is a Day 2+ topic and was not measured here.
+- **Batching is the lever for decode efficiency.** Reading the weights once for B sequences amortises the same memory traffic. That is covered from [`02-kv-cache-memory`](../02-kv-cache-memory/) onward and was not measured here.
 
 ## 6. Knowledge checkpoint (answer without notes)
 

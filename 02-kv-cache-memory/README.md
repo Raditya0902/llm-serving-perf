@@ -1,4 +1,4 @@
-# Day 2: GPU memory — calculator, paged KV allocator, experiments
+# GPU memory — calculator, paged KV allocator, experiments
 
 > **Hardware caveat.** This was built on an Apple M4 (16 GB unified memory). There is **no CUDA GPU**, so
 > `torch.cuda.memory_allocated / memory_reserved / max_memory_allocated` were never executed. `memory_probe.py`
@@ -52,14 +52,14 @@ Worked example, Llama-3-8B (32 layers, 8 KV heads, head_dim 128, fp16), on an 80
 | 8k context × 16 seqs, **fp8 KV** | 14.96 GiB | 8.00 GiB | 22.96 GiB | fits; up to **114** seqs |
 | Llama-3-70B, 8k × 8 seqs | 131.50 GiB | 20.00 GiB | 151.50 GiB | weights alone exceed 80 GiB: 0 seqs |
 
-KV per token is 128 KiB for Llama-3-8B and 12 KiB for Qwen2.5-0.5B (matches Day 1's `kv_bytes_per_token`).
+KV per token is 128 KiB for Llama-3-8B and 12 KiB for Qwen2.5-0.5B (matches [`01-inference-loop`](../01-inference-loop/)'s `kv_bytes_per_token`).
 
 ![](results/memory_growth.png)
 
 ## 2. Why KV-cache usage grows with context
 
 Attention at each new token needs the keys and values of *every* earlier token, in every layer. Recomputing them
-is what Day 1's uncached loop did (quadratic work). Caching them trades compute for memory: one K and one V vector
+is what [`01-inference-loop`](../01-inference-loop/)'s uncached loop did (quadratic work). Caching them trades compute for memory: one K and one V vector
 per token per layer per KV head. Memory is therefore **linear in tokens** (`kv_bytes_per_token × tokens`), and
 linear again in the number of sequences. The weights, by contrast, are paid once and shared by all sequences.
 At long context or high concurrency the KV cache overtakes the weights (above: 16 GiB KV vs 15 GiB weights at
@@ -195,12 +195,12 @@ Decode generates one token per step and, at small batch, does little arithmetic 
 the weights (and each sequence's KV cache) from HBM to the compute units, so it is **memory-bandwidth-bound**:
 `time/token ≳ (weight bytes + KV bytes read) / bandwidth`. For Llama-3-8B in fp16 (~16 GB) on an H100 (~3.35 TB/s) that
 is a ~4.8 ms floor, about 200 tokens/s for a single stream. This is back-of-envelope arithmetic; I did not measure
-it, and Day 1's M4 numbers are on a different memory system. Batching amortises the weight read across sequences;
+it, and [`01-inference-loop`](../01-inference-loop/)'s M4 numbers are on a different memory system. Batching amortises the weight read across sequences;
 long contexts add KV traffic that does not amortise.
 
 **3. How does Grouped-Query Attention reduce KV-cache memory?**
 Several query heads share one K/V head, so only `num_kv_heads` (not `num_query_heads`) K/V vectors are cached per token. The cache shrinks by
-`query_heads / kv_heads`: 4× for Llama-3-8B (32/8), 7× for Qwen2.5-0.5B (14/2, the figure Day 1 reported), 8× for
+`query_heads / kv_heads`: 4× for Llama-3-8B (32/8), 7× for Qwen2.5-0.5B (14/2, the figure [`01-inference-loop`](../01-inference-loop/) reported), 8× for
 Llama-3-70B (64/8). Quality loss is small; it is a standard way to buy concurrency.
 
 **4. Why do reserved GPU memory and allocated GPU memory differ?**
