@@ -1,4 +1,4 @@
-"""Peak GPU memory while a command runs (Day 4's sweep has no memory metric).
+"""Peak GPU memory while a command runs (`04-vllm-internals`'s sweep has no memory metric).
 
     python gpu/gpu_mem_sampler.py --out mem.json --interval 0.5 -- vllm bench serve ...
 

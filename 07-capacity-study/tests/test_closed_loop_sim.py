@@ -1,4 +1,4 @@
-"""Closed-loop (fixed-concurrency) simulation on top of Day 3's engine."""
+"""Closed-loop (fixed-concurrency) simulation on top of `03-batching-simulator`'s engine."""
 from __future__ import annotations
 
 import pytest

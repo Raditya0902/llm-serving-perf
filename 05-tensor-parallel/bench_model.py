@@ -1,4 +1,4 @@
-"""Pure math for the Day 5 communication benchmark (no torch, no processes).
+"""Pure math for the `05-tensor-parallel` communication benchmark (no torch, no processes).
 
 * ``fit_alpha_beta``   -- latency/bandwidth model  t(bytes) = alpha + beta * bytes
 * ``bus_bandwidth_factor`` -- nccl-tests definition of "bus bandwidth" per collective

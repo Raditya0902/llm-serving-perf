@@ -1,6 +1,6 @@
-"""SIMULATED predictions for E4-E6 using the Day 3 scheduler simulator.
+"""SIMULATED predictions for E4-E6 using the `03-batching-simulator` scheduler simulator.
 
-These are NOT measurements. The Day 3 cost model uses illustrative constants (an 8B fp16 /
+These are NOT measurements. The `03-batching-simulator` cost model uses illustrative constants (an 8B fp16 /
 A100-class guess), so only the *direction and mechanism* of an effect carry information:
 throughput plateaus, queueing, preemption onset. Absolute numbers must not be quoted as
 vLLM results; the real measurement path is RUNBOOK.md + day4's run_sweep.py.
@@ -24,13 +24,13 @@ from pathlib import Path
 
 import _day1  # noqa: F401  (also provides write_results)
 import numpy as np
-from run_experiments import write_results  # Day 1's JSON + CSV writer
+from run_experiments import write_results  # `01-inference-loop`'s JSON + CSV writer
 
 DAY3_DIR = Path(__file__).resolve().parent.parent / "03-batching-simulator"
 if str(DAY3_DIR) not in sys.path:
     sys.path.append(str(DAY3_DIR))
 
-from metrics import summarize  # noqa: E402  (Day 3)
+from metrics import summarize  # noqa: E402  (`03-batching-simulator`)
 from scheduler import SchedulerConfig  # noqa: E402
 from simulator import Simulator  # noqa: E402
 from workload import WorkloadConfig, generate_workload  # noqa: E402
@@ -39,10 +39,10 @@ from experiments import get_experiment  # noqa: E402
 
 RESULTS_DIR = Path(__file__).parent / "results" / "sim"
 SIM_NOTE = (
-    "SIMULATED: Day 3 cost model with illustrative constants; direction/mechanism only, "
+    "SIMULATED: `03-batching-simulator` cost model with illustrative constants; direction/mechanism only, "
     "not a vLLM or GPU measurement"
 )
-BASELINE_SEQS, BASELINE_BUDGET = 256, 8192  # the Day 4 sweep baseline
+BASELINE_SEQS, BASELINE_BUDGET = 256, 8192  # the `04-vllm-internals` sweep baseline
 AMPLE_KV_BLOCKS = 8192
 KEEP = (
     "throughput_tok_s", "throughput_req_s", "p95_ttft_ms", "p95_token_gap_ms", "p95_wait_ms",

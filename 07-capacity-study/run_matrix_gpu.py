@@ -6,13 +6,13 @@
 
 NOT RUN in this repo's history: the Mac that built it has no NVIDIA GPU. The orchestration is
 tested end to end with stand-in server/bench/nvidia-smi (tests/test_run_matrix_gpu.py); the
-real subprocess path reuses Day 4's `default_backend()`.
+real subprocess path reuses `04-vllm-internals`'s `default_backend()`.
 
 Per run: a FRESH server (no cache or fragmentation carried over), wait for ``/health``, a
 baseline ``/metrics`` sample, the benchmark with a background poller (peak KV usage, peak queue,
 preemption delta) and an ``nvidia-smi`` sampler (peak memory), then guaranteed teardown. Runs are
 issued round by round with the case order rotated each round, so no case always goes first (the
-position bias Day 6 found). Existing results are skipped only if they were produced by the same
+position bias `06-profiling` found). Existing results are skipped only if they were produced by the same
 configuration (``matrix_config_id``).
 """
 from __future__ import annotations
@@ -29,10 +29,10 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-import _prior  # noqa: F401  (puts Days 2-5 on sys.path)
+import _prior  # noqa: F401  (puts folders 02-05 on sys.path)
 
 # isort: split
-from run_sweep import (  # Day 4
+from run_sweep import (  # `04-vllm-internals`
     Backend,
     ServerHandle,
     ServerStartError,
@@ -41,7 +41,7 @@ from run_sweep import (  # Day 4
     stop_server,
     wait_until_healthy,
 )
-from sweep_config import LOOPBACK  # Day 4: the only host the sweep ever talks to
+from sweep_config import LOOPBACK  # `04-vllm-internals`: the only host the sweep ever talks to
 
 import gpu_mem
 import ingest_gpu
@@ -88,7 +88,7 @@ def ordered_runs(runs: Sequence[mx.RunSpec]) -> list[mx.RunSpec]:
     """Round by round (all rep 0, then rep 1, ...), each round shuffled with a fixed seed.
 
     A fixed rotation would keep `tuned` right behind `baseline` every round; a per-round shuffle
-    varies which of a compared pair runs first and what ran before it (Day 6's position bias)."""
+    varies which of a compared pair runs first and what ran before it (`06-profiling`'s position bias)."""
     rounds: dict[int, list[mx.RunSpec]] = {}
     for run in runs:
         rounds.setdefault(run.rep, []).append(run)
@@ -262,7 +262,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--gpu-index", type=_bounded_int(0, 63), default=0)
     p.add_argument("--model", default=mx.DEFAULT_HUB_MODEL, help="Hub id or local path for vllm serve")
     p.add_argument("--model-preset", default=mx.DEFAULT_PRESET, choices=sorted(kv_sizing.MODELS),
-                   help="Day 2 preset used for sizing; must match --model's architecture")
+                   help="`02-kv-cache-memory` preset used for sizing; must match --model's architecture")
     p.add_argument("--hardware", default=mx.DEFAULT_HARDWARE, choices=sorted(kv_sizing.HARDWARE))
     p.add_argument("--cap-kv-pool", action="store_true",
                    help="pass --kv-cache-memory-bytes so the KV pool equals --hardware's modeled pool "

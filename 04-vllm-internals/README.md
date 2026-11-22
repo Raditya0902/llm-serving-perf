@@ -6,6 +6,8 @@
 > reversed the first pass's `max_num_seqs` conclusion); see [RESULTS.md](RESULTS.md). The 1.5B repeat (51 runs) has been done too. Preemption was never triggered in these sweeps (the KV pool was at least 3x larger than
 > computed demand); KV-exhaustion behaviour was measured later in [`06-profiling`](../06-profiling/) (capped pool, 0.5B) and [`07-capacity-study`](../07-capacity-study/) (8B), see CHECKPOINT Q4. The tooling was written on a Mac with no GPU and
 > first ran on the A40; its unit tests still use *synthetic* files whose numbers mean nothing.
+>
+> The first smoke benchmark on the A40 (100 prompts at 2 req/s, Qwen2.5-0.5B, 0 failures) and its server log are kept in [results/a40-smoke/](results/a40-smoke/).
 
 ## Files
 

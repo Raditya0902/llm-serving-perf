@@ -1,4 +1,4 @@
-"""Process-group helpers shared by the Day 5 scripts.
+"""Process-group helpers shared by the `05-tensor-parallel` scripts.
 
 Two ways to get a process group:
 

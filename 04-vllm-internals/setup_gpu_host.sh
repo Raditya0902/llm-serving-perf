@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup of a Linux + NVIDIA GPU host for the Session 3 sweep.
+# One-time setup of a Linux + NVIDIA GPU host for the vLLM knob sweep.
 # Follows the install steps in vllm_src/docs/getting_started/installation/gpu.cuda.inc.md
 # (v0.34.0): a fresh uv environment, `uv pip install vllm --torch-backend=auto`,
 # then `vllm download-kernels`.

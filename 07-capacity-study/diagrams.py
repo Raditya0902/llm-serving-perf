@@ -2,7 +2,7 @@
 
     .venv/bin/python diagrams.py [--out results/architecture.png]
 
-Process and thread layout follows Day 4's SOURCE_TRACE.md section 0 (vLLM v0.34.0). Names and
+Process and thread layout follows `04-vllm-internals`'s SOURCE_TRACE.md section 0 (vLLM v0.34.0). Names and
 file:line citations live there; this picture only shows who owns what and what crosses a
 process boundary each step.
 """
@@ -76,7 +76,7 @@ def draw(path: Path = DEFAULT_OUT) -> Path:
     _arrow(ax, (0.75, 0.30), (0.62, 0.22), "sampled tokens", dy=-0.04)
     _arrow(ax, (0.32, 0.22), (0.21, 0.55), "EngineCore\nOutputs (ZMQ)", dy=0.0)
     ax.text(0.5, 0.015, "TP>1: every worker runs the same step; 2 AllReduces per layer over NVLink/NCCL "
-            "(Day 5).  Only block-id diffs and token ids cross process boundaries.",
+            "(`05-tensor-parallel`).  Only block-id diffs and token ids cross process boundaries.",
             ha="center", fontsize=8.5, color="#444444")
     ax.set_title("LLM inference stack: prompt to streamed tokens (vLLM v0.34.0 process layout)",
                  fontsize=12, fontweight="bold")

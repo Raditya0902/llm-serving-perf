@@ -1,13 +1,13 @@
-"""The Day 7 benchmark matrix: 2 workloads x 3 concurrency levels x 2 serving configs = 12 cases.
+"""The `07-capacity-study` benchmark matrix: 2 workloads x 3 concurrency levels x 2 serving configs = 12 cases.
 
 Fixed BEFORE any run (see README "Experiment design"):
 
 * Workload A, interactive chat : ~256 in / ~128 out, TTFT-sensitive, never KV-bound.
 * Workload B, long context     : ~2560 in / ~384 out, high KV pressure at concurrency 64.
 * Concurrency 4 / 16 / 64, closed loop (vLLM ``--max-concurrency N --request-rate inf``).
-* ``baseline`` is Day 4's baseline. ``tuned`` changes exactly two knobs
+* ``baseline`` is `04-vllm-internals`'s baseline. ``tuned`` changes exactly two knobs
   (``gpu_memory_utilization`` and ``max_num_batched_tokens``); ``max_num_seqs`` is equal
-  in both and above every concurrency level, so it cannot bind (a Day 4 finding).
+  in both and above every concurrency level, so it cannot bind (a `04-vllm-internals` finding).
 
 The same ``MatrixCase`` drives both the real vLLM runner (commands below) and the
 simulated matrix (``run_matrix_sim.py``), so the two sources describe identical experiments.
@@ -19,7 +19,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 
-import _prior  # noqa: F401  (puts Days 2-5 on sys.path)
+import _prior  # noqa: F401  (puts folders 02-05 on sys.path)
 
 # isort: split
 from sweep_config import BenchParams, ServeParams, SweepRun
@@ -103,7 +103,7 @@ class MatrixCase:
     config: ServingConfig
     concurrency: int
     model: str = DEFAULT_HUB_MODEL  # Hub id passed to `vllm serve`
-    model_preset: str = DEFAULT_PRESET  # Day 2 preset used for sizing and the simulator
+    model_preset: str = DEFAULT_PRESET  # `02-kv-cache-memory` preset used for sizing and the simulator
     hardware: str = DEFAULT_HARDWARE
     # Run on a larger GPU but pin the KV pool to what `hardware` would have, so the modeled
     # memory-pressure regime can be reproduced (vLLM then ignores gpu_memory_utilization for sizing).
@@ -112,7 +112,7 @@ class MatrixCase:
     seed_offset: int = 0  # lets two replicas of one experiment draw different prompts (data-parallel arm)
 
     def __post_init__(self) -> None:
-        ServeParams(model=self.model)  # reuses Day 4's model-id validation
+        ServeParams(model=self.model)  # reuses `04-vllm-internals`'s model-id validation
         kv_sizing.model_spec(self.model_preset)
         if self.hardware not in kv_sizing.HARDWARE:
             raise ValueError(f"unknown hardware {self.hardware!r}; valid: {sorted(kv_sizing.HARDWARE)}")
@@ -173,7 +173,7 @@ class MatrixCase:
         return BASE_SEED + rep + self.seed_offset + (CONTROL_SEED_OFFSET if self.is_control else 0)
 
     def serve_command(self, port: int) -> list[str]:
-        """`vllm serve` argv, built by Day 4's `SweepRun` so both days share one definition."""
+        """`vllm serve` argv, built by `04-vllm-internals`'s `SweepRun` so both days share one definition."""
         cfg = self.config
         serve = ServeParams(
             model=self.model, max_model_len=MAX_MODEL_LEN,
@@ -227,7 +227,7 @@ class MatrixCase:
         ]
 
     def predicted_pressure(self) -> dict[str, float | int | bool]:
-        """Analytic KV-capacity check (Day 2 arithmetic), used to cross-check the simulator."""
+        """Analytic KV-capacity check (`02-kv-cache-memory` arithmetic), used to cross-check the simulator."""
         return kv_sizing.capacity_pressure(
             kv_sizing.model_spec(self.model_preset),
             kv_sizing.HARDWARE[self.hardware],

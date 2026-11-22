@@ -6,6 +6,8 @@
 > `driver_allocated_memory` → reserved) and samples the peak itself because MPS has no peak counter. The CUDA
 > branch is written but **untested on real hardware**. Experiment C is pure simulation and is hardware-independent.
 > The conceptual points hold on CUDA; the exact reserved-memory numbers in Exp B are MPS-specific.
+>
+> **CUDA rerun.** Experiments A-C were later rerun unchanged on an NVIDIA A40 (torch 2.14.0+cu132), which exercised the CUDA counter branch. The raw outputs are in [results/cuda-a40/](results/cuda-a40/) and are not analysed in this README.
 
 ## Files
 

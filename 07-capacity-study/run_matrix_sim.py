@@ -1,4 +1,4 @@
-"""Run the 12-case matrix (and an ablation) on the Day 3 simulator. SIMULATED, not measured.
+"""Run the 12-case matrix (and an ablation) on the simulator in `03-batching-simulator`. SIMULATED, not measured.
 
     .venv/bin/python run_matrix_sim.py                     # 12 cases x 3 reps (+key reps, +A/A)
     .venv/bin/python run_matrix_sim.py --ablation          # also attribute `tuned` knob by knob
@@ -25,7 +25,7 @@ import stability
 logger = logging.getLogger(__name__)
 
 SIM_NOTE = (
-    "SIMULATED with the Day 3 engine and a roofline cost model derived from illustrative GPU "
+    "SIMULATED with the `03-batching-simulator` engine and a roofline cost model derived from illustrative GPU "
     "peaks (kv_sizing.HARDWARE); not a GPU measurement. peak_gpu_mem_gib is not measured."
 )
 DEFAULT_OUT = Path(__file__).resolve().parent / "results" / "sim"

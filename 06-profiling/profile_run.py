@@ -1,11 +1,11 @@
-"""Profile one representative Day 1 generation run (prefill window and decode window).
+"""Profile one representative `01-inference-loop` generation run (prefill window and decode window).
 
 Usage:
     python profile_run.py --device mps --prompt-len 512 --new-tokens 33 --tag mps-baseline
     python profile_run.py --smoke --device cpu --out /tmp/x     # tiny random model, no download
 
 Windowing: warmup generations run first (unprofiled). The prefill window is one
-`generate_cached(max_new_tokens=1)`. The decode window starts inside Day 1's `on_step`
+`generate_cached(max_new_tokens=1)`. The decode window starts inside `01-inference-loop`'s `on_step`
 hook at the first decode step, so it contains only decode and no prefill.
 
 On CUDA, `torch.cuda.profiler.start/stop` bracket the window and NVTX ranges label
@@ -269,7 +269,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--new-tokens", type=int, default=33, help="decode window = new_tokens - 1 steps")
     parser.add_argument("--warmup", type=int, default=3)
     parser.add_argument("--attn-impl", choices=["sdpa", "eager"], default="sdpa")
-    parser.add_argument("--model", default=DEFAULT_MODEL_ID, help="Hub id (ignored with --smoke); default is Day 1's 0.5B")
+    parser.add_argument("--model", default=DEFAULT_MODEL_ID, help="Hub id (ignored with --smoke); default is `01-inference-loop`'s 0.5B")
     parser.add_argument("--tag", default="profile")
     parser.add_argument("--out", type=Path, default=RESULTS_DIR)
     parser.add_argument("--smoke", action="store_true", help="tiny random model; not for reporting")

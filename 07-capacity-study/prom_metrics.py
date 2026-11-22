@@ -1,6 +1,6 @@
 """Prometheus text parsing and a background poller for vLLM's ``/metrics``.
 
-Day 4 only scraped the final preemption counter after a run. The matrix needs the *peak* KV
+`04-vllm-internals` only scraped the final preemption counter after a run. The matrix needs the *peak* KV
 usage and queue depth during the run, so this polls while the benchmark executes. Names are
 the v0.34.0 ones (``vllm/v1/metrics/loggers.py``):
 

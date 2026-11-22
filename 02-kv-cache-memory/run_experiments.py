@@ -1,4 +1,4 @@
-"""Day 2 experiments.
+"""`02-kv-cache-memory` experiments.
 
 A  Memory scaling   : theoretical KV bytes vs. bytes actually allocated as PyTorch tensors.
 B  Memory profiling : allocated vs. reserved vs. peak through a scripted alloc/free sequence.

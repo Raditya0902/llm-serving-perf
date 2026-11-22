@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# E1-E3 (Day 1 hypotheses, experiments.py) on vLLM at 1.5B / 3B / 8B: one default server per model, `vllm bench serve` at fixed concurrency.
+# E1-E3 (`01-inference-loop` hypotheses, experiments.py) on vLLM at 1.5B / 3B / 8B: one default server per model, `vllm bench serve` at fixed concurrency.
 #   E1  concurrency 1,2,4,8 (128 in / 128 out)       E2  TTFT at 128,512,1024,2048 input tokens (8 out, concurrency 1)
 #   E3  TPOT at 32,128,256 output tokens (128 in, concurrency 1)
 #

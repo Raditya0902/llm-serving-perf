@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Why is p50 ITL 234 ms at input_len=3584 (Day 4) when the step-cost rule predicts ~100 ms?
-# Fresh Day 4 baseline server per (input_len, window delay) with the torch profiler window, then a 1000-prompt burst with
+# Why is p50 ITL 234 ms at input_len=3584 (`04-vllm-internals`) when the step-cost rule predicts ~100 ms?
+# Fresh `04-vllm-internals` baseline server per (input_len, window delay) with the torch profiler window, then a 1000-prompt burst with
 # `--save-detailed` so per-token ITLs are available next to the per-step GPU costs. A40 / vLLM 0.34.0 / Qwen2.5-0.5B.
 #
 #   source ../04-vllm-internals/.venv-gpu/bin/activate

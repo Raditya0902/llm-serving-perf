@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# RUNBOOK 5 / E6 with a pool the workload can actually exhaust. Day 4's gpu_memory_utilization knob never got the KV pool below the
+# RUNBOOK 5 / E6 with a pool the workload can actually exhaust. `04-vllm-internals`'s gpu_memory_utilization knob never got the KV pool below the
 # workload's peak demand (pool 3-19x demand), so preemptions were never triggered. Here `--kv-cache-memory-bytes` shrinks the pool directly.
 # Baseline load: 1000 prompts, 512 in / 128 out, all at once, max_num_seqs 256 => peak demand ~164k tokens x 12 KiB/token ~ 2.0 GB of KV.
 #

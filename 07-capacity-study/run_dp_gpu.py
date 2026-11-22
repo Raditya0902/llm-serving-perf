@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from pathlib import Path
 
-import _prior  # noqa: F401  (puts Days 2-5 on sys.path)
+import _prior  # noqa: F401  (puts folders 02-05 on sys.path)
 
 # isort: split
 from run_sweep import default_backend, wait_until_healthy
@@ -40,7 +40,7 @@ logger = logging.getLogger("run_dp_gpu")
 
 def replica_cases(model: str, model_preset: str, hardware: str, cap_kv_pool: bool,
                   total_concurrency: int) -> list[mx.MatrixCase]:
-    """The two replicas' cases: workload B, baseline knobs, half the concurrency each (like Day 5's DP arm)."""
+    """The two replicas' cases: workload B, baseline knobs, half the concurrency each (like `05-tensor-parallel`'s DP arm)."""
     if total_concurrency < REPLICAS or total_concurrency % REPLICAS:
         raise ValueError(f"total concurrency must be even and >= {REPLICAS}, got {total_concurrency}")
     half = total_concurrency // REPLICAS

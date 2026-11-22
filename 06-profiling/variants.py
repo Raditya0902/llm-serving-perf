@@ -1,10 +1,10 @@
 """Greedy decode variants that share arithmetic, so outputs can be compared token for token.
 
-  day1           - Day 1's `generate_cached` unchanged (batch 1, sync + .item() every step)
-  batched        - same loop shape as Day 1 but for B equal-length prompts (one host sync/step)
+  day1           - `01-inference-loop`'s `generate_cached` unchanged (batch 1, sync + .item() every step)
+  batched        - same loop shape as `01-inference-loop` but for B equal-length prompts (one host sync/step)
   deferred_sync  - batch 1, tokens stay on the device; ONE sync after the last step
 
-All variants run a fixed number of tokens (EOS is suppressed, as in Day 1's experiments),
+All variants run a fixed number of tokens (EOS is suppressed, as in `01-inference-loop`'s experiments),
 because the deferred variant cannot see a stop token without syncing.
 """
 

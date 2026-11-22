@@ -1,4 +1,4 @@
-"""Shared fixtures: a tiny random Qwen2 model on CPU (no downloads) and the Day 6 import path."""
+"""Shared fixtures: a tiny random Qwen2 model on CPU (no downloads) and the `06-profiling` import path."""
 
 from __future__ import annotations
 

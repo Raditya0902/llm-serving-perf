@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launch a Day 5 script under torchrun.   usage: ./launch.sh NPROC script.py [args...]
+# Launch a `05-tensor-parallel` script under torchrun.   usage: ./launch.sh NPROC script.py [args...]
 #
 # On Linux / GPU hosts this is exactly `torchrun --standalone --nnodes=1 --nproc-per-node=N`.
 # On macOS, `--standalone` hangs when the machine hostname does not resolve (it did on the dev

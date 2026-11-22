@@ -5,7 +5,7 @@
 #   ./run_tp_compare.sh [OUT_DIR]          # default results/raw/tp_compare
 #   REPS=1 CONCS="1 32" ./run_tp_compare.sh /tmp/smoke      # quick check first
 #
-# One FRESH server per (config, concurrency, repeat), as in Day 4, so prefix-cache hits never carry over.
+# One FRESH server per (config, concurrency, repeat), as in `04-vllm-internals`, so prefix-cache hits never carry over.
 # Everything is logged under OUT_DIR; the script keeps going after a failed run and lists failures at the end.
 # Written for RunPod; not executed anywhere until the first two-GPU run, so read the log of the first run closely.
 set -uo pipefail
@@ -46,7 +46,7 @@ PY
 }
 
 nccl_baseline() {
-  # nccl-tests needs nvcc + NCCL headers; if the build fails, fall back to Day 5's own torch NCCL benchmark.
+  # nccl-tests needs nvcc + NCCL headers; if the build fails, fall back to `05-tensor-parallel`'s own torch NCCL benchmark.
   if [[ ! -x nccl-tests/build/all_reduce_perf ]]; then
     { git clone --depth 1 https://github.com/NVIDIA/nccl-tests nccl-tests \
       && make -C nccl-tests -j8 CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"; } > "$OUT/nccl_build.log" 2>&1 \
@@ -56,7 +56,7 @@ nccl_baseline() {
     ./nccl-tests/build/all_reduce_perf -b 1K -e 256M -f 2 -g 2 > "$OUT/nccl_all_reduce.txt" 2>&1 \
       || FAILURES+=("nccl_all_reduce_perf")
   fi
-  # Day 5's own torchrun entry points pick NCCL when each rank owns a GPU (dist_utils.resolve_backend). This is the
+  # `05-tensor-parallel`'s own torchrun entry points pick NCCL when each rank owns a GPU (dist_utils.resolve_backend). This is the
   # first time that path runs: collectives (init, all-reduce, broadcast, all-gather) and the TP layers vs a reference.
   # (run_experiments.py is CPU/Gloo only and spawns its own workers, so it is not run here.)
   for script in collectives.py tp_demo.py; do

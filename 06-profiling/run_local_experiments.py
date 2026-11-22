@@ -21,7 +21,7 @@ from typing import Callable
 import _day1  # noqa: F401
 import torch
 from device import pick_device
-from run_experiments import write_results  # Day 1's JSON + CSV writer
+from run_experiments import write_results  # `01-inference-loop`'s JSON + CSV writer
 
 from experiments import EXPERIMENTS, Experiment, get_experiment
 from measure import (

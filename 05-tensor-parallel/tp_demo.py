@@ -1,4 +1,4 @@
-"""Day 5 / Session 3 demo: verify tensor-parallel layers against a single-device reference.
+"""Demo: verify tensor-parallel layers against a single-device reference.
 
     ./launch.sh 2 tp_demo.py        # torchrun, 2 processes (Gloo on CPU here)
 

@@ -1,10 +1,10 @@
-"""KV-pool sizing and a hardware-derived cost model (Day 2 byte counts -> Day 3 simulator).
+"""KV-pool sizing and a hardware-derived cost model (`02-kv-cache-memory` byte counts -> `03-batching-simulator`).
 
 Everything is arithmetic; the hardware numbers are ILLUSTRATIVE published peaks plus an
 assumed utilisation, not measurements. They exist so the simulated matrix is internally
 consistent: the same bytes that size the KV pool also set the decode step time.
 
-    kv_bytes/token  = 2 (K,V) x layers x kv_heads x head_dim x dtype_bytes     (Day 2)
+    kv_bytes/token  = 2 (K,V) x layers x kv_heads x head_dim x dtype_bytes     (`02-kv-cache-memory`)
     pool_bytes      = gpu_bytes x util - weight_bytes - activation_reserve
     pool_blocks     = floor(pool_bytes / (block_size x kv_bytes/token))
     weight_read_ms  = weight_bytes / mem_bw            (decode is bandwidth-bound)
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import _prior  # noqa: F401  (puts Days 2-5 on sys.path)
+import _prior  # noqa: F401  (puts folders 02-05 on sys.path)
 
 # isort: split
 from cost_model import CostModel
@@ -103,7 +103,7 @@ def kv_pool_blocks(
 
 
 def cost_model_for(model: ModelSpec, hardware: HardwareProfile) -> CostModel:
-    """Day 3 `CostModel` whose constants come from bytes and bandwidth, not guesses."""
+    """`03-batching-simulator` `CostModel` whose constants come from bytes and bandwidth, not guesses."""
     return CostModel(
         weight_read_ms=weight_bytes(deployment_for(model)) / hardware.mem_bw_bytes_s * MS_PER_S,
         kv_read_ms_per_token=kv_bytes_per_token_for(model) / hardware.mem_bw_bytes_s * MS_PER_S,

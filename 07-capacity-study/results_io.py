@@ -1,6 +1,6 @@
 """Result files: ``{meta, rows}`` JSON plus a flat CSV, and run provenance.
 
-Conventions shared with Days 3-6: every file carries a ``meta`` block saying where the
+Conventions shared with folders 03-06: every file carries a ``meta`` block saying where the
 numbers came from (``simulated`` / ``source``), and an unmeasured value is ``null`` in JSON
 and ``not measured`` in CSV, never zero.
 

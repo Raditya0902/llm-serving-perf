@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One-time setup of a fresh Lambda Cloud VM (Ubuntu, NVIDIA driver preinstalled, user `ubuntu` with sudo) for rounds 5+.
 # Run from the repo root after untarring the repo:   bash 06-profiling/gpu/setup_lambda.sh
-# Creates 04-vllm-internals/.venv-gpu (vllm 0.34.0, torch picked by --torch-backend=auto for THIS driver), adds the Day 6 test deps,
+# Creates 04-vllm-internals/.venv-gpu (vllm 0.34.0, torch picked by --torch-backend=auto for THIS driver), adds the `06-profiling` test deps,
 # installs tmux, and reports whether nsys and ncu exist and whether counters are readable. Idempotent.
 set -uo pipefail
 cd "$(dirname "$0")/../.."

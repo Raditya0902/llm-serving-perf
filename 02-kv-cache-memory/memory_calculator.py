@@ -73,7 +73,7 @@ class DeploymentSpec:
 
 
 PRESETS: dict[str, ModelSpec] = {
-    # Day 1 model: 24 layers, 2 KV heads (14 query heads), head_dim 64.
+    # `01-inference-loop` model: 24 layers, 2 KV heads (14 query heads), head_dim 64.
     "qwen2.5-0.5b": ModelSpec(0.494e9, "fp16", 24, 2, 64),
     "llama3-8b": ModelSpec(8.03e9, "fp16", 32, 8, 128),
     "llama3-70b": ModelSpec(70.6e9, "fp16", 80, 8, 128),

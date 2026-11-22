@@ -1,6 +1,6 @@
 """One-factor-at-a-time sweep definition for ``vllm serve`` + ``vllm bench serve``.
 
-Session 3 asks for configuration comparisons that change **one serving
+The sweep makes configuration comparisons that change **one serving
 parameter at a time** while holding model, workload and hardware fixed.  This
 module encodes that rule so it can be checked mechanically: ``build_sweep``
 returns a ``baseline`` run followed by runs that each differ from it in

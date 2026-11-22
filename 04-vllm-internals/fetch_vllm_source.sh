@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Shallow-clone vLLM at the pinned tag into ./vllm_src and verify the commit.
-# Needed for Session 2 (reading source) and for verify_trace.py. No GPU required.
+# Needed for the source trace and for verify_trace.py. No GPU required.
 #
 #   ./fetch_vllm_source.sh                 # pinned version
 #   VLLM_TAG=v0.35.0 VLLM_COMMIT= ./fetch_vllm_source.sh   # try another tag, skip SHA check

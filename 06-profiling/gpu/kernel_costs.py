@@ -8,7 +8,7 @@ the family whose per-decode slope in *mixed* steps carries most of the total slo
 in a mixed step comes from. Each kernel is assigned to the step annotation that contains its start time.
 
 Coverage (kernel ms / step ms) is reported per step: a low value means the parse missed kernels (or the step is mostly idle),
-and an attribution built on it must not be trusted. This is the lesson of the invalid graph-mode nsys capture in Day 5.
+and an attribution built on it must not be trusted. This is the lesson of the invalid graph-mode nsys capture in `05-tensor-parallel`.
 """
 from __future__ import annotations
 

@@ -3,7 +3,7 @@
 Whole-GPU ``memory.used`` for one device: it includes the CUDA context and vLLM's pre-allocated
 KV pool, so it mostly reflects ``gpu_memory_utilization``, not live tensors. Run on an otherwise
 idle GPU. Never exercised on the dev Mac (no NVIDIA GPU); tested with stand-in queries only.
-Same approach as Day 6's ``gpu/gpu_mem_sampler.py`` (a different git branch), re-implemented as
+Same approach as `06-profiling`'s ``gpu/gpu_mem_sampler.py`` (a different git branch), re-implemented as
 a background sampler so it can run alongside the server and the benchmark.
 """
 from __future__ import annotations

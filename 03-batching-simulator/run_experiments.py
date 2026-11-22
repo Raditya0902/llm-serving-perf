@@ -1,4 +1,4 @@
-"""Day 3 experiments: scheduling strategies on the simulated serving engine.
+"""`03-batching-simulator` experiments: scheduling strategies on the simulated serving engine.
 
 A  Strategy comparison : sequential / static / continuous / continuous + chunked prefill
 B  Full active batch   : sweep max_running_seqs (what happens when the batch is full?)

@@ -32,7 +32,7 @@ def git_short_hash() -> str:
 
 
 def git_is_dirty() -> bool | None:
-    """True if Day 6 or Day 1 has uncommitted/untracked changes (the hash then does not identify the code)."""
+    """True if `06-profiling` or `01-inference-loop` has uncommitted/untracked changes (the hash then does not identify the code)."""
     try:
         result = subprocess.run(
             ["git", "status", "--porcelain", "--", "06-profiling", "01-inference-loop"],

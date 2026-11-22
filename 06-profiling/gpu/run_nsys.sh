@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Capture an nsys trace of ONE profiled window of the Day 1 loop (NVIDIA + Linux only).
+# Capture an nsys trace of ONE profiled window of the `01-inference-loop` decode loop (NVIDIA + Linux only).
 #
 # STATUS: run on RunPod (A40, nsys 2026.5.2 installed with `apt-get install nsight-systems-2026.5.2` from the CUDA repo).
 # `--sample=none --cpuctxsw=none` are needed in a container: CPU sampling and context-switch tracing want perf privileges.

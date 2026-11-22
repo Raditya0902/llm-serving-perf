@@ -51,7 +51,7 @@ def _table(header: Sequence[str], rows: Sequence[Sequence[str]]) -> list[str]:
 def _banner(meta: Mapping[str, Any]) -> list[str]:
     simulated = meta.get("simulated")
     if simulated is True:
-        return ["> **SIMULATED.** Produced by the Day 3 simulator with a roofline cost model from "
+        return ["> **SIMULATED.** Produced by the simulator in `03-batching-simulator` with a roofline cost model from "
                 "illustrative GPU peaks. Not a GPU measurement; peak GPU memory is not measured.", ""]
     if simulated is False:
         return [f"> Measured with vLLM (`{meta.get('git_commit', 'unknown')}`); see the run metadata.", ""]

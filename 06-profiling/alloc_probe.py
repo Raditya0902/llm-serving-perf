@@ -14,7 +14,7 @@ import _day1  # noqa: F401
 import torch
 from device import sync
 from generate import _select_next_token
-from run_experiments import kv_bytes_per_token  # Day 1: 2 * layers * kv_heads * head_dim * bytes
+from run_experiments import kv_bytes_per_token  # `01-inference-loop`: 2 * layers * kv_heads * head_dim * bytes
 
 KV_MATCH_TOLERANCE = 0.25  # a step "matches" if its growth is within 25% of one token's KV
 KV_MATCH_MIN_FRACTION = 0.9

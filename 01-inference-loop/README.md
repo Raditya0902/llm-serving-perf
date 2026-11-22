@@ -3,6 +3,8 @@
 A hand-written greedy decoding loop for **Qwen2.5-0.5B-Instruct** (PyTorch + Hugging Face Transformers), with and without a KV cache, plus three timing experiments.
 
 > **Hardware caveat.** All numbers below were measured on an **Apple M4 (16 GB), MPS backend, fp16**, with torch 2.15 and transformers 5.23. There was no NVIDIA GPU. The code selects cuda > mps > cpu automatically and uses `torch.cuda.synchronize` / `max_memory_allocated` on CUDA, so the same scripts run unchanged on a CUDA box. The *shapes* of the curves should carry over, but absolute numbers and the exact compute-bound/memory-bound split will not.
+>
+> **CUDA rerun.** Experiments A-C were later rerun unchanged on an NVIDIA A40 (torch 2.14.0+cu132). The raw outputs are in [results/cuda-a40/](results/cuda-a40/) and are not analysed in this README; the CUDA behaviour of this loop is analysed in [`06-profiling` report 9.1](../06-profiling/performance-report.md).
 
 ## Files
 

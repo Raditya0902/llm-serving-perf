@@ -1,4 +1,4 @@
-"""Day 5 / Session 2: PyTorch collective communication, one primitive at a time.
+"""PyTorch collective communication, one primitive at a time.
 
 Run with two local processes (see README for why macOS needs ``launch.sh``)::
 

@@ -1,4 +1,4 @@
-"""Day 5 / Session 3: a simplified tensor-parallel linear layer (forward pass only).
+"""A simplified tensor-parallel linear layer (forward pass only).
 
 Convention: ``Y = X @ W`` with ``X: [tokens, d_in]`` and ``W: [d_in, d_out]``.
 

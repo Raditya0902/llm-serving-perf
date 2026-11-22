@@ -1,4 +1,4 @@
-"""Day 5 experiments: what does communication cost, and when does tensor parallelism pay?
+"""`05-tensor-parallel` experiments: what does communication cost, and when does tensor parallelism pay?
 
 A  Collective benchmark : all_reduce / all_gather / broadcast, latency + bandwidth vs message
                           size, for 2 and 4 ranks; also a fitted alpha (latency) / beta (per byte)

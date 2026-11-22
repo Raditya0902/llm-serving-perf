@@ -1,12 +1,12 @@
-"""The Day 6 experiment registry: variable, baseline, measurement and the hypothesis.
+"""The `06-profiling` experiment registry: variable, baseline, measurement and the hypothesis.
 
 Hypotheses are written here *before* any measurement is taken, and are never edited
 to match results. If a result disagrees, the report says so.
 
 `runnable_on`:
-  local - measured on the dev machine with the Day 1 engine (this folder)
+  local - measured on the dev machine with the `01-inference-loop` engine (this folder)
   gpu   - vLLM scheduler/memory knobs; needs an NVIDIA host (see RUNBOOK.md). On the
-          Mac only a Day 3 simulator *prediction* exists, labelled SIMULATED.
+          Mac only a `03-batching-simulator` *prediction* exists, labelled SIMULATED.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ EXPERIMENTS: tuple[Experiment, ...] = (
         "TTFT (prefill latency), prefill tokens/s",
         "Prefill is compute-bound at these lengths, so TTFT grows about linearly with prompt "
         "length: TTFT(2048) / TTFT(512) lies in [3.8, 5.0], and prefill tokens/s is roughly flat "
-        "(Day 1: ~3.3k tok/s at 512).",
+        "(`01-inference-loop`: ~3.3k tok/s at 512).",
         "local",
     ),
     Experiment(
@@ -86,7 +86,7 @@ EXPERIMENTS: tuple[Experiment, ...] = (
     Experiment(
         "O1", "Optimization: defer host syncs", "decode_loop", ("day1", "deferred_sync"), "day1",
         "per-step latency, tokens/s (outputs must be identical)",
-        "Day 1 syncs twice per step. If the CPU enqueue time is >= ~80% of the synced step time "
+        "`01-inference-loop` syncs twice per step. If the CPU enqueue time is >= ~80% of the synced step time "
         "(CPU/launch-bound), removing syncs cannot help: improvement < 5%. A bigger gain would "
         "mean the step was waiting on sync latency, not on work.",
         "local",

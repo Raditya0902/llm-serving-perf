@@ -1,4 +1,4 @@
-"""E1-E3 of Day 1 (experiments.py) on vLLM: evaluate the unchanged hypotheses from gpu/run_e123_vllm.sh results.
+"""E1-E3 of `01-inference-loop` (experiments.py) on vLLM: evaluate the unchanged hypotheses from gpu/run_e123_vllm.sh results.
 
     python -m gpu.e123_summary <root>        # <root>/<model>/e1_c<C>.json, e2_in<L>.json, e3_out<L>.json
 

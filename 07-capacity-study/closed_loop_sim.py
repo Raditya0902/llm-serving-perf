@@ -1,15 +1,15 @@
-"""Closed-loop (fixed-concurrency) client on top of Day 3's discrete-event engine.
+"""Closed-loop (fixed-concurrency) client on top of `03-batching-simulator`'s discrete-event engine.
 
-Day 3's `Simulator` replays a fixed arrival schedule (open loop). `vllm bench serve
+`03-batching-simulator`'s `Simulator` replays a fixed arrival schedule (open loop). `vllm bench serve
 --max-concurrency N --request-rate inf` is closed loop: N clients, each sending its next
 request the instant its previous one finishes. That is what the matrix measures, so this
-module subclasses the Day 3 engine and replaces only the arrival logic; iteration
+module subclasses the `03-batching-simulator` engine and replaces only the arrival logic; iteration
 planning, the cost model, KV accounting, preemption and the per-iteration bookkeeping
-(`_record`, `_apply`) are Day 3's, unchanged.
+(`_record`, `_apply`) are `03-batching-simulator`'s, unchanged.
 
-SIMULATED: every number produced here comes from the Day 3 roofline cost model, not a GPU.
+SIMULATED: every number produced here comes from the `03-batching-simulator` roofline cost model, not a GPU.
 Known simplifications (see README): no attention-quadratic prefill cost, no prefix cache,
-vLLM's full-prompt capacity check at admission (Day 4 COMPARISON.md) is not modelled, and
+vLLM's full-prompt capacity check at admission (`04-vllm-internals` COMPARISON.md) is not modelled, and
 the client has zero think time and perfect pacing.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ import random
 
 import numpy as np
 
-import _prior  # noqa: F401  (puts Days 2-5 on sys.path)
+import _prior  # noqa: F401  (puts folders 02-05 on sys.path)
 
 # isort: split
 from cost_model import CostModel

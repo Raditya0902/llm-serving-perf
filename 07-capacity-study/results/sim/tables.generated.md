@@ -2,7 +2,7 @@
 
 # Generated result tables
 
-> **SIMULATED.** Produced by the Day 3 simulator with a roofline cost model from illustrative GPU peaks. Not a GPU measurement; peak GPU memory is not measured.
+> **SIMULATED.** Produced by the simulator in `03-batching-simulator` with a roofline cost model from illustrative GPU peaks. Not a GPU measurement; peak GPU memory is not measured.
 
 ## Matrix (mean over repeats)
 

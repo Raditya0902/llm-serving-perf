@@ -1,10 +1,10 @@
-"""Plots for Day 5, read from results/*.json (run run_experiments.py first).
+"""Plots for `05-tensor-parallel`, read from results/*.json (run run_experiments.py first).
 
     python plot_results.py            # full results -> results/*.png
     python plot_results.py --suffix _smoke --results DIR
 
 Figures: tp_diagram.png (schematic, no data), exp_a_collectives.png, exp_b_speedup.png,
-exp_b_comm_fraction.png, exp_c_model.png. Same palette as Day 3. Every measured figure is
+exp_b_comm_fraction.png, exp_c_model.png. Same palette as `03-batching-simulator`. Every measured figure is
 Gloo-on-CPU; the GPU panel in exp_c_model.png is built from *assumed* hardware numbers and
 says so in its title.
 """

@@ -1,6 +1,6 @@
 """Measurement stability: aggregate repeats, coefficient of variation, and the A/A noise floor.
 
-Rules (carried over from Day 6's harness pitfalls):
+Rules (carried over from `06-profiling`'s harness pitfalls):
 
 * A difference between two cases is called ``real`` only if (a) the two cases' min..max
   ranges over their repeats do not overlap AND (b) it exceeds the noise floor.

@@ -1,4 +1,4 @@
-"""Follow-up runs for the Day 7 matrix: H6 (admission caps) and a decomposition of the `tuned` config.
+"""Follow-up runs for the `07-capacity-study` matrix: H6 (admission caps) and a decomposition of the `tuned` config.
 
 `tuned` changes two knobs at once (gpu_memory_utilization 0.85 -> 0.92, max_num_batched_tokens 8192 -> 2048). With
 --cap-kv-pool the first one becomes a pool-size change (17.0 -> 19.8 GiB). These arms change ONE knob at a time on

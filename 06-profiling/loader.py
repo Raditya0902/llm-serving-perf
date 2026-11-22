@@ -1,4 +1,4 @@
-"""Model loading with an explicit attention implementation (Day 1's `load` has no such knob)."""
+"""Model loading with an explicit attention implementation (`01-inference-loop`'s `load` has no such knob)."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def load_model(
     attn_impl: str = "sdpa",
     model_id: str = DEFAULT_MODEL_ID,
 ):
-    """Return `(tokenizer, model)`; same dtype policy as Day 1 (fp16 on accelerators, fp32 on CPU)."""
+    """Return `(tokenizer, model)`; same dtype policy as `01-inference-loop` (fp16 on accelerators, fp32 on CPU)."""
     validate_attn_impl(attn_impl)
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = (

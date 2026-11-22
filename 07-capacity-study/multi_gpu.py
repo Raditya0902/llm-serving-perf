@@ -1,7 +1,7 @@
 """Analytic two-GPU / multi-node model: what tensor parallelism buys and costs for decode.
 
-ASSUMED, not measured. Link constants are the Day 5 "assumption" rows (NVLink-class, PCIe-class)
-plus a 100 GbE network entry; GPU peaks come from ``kv_sizing.HARDWARE``. Day 5 measured only
+ASSUMED, not measured. Link constants are the `05-tensor-parallel` "assumption" rows (NVLink-class, PCIe-class)
+plus a 100 GbE network entry; GPU peaks come from ``kv_sizing.HARDWARE``. `05-tensor-parallel` measured only
 Gloo/CPU AllReduce latency, so nothing here has been validated on NVLink/NCCL.
 
 Per decode step with `T` tokens in the batch (T = concurrent sequences), tensor parallel degree `n`:
@@ -15,14 +15,14 @@ TP also changes capacity, which is the bigger effect for long-context serving: w
 sharded, so each GPU frees ``weight_bytes (1 - 1/n)`` for KV, and the KV heads are sharded too
 (when ``num_kv_heads % n == 0``). Group KV capacity therefore grows *faster than n*.
 
-The Day 5 roofline (`bench_model.predict_tp_speedup`) models one AllReduce; here the per-call
+The `05-tensor-parallel` roofline (`bench_model.predict_tp_speedup`) models one AllReduce; here the per-call
 latency is multiplied by the number of AllReduces in a step, which is exact for that model.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-import _prior  # noqa: F401  (puts Days 2-5 on sys.path)
+import _prior  # noqa: F401  (puts folders 02-05 on sys.path)
 
 # isort: split
 from bench_model import bus_bandwidth_factor, predict_tp_speedup
@@ -48,8 +48,8 @@ class Link:
 
 
 LINKS: dict[str, Link] = {
-    "nvlink": Link("nvlink", 15e-6, 200e9, "Day 5 nvlink_class assumption"),
-    "pcie": Link("pcie", 30e-6, 12e9, "Day 5 pcie_class assumption"),
+    "nvlink": Link("nvlink", 15e-6, 200e9, "`05-tensor-parallel` nvlink_class assumption"),
+    "pcie": Link("pcie", 30e-6, 12e9, "`05-tensor-parallel` pcie_class assumption"),
     "network-100gbe": Link("network-100gbe", 50e-6, 10e9, "100 GbE, ~80% of line rate; TP across nodes"),
 }
 

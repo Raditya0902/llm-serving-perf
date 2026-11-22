@@ -125,7 +125,7 @@ def test_main_overwrites_when_forced_or_when_report_is_untouched(tmp_path):
     out.write_text("# my notes\n")
 
     assert main(["--summary", str(summary), "--out", str(out), "--force"]) == 0
-    assert "Session 3 results" in out.read_text()
+    assert "vLLM knob sweep: results" in out.read_text()
     assert main(["--summary", str(summary), "--out", str(out)]) == 0  # still the placeholder
 
 

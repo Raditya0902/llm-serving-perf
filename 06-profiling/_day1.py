@@ -1,8 +1,8 @@
-"""Make the Day 1 modules (generate, device, model_io, prompts, bench) importable.
+"""Make the `01-inference-loop` modules (generate, device, model_io, prompts, bench) importable.
 
-Day 1 is a flat set of scripts, not a package. The directory is *appended* to
-`sys.path` so Day 6 modules win on name clashes (both days have a `run_*experiments.py`).
-Day 1 code is used as-is; nothing here modifies it.
+`01-inference-loop` is a flat set of scripts, not a package. The directory is *appended* to
+`sys.path` so `06-profiling` modules win on name clashes (both days have a `run_*experiments.py`).
+`01-inference-loop` code is used as-is; nothing here modifies it.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ DAY1_DIR = Path(__file__).resolve().parent.parent / "01-inference-loop"
 
 def ensure_day1_on_path() -> Path:
     if not DAY1_DIR.is_dir():
-        raise FileNotFoundError(f"Day 1 directory not found: {DAY1_DIR}")
+        raise FileNotFoundError(f"`01-inference-loop` directory not found: {DAY1_DIR}")
     entry = str(DAY1_DIR)
     if entry not in sys.path:
         sys.path.append(entry)
