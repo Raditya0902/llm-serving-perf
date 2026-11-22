@@ -1,4 +1,4 @@
-# Day 3 design: continuous-batching scheduler simulator
+# Design: continuous-batching scheduler simulator
 
 A discrete-event simulator of one LLM serving engine. It decides *which sequences run in each
 forward pass* and charges each pass a simulated time from a documented cost model. Nothing here

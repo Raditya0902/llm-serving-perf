@@ -1,4 +1,4 @@
-# Session 2 — vLLM request path: annotated call-flow
+# vLLM request path: annotated call-flow
 
 > **Pinned to vLLM `v0.34.0`, commit `62d4bc3c7e33b1b6c906e233e6af2d3506c482ca`.**
 > The checked-out source is the authority; where it disagrees with the task
@@ -280,7 +280,7 @@ Aborts take the same road via `EngineCore.abort_requests` ENG:610 →
 3. `EngineCore._initialize_kv_caches` (ENG:273) collects it, `get_kv_cache_configs` (`vllm/v1/core/kv_cache_planning.py:1565`) divides by bytes-per-block (`num_blocks = available // bytes_per_block`, minimum across ranks) and stores `cache_config.num_gpu_blocks`.
 4. Scheduler side: `BlockPool(num_gpu_blocks)` in `KVCacheCoordinator.__init__` (KVC:94). Worker side: `GPUModelRunner.initialize_kv_cache` (GMR:644) allocates the KV tensors.
 
-Consequence for Session 3: raising `--gpu-memory-utilization` buys **more blocks, not
+Consequence for the benchmark sweep: raising `--gpu-memory-utilization` buys **more blocks, not
 more speed** — it changes preemption frequency only once the pool is the binding constraint.
 `--max-num-batched-tokens` also changes memory: the profile run sizes activations at that
 value, so a larger budget shrinks the KV pool.

@@ -1,7 +1,7 @@
 # Closed-book assessment: ten answers
 
 Each answer carries an equation, diagram, example, or a pointer to something implemented in this lab. Benchmark numbers are **SIMULATED**
-(Day 3 engine, illustrative A100-40GB constants) unless tagged **[measured-Mac]** (Day 6, M4/MPS) or **[source]** (vLLM v0.34.0 source, Day 4).
+(`03-batching-simulator` engine, illustrative A100-40GB constants) unless tagged **[measured-Mac]** (`06-profiling`, M4/MPS) or **[source]** (vLLM v0.34.0 source, `04-vllm-internals`).
 Nothing here has GPU measurements. Section numbers refer to [REPORT.md](REPORT.md).
 
 ---
@@ -23,7 +23,7 @@ HTTP request -> tokenize -> [engine: add to waiting queue]
 5. **Sampling and stop:** the worker samples (greedy/top-p...), starts an async device-to-host copy and returns token ids; the scheduler appends them, checks EOS/length, frees blocks of finished requests.
 6. **Streaming:** token ids return to the frontend, are detokenized incrementally and sent as SSE chunks.
 
-Diagram: [results/architecture.png](results/architecture.png). Implemented in miniature: Day 1's cached greedy loop (real model, Mac) and Day 3's iteration-level engine (simulated).
+Diagram: [results/architecture.png](results/architecture.png). Implemented in miniature: `01-inference-loop`'s cached greedy loop (real model, Mac) and `03-batching-simulator`'s iteration-level engine (simulated).
 
 ## 2. Why prefill is often compute-bound and decode often bandwidth-limited
 
@@ -39,7 +39,7 @@ ridge     = peak_FLOPS / HBM_BW  = 312e12 / 1.555e12 ~ 200 FLOP/byte  (A100, ass
   That is why batching raises decode throughput nearly for free, up to `T` ~ 100-200.
 
 Evidence: the simulator's cost model is `iter = overhead + max(compute, memory)` (`03-batching-simulator/cost_model.py`, constants derived in `kv_sizing.cost_model_for`). On real
-hardware, Day 6 **[measured-Mac]** found decode is device-bound on weight reads (matmuls 74% of a 15.9 ms step) and batching decode gives ~5.6-6.1x at batch 8 while end-to-end only 2.8-3.5x
+hardware, `06-profiling` **[measured-Mac]** found decode is device-bound on weight reads (matmuls 74% of a 15.9 ms step) and batching decode gives ~5.6-6.1x at batch 8 while end-to-end only 2.8-3.5x
 because compute-bound prefill does not amortize. Caveat: Apple unified memory, not NVIDIA.
 
 ## 3. Deriving the KV-cache requirement for a GQA transformer
@@ -69,12 +69,12 @@ continuous  step: [r1 r2 r3 r4] -> r2 done -> [r1 r3 r4 r5] -> r1 done -> [r3 r4
 - **Dynamic:** still a static batch once launched; the only difference is *when* the batch is formed (timeout or size trigger), trading queueing delay for fuller batches.
 - **Continuous (iteration-level):** the scheduler re-plans every forward pass, so finished sequences free their slot and KV immediately and new ones join at once.
 
-Implemented and compared in `03-batching-simulator` (`StaticScheduler` vs `ContinuousScheduler`): continuous batching gave 13x the throughput of sequential and 2.1x static there (Day 3 README, simulated), and
+Implemented and compared in `03-batching-simulator` (`StaticScheduler` vs `ContinuousScheduler`): continuous batching gave 13x the throughput of sequential and 2.1x static there (`03-batching-simulator` README, simulated), and
 `padded_slot_frac` quantifies the static waste. vLLM goes further: no separate prefill and decode phases at all [source].
 
 ## 5. How vLLM decides which requests receive computation
 
-Every step `Scheduler.schedule()` (SCH:716) makes one pass over two budgets, `token_budget` and `input_budget` (`max_num_batched_tokens`) [source: Day 4 CHECKPOINT Q2]:
+Every step `Scheduler.schedule()` (SCH:716) makes one pass over two budgets, `token_budget` and `input_budget` (`max_num_batched_tokens`) [source: `04-vllm-internals` CHECKPOINT Q2]:
 
 ```
 for req in running:                                   # already-running requests first, in list order
@@ -86,7 +86,7 @@ if nothing was preempted:
 ```
 
 So: *running requests -> KV holders -> policy order*, hard stop at the first waiting request that cannot get tokens or blocks. Without chunked prefill a prompt larger than the leftover budget blocks the
-queue (head-of-line). Same logic in miniature: `03-batching-simulator/scheduler.py`; the differences (vLLM checks the whole prompt fits but allocates only the first chunk) are in Day 4 `COMPARISON.md`.
+queue (head-of-line). Same logic in miniature: `03-batching-simulator/scheduler.py`; the differences (vLLM checks the whole prompt fits but allocates only the first chunk) are in `04-vllm-internals` `COMPARISON.md`.
 Observed effect of the budget here: shrinking `max_num_batched_tokens` 8192 -> 2048 at B@64 improved mean TPOT 5% (REPORT §8) **[SIM]**.
 
 ## 6. Paged KV-cache allocation: how it works and what it solves
@@ -101,12 +101,12 @@ free list:                  blocks {1,3,4,...}               allocate one block 
   full blocks are hash-chained so identical prefixes can share blocks (ref-counted) [source: `BlockPool`, BP:107].
 - **Problem solved:** contiguous allocation must reserve `max_len` per request up front, so memory is stranded by internal fragmentation (reserved but unused) and external fragmentation (holes between sequences),
   capping concurrency far below what actually fits. Paging makes waste at most one partial block per sequence.
-- **Evidence in this lab:** Day 2 Exp C (simulated): ~83% of reserved memory unused with contiguous allocation vs 1-16% with paging (`02-kv-cache-memory/paged_allocator.py` vs `ContiguousAllocator`).
-  Day 7 relies on it: the "demand vs pool" arithmetic in REPORT §2 is only valid because waste is small.
+- **Evidence in this lab:** `02-kv-cache-memory` Exp C (simulated): ~83% of reserved memory unused with contiguous allocation vs 1-16% with paging (`02-kv-cache-memory/paged_allocator.py` vs `ContiguousAllocator`).
+  `07-capacity-study` relies on it: the "demand vs pool" arithmetic in REPORT §2 is only valid because waste is small.
 
 ## 7. What happens inside vLLM when it runs out of KV capacity
 
-It depends on which side of the scheduler the request is on [source: Day 4 CHECKPOINT Q4]:
+It depends on which side of the scheduler the request is on [source: `04-vllm-internals` CHECKPOINT Q4]:
 
 - **A running request needs one more block** (`allocate_slots` -> `None`, SCH:930): vLLM **preempts a victim** (the last in `running` for FCFS; max `(priority, arrival)` for PRIORITY), calls `_preempt_request` (SCH:1853):
   frees its blocks, sets `num_computed_tokens = 0`, marks it `PREEMPTED`, puts it at the **front** of `waiting`. It is later **recomputed** (re-prefilled with prompt *and* generated tokens), reusing any still-cached prefix blocks.
@@ -130,7 +130,7 @@ MLP:  y = ( act(x A) ) B       A split by COLUMNS (A = [A1|A2]),  B split by ROW
 - **Requirement:** a fast, low-latency link. Analytic results **[assumed constants; multi_gpu.py]**: TP=2 speeds a decode step **1.64x on NVLink-class, 1.05x on PCIe-class, 0.88x (slower) over 100 GbE**.
   TP also shards weights and KV heads, so group KV capacity grows faster than `n` (2.88x at TP=2). Keep TP inside a node; use PP or DP across nodes.
 - Implemented: `05-tensor-parallel/tensor_parallel.py` (`ColumnParallelLinear`, `RowParallelLinear`, `ParallelMLP`, verified against an unsharded reference on Gloo/CPU), `bench_model.py` (alpha-beta fit), and
-  `07-capacity-study/multi_gpu.py`. Not run: NCCL on GPUs (Day 5 RUNBOOK, REPORT §5).
+  `07-capacity-study/multi_gpu.py`. Not run: NCCL on GPUs (`05-tensor-parallel` RUNBOOK, REPORT §5).
 
 ## 9. Identifying the dominant bottleneck in an inference workload
 
@@ -140,7 +140,7 @@ A decision procedure, cheapest signal first (`bottleneck.py` encodes steps 1-4 a
 2. **Running batch pinned at `max_num_seqs` with a growing waiting queue?** -> **scheduler-bound** (admission cap).
 3. **TPOT vs the weight-read floor** `weights / HBM_BW` (10.3 ms here): within ~1.5x -> **bandwidth-bound decode** (only batching, quantization or more bandwidth helps).
 4. **TPOT well above the floor** -> **prefill interference / compute**: look at `max_num_batched_tokens` and chunking.
-5. **Wall time vs GPU busy time** (nsys gaps; CPU enqueue time vs step time): large gaps -> **host/launch-bound**. Day 6 **[measured-Mac]**: CPU enqueue 3.0 ms of a 15.9 ms step, so *device-bound*; Day 1's launch-overhead guess was refuted.
+5. **Wall time vs GPU busy time** (nsys gaps; CPU enqueue time vs step time): large gaps -> **host/launch-bound**. `06-profiling` **[measured-Mac]**: CPU enqueue 3.0 ms of a 15.9 ms step, so *device-bound*; `01-inference-loop`'s launch-overhead guess was refuted.
 
 Example from the matrix **[SIM]**: B@64 -> step 1 fires (100%, 64 preemptions); B@16 -> TPOT 23 ms is 2.2x the floor -> step 4; A@4 -> TPOT 11.1 ms -> step 3 (`results/sim/analysis.json`). Rules are heuristics:
 they label, they do not prove; confirm with a profile.

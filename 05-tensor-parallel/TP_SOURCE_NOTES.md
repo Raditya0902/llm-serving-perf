@@ -1,11 +1,11 @@
 # How vLLM implements tensor parallelism (source notes)
 
-Source: vLLM **v0.34.0**, commit `62d4bc3c7e33` — the same checkout Day 4 used
+Source: vLLM **v0.34.0**, commit `62d4bc3c7e33` — the same checkout `04-vllm-internals` used
 (`04-vllm-internals/vllm_src/`, git-ignored). Paths below are relative to that tree.
 
 **How this was checked.** I read the quoted ranges directly and confirmed every symbol below
 exists with `grep -n`. Line numbers are what that grep returned on this checkout; they will
-drift on other versions, and (as on Day 4) interior line numbers are not machine-checked.
+drift on other versions, and (as on `04-vllm-internals`) interior line numbers are not machine-checked.
 I did **not** read the NCCL wrappers (`pynccl.py`, `custom_all_reduce.py`) — only the code that
 chooses between them — and I did not run any of this (no GPU here).
 
@@ -34,7 +34,7 @@ Differences worth knowing: vLLM layers carry quantization (`quant_method.apply`)
 
 ## 2. A real model uses them exactly as in the Megatron pattern
 
-`vllm/model_executor/models/qwen2.py` (Qwen2 — the family in the Session 3 `vllm serve` command):
+`vllm/model_executor/models/qwen2.py` (Qwen2 — the family in the TP=1 vs TP=2 `vllm serve` command):
 
 - **MLP** (`Qwen2MLP`): `gate_up_proj = MergedColumnParallelLinear` (`qwen2.py:91`), then
   `SiluAndMul`, then `down_proj = RowParallelLinear` (`qwen2.py:98`). The forward is
@@ -52,7 +52,7 @@ Differences worth knowing: vLLM layers carry quantization (`quant_method.apply`)
   AllReduce combines them.
 - So a transformer layer costs **two AllReduces** (attention output, MLP output) in the forward
   pass. For Qwen2.5-1.5B that is `2 × num_layers` AllReduces per generated token — the number the
-  Session 3 TP=2 experiment's communication overhead is made of. (Layer count: check the model
+  TP=2 experiment's communication overhead is made of. (Layer count: check the model
   config on the GPU host; I haven't loaded it here.)
 
 ## 3. How the communication is dispatched
@@ -78,7 +78,7 @@ tail). The point for this lab: for the small messages decode produces, vLLM does
 `ncclAllReduce`; it has hand-written low-latency paths because **at small sizes the α (latency)
 term dominates** — the same regime my Exp A fits measure on Gloo.
 
-## 4. What this tells us about the Day 5 hypotheses
+## 4. What this tells us about the `05-tensor-parallel` hypotheses
 
 - Per-token TP cost = `2 × layers` small AllReduces, each of size `tokens × hidden × 2 bytes`
   (fp16). At decode that is KBs, so latency (α), not bandwidth, is the bill. This is why custom

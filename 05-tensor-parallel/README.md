@@ -21,13 +21,13 @@
 
 | File | Purpose |
 |---|---|
-| `collectives.py` | **Session 2 deliverable.** Functional wrappers (`all_reduce_sum`, `broadcast_from`, `all_gather_cat`, `synchronize`) + a torchrun demo with self-checks |
+| `collectives.py` | Functional wrappers (`all_reduce_sum`, `broadcast_from`, `all_gather_cat`, `synchronize`) + a torchrun demo with self-checks |
 | `dist_utils.py` | Init from torchrun env, backend choice (NCCL iff one CUDA device per rank, else Gloo), clean shutdown, `spawn_group` for tests/benchmarks without torchrun |
-| `tensor_parallel.py` | **Session 3 deliverable.** `ColumnParallelLinear`, `RowParallelLinear`, `ParallelMLP`, shard helpers |
+| `tensor_parallel.py` | `ColumnParallelLinear`, `RowParallelLinear`, `ParallelMLP`, shard helpers |
 | `tp_demo.py` | torchrun entry: checks column / row / MLP against a single-device reference |
 | `launch.sh` | `torchrun` launcher; works around macOS hostname resolution (see Limitations) |
 | `bench_model.py` / `bench_workers.py` / `run_experiments.py` / `plot_results.py` | Communication benchmark: pure maths / per-rank workers / CLI (`--exp A\|B\|C\|all --smoke`) / figures |
-| `PARALLELISM.md` | **Session 4:** TP diagram, DP vs TP, benchmark results, GPU topology, decision guide |
+| `PARALLELISM.md` | TP diagram, DP vs TP, benchmark results, GPU topology, decision guide |
 | `CHECKPOINT.md` | Answers to the six knowledge-checkpoint questions |
 | `TP_SOURCE_NOTES.md` | How vLLM v0.34.0 implements TP, mapped onto my code |
 | `RUNBOOK.md`, `RESULTS.md` | The unrun two-GPU vLLM experiment: commands, metrics, hypotheses; empty results stub |

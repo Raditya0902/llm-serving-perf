@@ -1,4 +1,4 @@
-# Day 7 final engineering assessment: serving an 8B model, from KV bytes to a latency-bounded throughput decision
+# Capacity study: serving an 8B model, from KV bytes to a latency-bounded throughput decision
 
 > **Update: a real-GPU run now exists.** This report is the **pre-run simulated analysis**; the predictions in it were scored against a
 > 49-run A40 matrix in [GPU_RESULTS.md](GPU_RESULTS.md) (structure held, including preemption counts; the token-budget knob had the wrong
@@ -6,9 +6,9 @@
 > **Section 5 (two GPUs) has also been measured**: the "PCIe 1.05x" row below was an A100-40GB number; on 2x A40 over PCIe the measured step speedup is 1.29x (B@64) to 1.53x (B@16), which this model reproduces to within 2% and 6% when given the A40 profile and the
 > measured link constants (25 us, 7.6 GB/s). The "require NVLink or the speedup vanishes" advice is therefore wrong for this model on these GPUs. KV capacity 2.88x held under the capped pool; see GPU_RESULTS.md.
 >
-> **Read this first (pre-run).** Every benchmark number below is **SIMULATED**: the Day 3 scheduler/engine with a roofline cost model derived
+> **Read this first (pre-run).** Every benchmark number below is **SIMULATED**: the `03-batching-simulator` scheduler/engine with a roofline cost model derived
 > from *illustrative* A100-40GB peaks. No GPU ran anything in this repo (it was built on a Mac). Claims are tagged:
-> **[measured-Mac]** Apple M4/MPS, Day 1 engine, Day 6 · **[source]** read from vLLM v0.34.0 source, Day 4 · **[mechanism]** derived arithmetic ·
+> **[measured-Mac]** Apple M4/MPS, `01-inference-loop` engine, `06-profiling` · **[source]** read from vLLM v0.34.0 source, `04-vllm-internals` · **[mechanism]** derived arithmetic ·
 > **[SIM]** simulated here · **[assumed]** assumed constant · **[GPU pending]** needs the run in [RUNBOOK.md](RUNBOOK.md).
 > Peak GPU memory is *not measured*. Tables: [results/sim/tables.generated.md](results/sim/tables.generated.md); raw rows: `results/sim/*.json`.
 
@@ -24,7 +24,7 @@ which a second GPU more than doubles, **if** the link is NVLink-class. All of th
 
 ![architecture](results/architecture.png)
 
-Pipeline, prompt to streamed tokens **[source: Day 4 SOURCE_TRACE §0-1]**:
+Pipeline, prompt to streamed tokens **[source: `04-vllm-internals` SOURCE_TRACE §0-1]**:
 
 1. **API server process.** The request arrives over HTTP, the prompt is tokenized, and the request is sent over ZMQ to the engine core.
 2. **EngineCore process (CPU only).** An input thread preprocesses the request and hashes its prompt blocks. The busy-loop thread runs the
@@ -39,7 +39,7 @@ AllReduces twice per layer (section 5).
 
 ## 2. KV-cache memory calculations
 
-**Per token (GQA)** **[mechanism, Day 2 `memory_calculator.py`]**
+**Per token (GQA)** **[mechanism, `02-kv-cache-memory` `memory_calculator.py`]**
 
 ```
 kv_bytes/token = 2 (K,V) x layers x kv_heads x head_dim x dtype_bytes
@@ -57,7 +57,7 @@ util 0.92:  19.84 GiB -> 162,544 tokens (10,159 blocks)           <- tuned (+16%
 ```
 
 (Without GQA the 0.85 pool would hold only ~34,900 tokens.) vLLM sizes its pool the same way, from the worker's memory profile
-**[source: Day 4 CHECKPOINT Q3]**; here it is arithmetic on assumed numbers.
+**[source: `04-vllm-internals` CHECKPOINT Q3]**; here it is arithmetic on assumed numbers.
 
 **Demand per case** (time-averaged footprint of a sequence = prompt + half its output; `kv_sizing.capacity_pressure`):
 
@@ -69,12 +69,12 @@ util 0.92:  19.84 GiB -> 162,544 tokens (10,159 blocks)           <- tuned (+16%
 
 Only B at concurrency 64 exceeds the pool, so it is the only case predicted to preempt. A maximal B sequence (3,200 in + 480 out) holds
 3,680 tokens = 460 MiB. **The simulator independently agrees:** across all 12 cases, preemptions occur exactly in the two B@64 cases
-(`tests/test_closed_loop_sim.py::test_pressure_prediction_matches_simulated_preemption`). Day 2's paged allocator is what makes this
-arithmetic honest: it wastes 1-16% of reserved memory versus 83% for contiguous allocation (Day 2 Exp C, simulated).
+(`tests/test_closed_loop_sim.py::test_pressure_prediction_matches_simulated_preemption`). `02-kv-cache-memory`'s paged allocator is what makes this
+arithmetic honest: it wastes 1-16% of reserved memory versus 83% for contiguous allocation (`02-kv-cache-memory` Exp C, simulated).
 
 ## 3. Scheduler design and behavior
 
-**Design** (Day 3 simulator; vLLM comparison in Day 4 `COMPARISON.md`). Each iteration is one forward pass over a token budget. Every decoding
+**Design** (`03-batching-simulator`; vLLM comparison in `04-vllm-internals` `COMPARISON.md`). Each iteration is one forward pass over a token budget. Every decoding
 sequence costs one token; leftover budget goes to prefill chunks (chunked prefill on, as in vLLM v1). Waiting requests are admitted in FCFS
 order while a slot, KV blocks and budget exist, with strict head-of-line blocking. When a running sequence needs a block and the pool is
 empty, the **lowest-ranked running request is preempted by recompute**: its blocks are freed, progress reset, and it re-queues. Iteration time is
@@ -84,7 +84,7 @@ compute-bound **[mechanism]**. In this report the cost-model constants come from
 
 **What vLLM does the same / differently** **[source]**: no separate prefill and decode phases (`num_computed_tokens` chases
 `num_tokens_with_spec`); running requests are served first, then waiting ones, and a step that preempted admits none; a waiting request that
-cannot get blocks stops the admission loop and **never evicts a running one**. Day 3 reserves a request's KV on-demand, whereas vLLM also checks
+cannot get blocks stops the admission loop and **never evicts a running one**. `03-batching-simulator` reserves a request's KV on-demand, whereas vLLM also checks
 that the whole prompt fits at admission (`scheduler_reserve_full_isl`) but allocates only the first chunk: **not modelled here**.
 
 **Observed behavior on the matrix [SIM]** (full table in `tables.generated.md`):
@@ -98,14 +98,14 @@ that the whole prompt fits at admission (`scheduler_reserve_full_isl`) but alloc
 | B c=64 tuned | 3,424 | 60.5 | 35,942 | 907 | 100% | 56 | **KV-capacity bound** |
 
 Reading it: A scales almost for free (c=4 -> 64 gives 7.4x tokens/s for 2.4x P95 and 2x TPOT). B at 64 does not: the pool is full, ~64
-sequences are preempted and recomputed, and TTFT balloons to seconds because new requests wait for blocks. Day 3's chunked-prefill finding
-(worst token gap 118 -> 21 ms, Day 3 README) is the mechanism behind `tuned`'s smaller token budget **[SIM, Day 3]**.
+sequences are preempted and recomputed, and TTFT balloons to seconds because new requests wait for blocks. `03-batching-simulator`'s chunked-prefill finding
+(worst token gap 118 -> 21 ms, `03-batching-simulator` README) is the mechanism behind `tuned`'s smaller token budget **[SIM, `03-batching-simulator`]**.
 
 ![KV pool use and preemptions per case](results/sim/figures/kv_pressure.png)
 
 ## 4. vLLM internal execution trace
 
-Full annotated call flow with `file:line` for 151 machine-checked symbols is in [Day 4 SOURCE_TRACE.md](../04-vllm-internals/SOURCE_TRACE.md)
+Full annotated call flow with `file:line` for 151 machine-checked symbols is in [`04-vllm-internals` SOURCE_TRACE.md](../04-vllm-internals/SOURCE_TRACE.md)
 (`verify_trace.py` resolves them against the pinned source). One decode step in steady state **[source: v0.34.0 @ `62d4bc3`]**:
 
 ```
@@ -123,12 +123,12 @@ Why this matters for the numbers above: (a) `schedule()` charges token budget an
 `max_num_batched_tokens` and a larger pool act on different constraints; (b) preemption is *only* for running requests, so the B@64 thrash
 is requests evicting each other, not the queue backing up; (c) `max_num_batched_tokens` also shrinks the pool slightly (the startup profile run
 sizes activations at that value), a second-order effect the simulator ignores. The brief's file list was stale (`gpu_model_runner.py` no longer
-exists); the source, not the brief, is the authority (Day 4).
+exists); the source, not the brief, is the authority (`04-vllm-internals`).
 
 ## 5. Multi-GPU communication
 
 **Tensor parallelism** shards each layer's matrices: column-parallel QKV and gate/up, row-parallel output and down projections, so each
-layer needs **two AllReduces** (after attention's out-projection and after the MLP) **[source: Day 5 TP_SOURCE_NOTES]**. Per decode step with
+layer needs **two AllReduces** (after attention's out-projection and after the MLP) **[source: `05-tensor-parallel` TP_SOURCE_NOTES]**. Per decode step with
 `T` sequences in the batch, `L` layers, hidden size `h`, TP degree `n` **[mechanism; multi_gpu.py]**:
 
 ```
@@ -150,7 +150,7 @@ For Llama-3-8B, T = 64: 64 AllReduces of 512 KiB each. Results on the **assumed*
 **Two effects, and the second matters more here.** *Speed*: decode is weight-read bound, so TP halves the read but adds 64 latency-bound
 collectives; the gain depends entirely on the link. *Capacity*: weights are sharded, so each GPU frees `weight_bytes (1 - 1/n)` for KV, and KV
 heads shard too (8 heads divide by 2/4/8), so group KV grows **faster than n** (2.88x at TP=2). B@64 needs ~176k tokens: it does not fit on
-one GPU (139.6k) and fits on two (401.7k), so the preemption thrash in section 3 should disappear. Day 5 measured only Gloo/CPU AllReduce
+one GPU (139.6k) and fits on two (401.7k), so the preemption thrash in section 3 should disappear. `05-tensor-parallel` measured only Gloo/CPU AllReduce
 (alpha ~151 us on 2 ranks, ~417 us on 4), so the NVLink/NCCL constants are untested.
 
 ![Analytic TP speedup and KV capacity](results/sim/figures/multi_gpu.png)
@@ -172,11 +172,11 @@ one GPU (139.6k) and fits on two (401.7k), so the preemption thrash in section 3
   sequence (3,680 tokens) fits `max_model_len` 4096. `--ignore-eos` so output length is fixed by the workload, not the model.
 - **Load:** closed loop, `--max-concurrency` 4 / 16 / 64 with `--request-rate inf`; `num_prompts = max(100, 8 x concurrency)`; warmups = concurrency. Closed loop means
   the offered load adapts to the server, which is why P95 rises with concurrency instead of the queue growing without bound.
-- **Configs:** `baseline` = Day 4 baseline (util 0.85, 8192 batched tokens); `tuned` = (0.92, 2048). `max_num_seqs` is 256 in both and cannot bind at concurrency <= 64.
+- **Configs:** `baseline` = `04-vllm-internals` baseline (util 0.85, 8192 batched tokens); `tuned` = (0.92, 2048). `max_num_seqs` is 256 in both and cannot bind at concurrency <= 64.
   `tuned` changes two knobs at once, so a sim-only **ablation** toggles each alone, and adds admission caps (`max_num_seqs` 16/24/32).
 - **Repeats and stability:** 3 repeats per case, 5 for concurrency 64, plus an **A/A control** (B@16 baseline repeated with fresh prompts). A difference is "real" only if
   repeat ranges do not overlap *and* it exceeds the noise floor (the larger of the A/A delta and each case's CV); one repeat never establishes a difference
-  (`stability.py`). On the GPU the runner starts a fresh server per run and rotates case order each round, the position-bias fix from Day 6.
+  (`stability.py`). On the GPU the runner starts a fresh server per run and rotates case order each round, the position-bias fix from `06-profiling`.
 - **Metrics:** TTFT, TPOT, P95 e2e, request and output-token throughput, peak GPU memory *(not measured here)*, peak KV-pool use, preemptions, peak waiting queue.
 - **Fixed in advance:** the workloads, `tuned`, the objective, and the latency-limit factor `k = 3.0` were written down before any run
   (README, `matrix.py`, `objective.py`); the GPU predictions H1-H6 in the RUNBOOK were written from the simulator before any GPU data exists.
@@ -195,20 +195,20 @@ What exists, and what does not:
 
 | Evidence | Source | Status |
 |---|---|---|
-| Decode is device-bound on weight reads: matmuls 74% of a 15.9 ms step (51-93 GB/s effective); CPU enqueues a step in 3.0 ms | Day 6, Qwen2.5-0.5B fp16 on M4 MPS ([performance-report.md](../06-profiling/performance-report.md)) | **[measured-Mac]**; unified-memory Apple GPU, does not transfer to NVIDIA |
-| Batch 1 -> 8 raises throughput only 2.8-3.5x (decode batches ~5.6-6.1x, prefill is compute-bound and does not amortize) | Day 6 E1 | **[measured-Mac]** |
-| Removing per-step host syncs: +6.6% throughput, -7% median TPOT, A/A control -0.1% | Day 6 O1 | **[measured-Mac]** |
-| `eager` attention 33% slower than `sdpa` at decode | Day 6 O2 | **[measured-Mac]** |
+| Decode is device-bound on weight reads: matmuls 74% of a 15.9 ms step (51-93 GB/s effective); CPU enqueues a step in 3.0 ms | `06-profiling`, Qwen2.5-0.5B fp16 on M4 MPS ([performance-report.md](../06-profiling/performance-report.md)) | **[measured-Mac]**; unified-memory Apple GPU, does not transfer to NVIDIA |
+| Batch 1 -> 8 raises throughput only 2.8-3.5x (decode batches ~5.6-6.1x, prefill is compute-bound and does not amortize) | `06-profiling` E1 | **[measured-Mac]** |
+| Removing per-step host syncs: +6.6% throughput, -7% median TPOT, A/A control -0.1% | `06-profiling` O1 | **[measured-Mac]** |
+| `eager` attention 33% slower than `sdpa` at decode | `06-profiling` O2 | **[measured-Mac]** |
 | Bottleneck labels per case (rule-based: KV-full+preempt, batch at cap, TPOT vs weight-read floor) | `bottleneck.py` on `results/sim` | **[SIM]** |
 | nsys timelines, vLLM profiler, GPU peak memory | none | **not measured** |
 
 The measured Mac findings and the simulated labels agree in kind: decode at low concurrency sits near the weight-read floor (TPOT 11.1 ms against a 10.3 ms floor at A c=4;
 within the 1.5x rule), and the step stretches once prefill shares it (B c=16: 23.2 ms, 2.2x the floor). That agreement is by construction of the cost model, not independent
 validation. **No claim here has GPU profiling evidence.** The first GPU run should add an `nsys` trace of B@64 to confirm the KV-bound story (GPU idle gaps during recompute, not
-kernel saturation); Day 6's [`gpu/run_nsys.sh`](../06-profiling/gpu/run_nsys.sh) is the starting point.
+kernel saturation); `06-profiling`'s [`gpu/run_nsys.sh`](../06-profiling/gpu/run_nsys.sh) is the starting point.
 
 **How I'd identify the dominant bottleneck** (answers Q9): check KV-pool use and preemptions first; then batch size against `max_num_seqs`; then TPOT against the weight-read floor
-(`weights / HBM bandwidth`); then where wall time goes (GPU timeline gaps, CPU enqueue vs step time as in Day 6's launch probe).
+(`weights / HBM bandwidth`); then where wall time goes (GPU timeline gaps, CPU enqueue vs step time as in `06-profiling`'s launch probe).
 
 ## 8. Final optimization decision
 
@@ -239,7 +239,7 @@ Ablation at B@64 (`results/sim/figures/ablation.png`): `util-only` gives TTFT -5
 
 ![Ablation at B c=64](results/sim/figures/ablation.png)
 - *Why I expected it:* a bigger pool means fewer blocks-starved waits (`util`); a smaller token budget stops baseline from packing up to three 2.5k-token prompts into one step, which stalls every
-  decoder for ~0.8 s (`tokens`; Day 3's chunked-prefill result).
+  decoder for ~0.8 s (`tokens`; `03-batching-simulator`'s chunked-prefill result).
 - *What happened:* the util change did most of the TTFT work and the token-budget change most of the TPOT work, as expected; but `util` also raises TPOT because more sequences decode at once. **I did not
   expect `tuned` to leave P95 e2e unchanged**: the TTFT win is paid back in per-token time over 384 output tokens. These are mechanisms consistent with the simulator, not isolated experiments.
 - *Neither config meets `L` at 64* (36.7 s and 35.9 s against 19.9 s).

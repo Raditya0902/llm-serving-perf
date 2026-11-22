@@ -1,4 +1,4 @@
-# Session 3 runbook — vLLM TP=1 vs TP=2 on two GPUs
+# Runbook: vLLM TP=1 vs TP=2 on two GPUs
 
 > **Status (updated): run once on 2x A100-80GB over NVLink** via `run_tp_compare.sh`; results and verdicts are in [RESULTS.md](RESULTS.md).
 > Also run on 2x A40 over PCIe, including 3a (`nsys`, via `run_nsys_tp2.sh`, concurrency 8 only); see the PCIe section of RESULTS.md. The text below is the original procedure, written on a Mac and kept as written:
@@ -45,7 +45,7 @@ CUDA_VISIBLE_DEVICES=0   vllm serve Qwen/Qwen2.5-1.5B-Instruct --max-model-len 4
 CUDA_VISIBLE_DEVICES=0,1 vllm serve Qwen/Qwen2.5-1.5B-Instruct --max-model-len 4096 --gpu-memory-utilization 0.85 --tensor-parallel-size 2
 ```
 
-Stop the server between runs (a fresh server per run avoids prefix-cache inflation, as in Day 4).
+Stop the server between runs (a fresh server per run avoids prefix-cache inflation, as in `04-vllm-internals`).
 From each startup log, copy the `GPU KV cache size: N tokens` line — TP=2 frees weight memory on
 each GPU, so the KV pool per GPU differs even though the model "fits both ways".
 

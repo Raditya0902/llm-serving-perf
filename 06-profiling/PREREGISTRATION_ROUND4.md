@@ -15,7 +15,7 @@ Prediction: equivalent (both kernels are fp16 with fp32 accumulation).
 Models and GQA group: Qwen2.5-1.5B (12/2 = 6), Qwen2.5-3B (16/2 = 8), Llama-3.1-8B (32/8 = 4). 0.5B (14/2 = 7) is the reference from round 3. FLASH_ATTN vs TRITON_ATTN, `max_num_seqs` 256 vs 1024 (8B: 64 vs 192, because 1024 sequences x 640 tokens needs 655k KV tokens against a pool of about 175k; 8B uses `max_num_batched_tokens=2048`), workloads 512x128 (all seqs) and 3584x128 (1.5B at 256 seqs, 3B at 128 seqs: 256 x 3,712 tokens would not fit the 3B's pool of about 0.9M; 8B: not run, about 7 minutes a run), 2 repeats.
 Predictions (attention is a smaller share of a mixed step in a larger model, so the gain shrinks):
 - Triton over FA2 at 256 seqs, 512x128: 1.5B +8 to +13%, 3B +4 to +10%, 8B +1 to +5%. At 3584x128: 1.5B +30 to +55%, 3B +15 to +40%.
-- FA2 loss at 1024 vs 256 (512x128): 1.5B -4 to -8% (Day 4 saw -4.9%), 3B -2 to -6%, 8B (192 vs 64) 0 to -3%. Triton: within +-1.5% at every size.
+- FA2 loss at 1024 vs 256 (512x128): 1.5B -4 to -8% (`04-vllm-internals` saw -4.9%), 3B -2 to -6%, 8B (192 vs 64) 0 to -3%. Triton: within +-1.5% at every size.
 Refuted if: Triton is slower than FA2 at any size or workload by more than 2%, or the FA2 1024-seq loss is at least 3 points larger than predicted at any size, or Triton shows a loss of more than 3% at 1024.
 
 ## Q3. Does Hopper (FlashAttention 3) have the penalty? (H100; `gpu/attn_sweep.py --fa-version`, `gpu/run_backend_ab.sh` with `FLASH_ATTN:2` / `FLASH_ATTN:3` entries)

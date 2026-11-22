@@ -57,7 +57,7 @@ Driver: `07-capacity-study/run_round5_a100.sh` (Llama-3.1-8B ungated mirror, wor
 | F2 (custom all-reduce) | Worth +1% to +4% throughput at c64 on NVLink and 0% to +2% on PCIe | Reported per host; refuted if the PCIe gain exceeds the NVLink gain |
 | F3 (NCCL over host memory on the NVLink host) | TP=2 no-custom with `NCCL_P2P_DISABLE=1` is at least 5% slower than no-custom over NVLink at c16 and lands within 10% of the PCIe host's no-custom arm | Both clauses must hold |
 | F4 (link probe) | Bus bandwidth at 256 MiB: NVLink >= 150 GB/s, PCIe <= 30 GB/s; 8 KiB all-reduce latency <= 30 us on NVLink | Held per number |
-| F5 (real 40 GB pool) | TP=1 at c64 preempts on the real 40 GB card (the Day 7 capped emulation predicted 64 preemptions per run); TP=2 does not | Held if TP=1 preemptions >= 20 per run and TP=2 has 0 |
+| F5 (real 40 GB pool) | TP=1 at c64 preempts on the real 40 GB card (the `07-capacity-study` capped emulation predicted 64 preemptions per run); TP=2 does not | Held if TP=1 preemptions >= 20 per run and TP=2 has 0 |
 
 
 ---

@@ -36,7 +36,7 @@ heads across devices (column-parallel QKV), attend locally, row-parallel output 
 one AllReduce. That is why a transformer layer costs **two AllReduces** in the forward pass,
 and how vLLM does it ([TP_SOURCE_NOTES.md](TP_SOURCE_NOTES.md)).
 
-**When AllGather vs AllReduce is needed** (the Session 3 question): AllGather when a
+**When AllGather vs AllReduce is needed** (the TP-layer question): AllGather when a
 column-parallel output must be a *complete* tensor (e.g. the final logits/vocab projection, or
 when the next op mixes across the sharded dimension); AllReduce after a row-parallel layer,
 always. Column → elementwise → row needs neither between the two matmuls.

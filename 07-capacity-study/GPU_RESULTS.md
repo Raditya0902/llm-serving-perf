@@ -1,4 +1,4 @@
-# Day 7 matrix on a real GPU: results and verdicts
+# Capacity-study matrix on a real GPU: results and verdicts
 
 Measured on one NVIDIA A40 (RunPod), vLLM 0.34.0, `Llama-3.1-8B-Instruct` (ungated mirror `NousResearch/Meta-Llama-3.1-8B-Instruct`,
 `--model-preset llama3-8b`). Generated tables: [results/gpu/a40-capped/tables.generated.md](results/gpu/a40-capped/tables.generated.md).
@@ -55,7 +55,7 @@ a larger resident batch fits (TPOT +13%), but batch size was not measured, so th
 
 - **What the simulator got right** (structure): where KV pressure appears (B@64 only), the preemption counts (64.4 simulated vs 64.2 measured for the baseline), peak KV fractions of the non-pressured cases (for example B@16 34.9% vs 35%), the pool-size effect, and the direction and rough size of the admission-cap trade (it underestimated the throughput cost by about 1.3-3x).
 - **What it got wrong**: the **token-budget knob has the wrong sign** on throughput (+5.0% vs -6.2%), TTFT and TPOT. Absolute times are also far off (for example A-c64 2,614 simulated vs 1,065 measured tok/s), as expected from modeling an A100 with illustrative constants.
-- **Implicated assumption**: the Day 3 cost model charges a fixed `overhead_ms = 0.3` per iteration, and a smaller token budget therefore looks free: it only reduces per-step interference. Day 6 measured per-step costs on this A40 of 7-16 ms for a 0.5B model, so a fixed per-step cost more than 20x larger than 0.3 ms is real, and a 2,048 budget splits each 2,560-token prompt into two chunks. That fits the measured loss and Day 4's independent finding on the same GPU (a smaller token budget cost throughput at saturation), but **this was not isolated here** (no step-level trace of the 8B runs, batch size not measured), so treat it as the leading hypothesis.
+- **Implicated assumption**: the `03-batching-simulator` cost model charges a fixed `overhead_ms = 0.3` per iteration, and a smaller token budget therefore looks free: it only reduces per-step interference. `06-profiling` measured per-step costs on this A40 of 7-16 ms for a 0.5B model, so a fixed per-step cost more than 20x larger than 0.3 ms is real, and a 2,048 budget splits each 2,560-token prompt into two chunks. That fits the measured loss and `04-vllm-internals`'s independent finding on the same GPU (a smaller token budget cost throughput at saturation), but **this was not isolated here** (no step-level trace of the 8B runs, batch size not measured), so treat it as the leading hypothesis.
 
 ## Two-GPU follow-up: the 8B model with `--tensor-parallel-size 2` (RUNBOOK section 5)
 
@@ -81,7 +81,7 @@ Against the pre-run analytic predictions (REPORT section 5; link constants were 
 | PCIe: step speedup ~1.05x | not run on this pod; see the A40 PCIe section below | See below |
 
 TP=2 also lowers TTFT by ~39% and the custom all-reduce kernel is worth about +2.7% throughput at B@64 (1,844 vs 1,796 tok/s; small but outside the 0.2-0.3% CV).
-The Day 5 1.5B experiment on the same pod (TP=2 +20 to +38% throughput; two TP=1 replicas beat one TP=2 server by 19.5% at concurrency 128) is in
+The `05-tensor-parallel` 1.5B experiment on the same pod (TP=2 +20 to +38% throughput; two TP=1 replicas beat one TP=2 server by 19.5% at concurrency 128) is in
 [../05-tensor-parallel/RESULTS.md](../05-tensor-parallel/RESULTS.md); an 8B data-parallel baseline was not run on that pod; it was run on the 2x A40 PCIe pod (next section) and, in round 5, on an A100 NVLink host (last section).
 
 ## Round 2 on a 2x A40 pod (PCIe only): capped TP=2, data-parallel baseline, uncapped single GPU, PCIe step speedup
@@ -154,7 +154,7 @@ REPORT section 4 said that on a 48 GB card B@64 reaches ~95% KV with no preempti
 | B@64 mean TTFT / TPOT ms | 4,944 / 135.4 | 2,199 / 105.0 | 1,375 / 79.5 | TTFT -37.5%, TPOT -24.3% |
 
 **It depends on load.** At 16 concurrent requests TP=2 gives more throughput (plausibly because each replica is only 8 sequences deep and its decode step is the full single-GPU step; not isolated), while replicas still win on TTFT. At 64 the replicas win by 31% on throughput and
-24% on TPOT and never preempt. That is the same direction as the Day 5 1.5B result (replicas ahead at high concurrency). Caveats: the replica numbers are two simultaneous benchmark runs combined as described above (a single client's view would differ slightly);
+24% on TPOT and never preempt. That is the same direction as the `05-tensor-parallel` 1.5B result (replicas ahead at high concurrency). Caveats: the replica numbers are two simultaneous benchmark runs combined as described above (a single client's view would differ slightly);
 the two replicas draw different prompts (seed offset 100); only two load points; PCIe A40 only. An NVLink 8B data-parallel run was made in round 5 (below).
 
 ## Round 5: the same A100 40GB GPU on PCIe and on NVLink, 8B data-parallel on NVLink (Lambda Cloud)

@@ -1,9 +1,9 @@
-# RUNBOOK: run the Day 7 matrix on a Linux + NVIDIA host
+# Runbook: run the capacity-study matrix on a Linux + NVIDIA host
 
 **Status: executed once on one NVIDIA A40** (49 runs; see [GPU_RESULTS.md](GPU_RESULTS.md)). Fixes needed on that first run: the ingest
 concurrency guard (vLLM's whole-second "peak concurrent requests" can read above the cap), and the gated model was replaced by the ungated
 mirror `NousResearch/Meta-Llama-3.1-8B-Instruct`. The rest of this paragraph is the original, pre-run status. Written on a Mac with no GPU. The orchestration is tested with stand-ins (`tests/test_run_matrix_gpu.py`);
-the real `vllm serve` / `vllm bench serve` path reuses Day 4's `default_backend()` and was not exercised. Expect to fix small things on
+the real `vllm serve` / `vllm bench serve` path reuses `04-vllm-internals`'s `default_backend()` and was not exercised. Expect to fix small things on
 the first run, and treat any surprise as a finding to record, not to hide.
 
 ## 0. Prerequisites
@@ -11,7 +11,7 @@ the first run, and treat any surprise as a finding to record, not to hide.
 - Linux, one idle NVIDIA GPU (the sampler reports whole-GPU memory), CUDA drivers, `nvidia-smi` on `PATH`.
 - ~16 GB of disk for the model; a Hugging Face token if you keep the default gated model (`meta-llama/Llama-3.1-8B-Instruct`). Any model
   with the same architecture works via `--model`; **`--model-preset` must match its architecture** (it sizes KV and the simulated cost).
-- vLLM `0.34.0`, as in Day 4: `04-vllm-internals/setup_gpu_host.sh` creates `.venv-gpu` and writes `results/env.txt`.
+- vLLM `0.34.0`, as in `04-vllm-internals`: `04-vllm-internals/setup_gpu_host.sh` creates `.venv-gpu` and writes `results/env.txt`.
 
 ```bash
 cd 07-capacity-study
@@ -95,7 +95,7 @@ The runner stops each server's whole process group (vLLM's engine and workers ca
 `nvidia-smi` and kill any leftover `VLLM::EngineCore` / `VLLM::Worker` processes before re-running; the runner refuses a port that is
 already in use rather than benchmark a server it did not start.
 
-Known gaps, found in review and **not fixed** (the teardown code is Day 4's):
+Known gaps, found in review and **not fixed** (the teardown code is `04-vllm-internals`'s):
 
 - **A second Ctrl-C / SIGTERM during teardown** can interrupt the 30 s graceful wait and skip the SIGKILL stage, leaving the server's process
   group holding the GPU. Press Ctrl-C once and wait; check `nvidia-smi` afterwards.

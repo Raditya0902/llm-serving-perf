@@ -1,4 +1,4 @@
-# Day 5 knowledge checkpoint
+# Tensor parallelism: concept questions and answers
 
 Numbers marked **[measured]** come from `results/` (CPU, Gloo, one Apple M4, 3-repeat medians).
 Numbers or claims marked **[hypothesis]** are not measured here; no GPU or NCCL was available.
@@ -80,7 +80,7 @@ here — only that communication share shrinks (4–13%). Collective timings inc
 skew between ranks and the 4-rank runs may mix performance/efficiency cores.
 
 **[hypothesis, assumed hardware]** For a Qwen2.5-1.5B-sized MLP the model predicts TP=2 slightly
-helps on an NVLink-class link (1.3–1.8×) and slightly hurts on a PCIe-class link (0.9×). Measured in round 5 on the same A100 GPU: Llama-3.1-8B TPOT speedup 1.65x (NVLink, 158 GB/s) vs 0.70x (PCIe VM at about 3 GB/s), Day 7 GPU_RESULTS.md.
+helps on an NVLink-class link (1.3–1.8×) and slightly hurts on a PCIe-class link (0.9×). Measured in round 5 on the same A100 GPU: Llama-3.1-8B TPOT speedup 1.65x (NVLink, 158 GB/s) vs 0.70x (PCIe VM at about 3 GB/s), `07-capacity-study` GPU_RESULTS.md.
 Whether that holds for TP=1 vs TP=2 on real GPUs is the open experiment in `RUNBOOK.md`.
 
 ---

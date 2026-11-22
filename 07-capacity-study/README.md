@@ -18,7 +18,7 @@
 
 | File | What it is |
 |---|---|
-| [REPORT.md](REPORT.md) | **Session 4 deliverable.** The 8 required sections, the Session 3 before/after, and the biggest tradeoff |
+| [REPORT.md](REPORT.md) | The main report: eight sections, the before/after comparison, and the biggest tradeoff |
 | [ANSWERS.md](ANSWERS.md) | The ten closed-book questions, each answered with an equation, diagram, example or pointer to code |
 | [RUNBOOK.md](RUNBOOK.md) | How to run the matrix on a Linux GPU host, and the predictions the real run will confirm or refute |
 | `matrix.py` | The 12-case matrix (2 workloads x 3 concurrencies x 2 configs), the A/A control, and the exact `vllm serve` / `vllm bench serve` commands |

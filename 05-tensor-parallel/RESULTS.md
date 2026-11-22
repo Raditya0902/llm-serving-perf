@@ -1,4 +1,4 @@
-# Day 5 on two real GPUs: NCCL baseline and vLLM TP=1 vs TP=2
+# Tensor parallelism on real GPUs: NCCL baseline and vLLM TP=1 vs TP=2
 
 Measured on one RunPod pod with **2x NVIDIA A100-SXM4-80GB joined by NVLink** (`nvidia-smi topo -m`: GPU0-GPU1 = `NV12`),
 vLLM 0.34.0, torch 2.14.0+cu132 (NCCL 2.30.7), `Qwen/Qwen2.5-1.5B-Instruct`, `--max-model-len 4096 --gpu-memory-utilization 0.85`.
@@ -19,7 +19,7 @@ The same experiment was repeated on a **PCIe-only pair (2x A40, no NVLink)**; it
 
 The assumed numbers were close. Note: nccl-tests was built against the container's system NCCL 2.25.1, not the NCCL 2.30.7 that torch and vLLM
 use, so treat it as the interconnect's ceiling, not as vLLM's exact collective path.
-Day 5's own NCCL path ran for the first time too: `collectives.py` (all-reduce, broadcast, all-gather, barrier) and `tp_demo.py` (column-parallel,
+`05-tensor-parallel`'s own NCCL path ran for the first time too: `collectives.py` (all-reduce, broadcast, all-gather, barrier) and `tp_demo.py` (column-parallel,
 row-parallel and the MLP match the unsharded reference to ~1e-5 relative error ~1e-7) both pass under `torchrun` with the NCCL backend.
 `run_experiments.py` is CPU/Gloo only and was not run on the GPUs.
 
@@ -60,7 +60,7 @@ runs, so it slightly overstates a single client's view. Only concurrency 32 and 
 Measured on a second pod: **2x NVIDIA A40 48 GB, no NVLink** (`nvidia-smi topo -m`: GPU0-GPU1 = `PIX`, one PCIe bridge; no `NV#` entries), same vLLM 0.34.0 /
 torch 2.14.0+cu132 / NCCL 2.30.7, same model, flags, prompts, seeds, 3 repeats, fresh server per run, 0 failed requests. Evidence:
 [results/gpu_a40_pcie/](results/gpu_a40_pcie/) (`summary.md`, `topo.txt`, `nccl_all_reduce.txt`, `kv_cache_lines.txt`, NCCL demo logs, `nsys_tp2/`).
-Both Day 5 NCCL demos (`collectives.py`, `tp_demo.py`) pass on this pair too.
+Both `05-tensor-parallel` NCCL demos (`collectives.py`, `tp_demo.py`) pass on this pair too.
 
 **Interconnect (nccl-tests `all_reduce_perf`, 2 ranks).** Two different A40 hosts were tried, and they differ:
 
@@ -132,7 +132,7 @@ used as a replica than as a tensor-parallel partner for this model, at the concu
 ## What the numbers do and do not say
 
 - At concurrency 1 the step is 4.06 ms at TP=1; weight reads alone would be ~1.5 ms (3 GB over ~2 TB/s), so a large part is not memory-bound
-  (Day 6 found the same launch-bound behaviour on the A40). TP=2 therefore cannot give 2x. This is an interpretation from arithmetic plus Day 6, not a measurement here.
+  (`06-profiling` found the same launch-bound behaviour on the A40). TP=2 therefore cannot give 2x. This is an interpretation from arithmetic plus `06-profiling`, not a measurement here.
 - Count check: 28 layers x 2 = 56 all-reduces per token. At the ~13 us small-message latency that is >= 0.7 ms, about 24% of the 3.02 ms TP=2 TPOT, as a floor
   (CUDA graphs and vLLM's custom kernel change the real cost). Not profiled.
 - Why replicas win at 128 (a likely explanation, not isolated): each replica keeps the full model on its GPU and pays no per-token all-reduce, so two replicas reach
@@ -145,10 +145,10 @@ used as a replica than as a tensor-parallel partner for this model, at the concu
   a same-GPU comparison (for example 2x A100 PCIe against the NVLink pod) was not run. Multi-node was not run.
 - **Nsight Systems was not available on the NVLink pod**, so the NVLink all-reduce statements in the section above are arithmetic, not profile. The PCIe pod has a measurement (above), at concurrency 8 only.
 - The first A40 pod was abandoned: every TP=2 server start failed there with `CUDA error: unspecified launch failure` and GPU 1 then became unusable (no driver reset in the container), while NCCL tests
-  and the Day 5 NCCL demos had passed. The replacement pod ran TP=2 with the default custom all-reduce and with NCCL only without trouble, so this was most likely a bad host or GPU, not a property of
+  and the `05-tensor-parallel` NCCL demos had passed. The replacement pod ran TP=2 with the default custom all-reduce and with NCCL only without trouble, so this was most likely a bad host or GPU, not a property of
   PCIe; the cause was not established. Its nccl-tests result is kept above for comparison; its TP=1 runs and failure logs are in `results/raw/` (git-ignored).
 - DP baseline at concurrency 32 and 128 only. Its first attempt was invalid (the second replica never started because RunPod's nginx owns port 8001 and answers
   `/health` with 200, so the script treated it as healthy) and was rerun on ports 18000/18001 with a health check that requires the model id from `/v1/models`;
   the invalid files were discarded. The fixed script is [run_tp_compare.sh](run_tp_compare.sh).
 - The A100 pair is 80 GB, so a 1.5B model never feels KV pressure; the KV doubling is a capacity fact, not a latency effect here.
-- Day 7's 8B follow-up (`--tensor-parallel-size 2`) is in the Day 7 [GPU_RESULTS.md](../07-capacity-study/GPU_RESULTS.md).
+- `07-capacity-study`'s 8B follow-up (`--tensor-parallel-size 2`) is in the `07-capacity-study` [GPU_RESULTS.md](../07-capacity-study/GPU_RESULTS.md).

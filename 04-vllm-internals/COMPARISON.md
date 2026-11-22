@@ -1,9 +1,9 @@
-# Session 4 — Day 3 scheduler vs vLLM v0.34.0
+# Scheduler comparison: `03-batching-simulator` vs vLLM v0.34.0
 
 Compares `../03-batching-simulator/` (a discrete-event *simulator* of a scheduler) with
 vLLM's real V1 scheduler, pinned to commit `62d4bc3`. vLLM citations use the
 abbreviations from [SOURCE_TRACE.md](SOURCE_TRACE.md) (SCH = `core/sched/scheduler.py`,
-KVM = `core/kv_cache_manager.py`, …). Day 3 citations are `file:line` inside
+KVM = `core/kv_cache_manager.py`, …). `03-batching-simulator` citations are `file:line` inside
 `03-batching-simulator/`.
 
 Everything on the vLLM side is read from source, not from memory or docs. Where this
@@ -13,10 +13,10 @@ file says what *would happen* (a prediction), it says so.
 
 ### 1a. Implemented — same mechanism
 
-| Mechanism | Day 3 | vLLM | Notes |
+| Mechanism | `03-batching-simulator` | vLLM | Notes |
 |---|---|---|---|
 | Iteration-level (continuous) batching | `ContinuousScheduler.plan` scheduler.py:174, called once per `Simulator.run` iteration | `Scheduler.schedule` SCH:716, called once per `EngineCore.step` ENG:713 | Both re-decide the batch every forward pass |
-| Per-iteration token budget; a decoder costs 1 token | `_allocate` :197 — `budget = token_budget − len(decoders)` | `token_budget` SCH:735; decode `num_new_tokens = 1` via SCH:855 | Day 3 `token_budget` ≙ vLLM `--max-num-batched-tokens` |
+| Per-iteration token budget; a decoder costs 1 token | `_allocate` :197 — `budget = token_budget − len(decoders)` | `token_budget` SCH:735; decode `num_new_tokens = 1` via SCH:855 | `03-batching-simulator` `token_budget` ≙ vLLM `--max-num-batched-tokens` |
 | Cap on concurrent sequences | `max_running_seqs`, checked in `_can_admit` :229 | `--max-num-seqs` → `max_num_running_reqs`/`max_num_active_reqs`; checked SCH:1095 | |
 | Chunked prefill | `chunked_prefill` flag; `chunk = min(remaining, budget)` :204 | `enable_chunked_prefill` (default **True**, `config/scheduler.py:146`); `min(num_new_tokens, request_token_budget)` SCH:1396 | |
 | …and its absence blocks the queue | `_admit`: `left < needs → return` :221 | `not enable_chunked_prefill and n > budget → break` SCH:1387-1394 | Both reproduce head-of-line blocking by an oversized prompt |
@@ -30,9 +30,9 @@ file says what *would happen* (a prediction), it says so.
 
 ### 1b. Simplified
 
-| Mechanism | Day 3 (simplification) | vLLM (reality) |
+| Mechanism | `03-batching-simulator` (simplification) | vLLM (reality) |
 |---|---|---|
-| KV accounting | **Counts only**: `_owned: dict[req_id, int]`, `used_blocks` | `BlockPool` with `KVCacheBlock` objects, `ref_cnt`, a doubly-linked `FreeKVCacheBlockQueue`, a hash→block map, a `null_block` (BP:107, kv_cache_utils.py:166,254). (Day 2's `PagedKVAllocator` has real ids/tables but Day 3 does not use it.) |
+| KV accounting | **Counts only**: `_owned: dict[req_id, int]`, `used_blocks` | `BlockPool` with `KVCacheBlock` objects, `ref_cnt`, a doubly-linked `FreeKVCacheBlockQueue`, a hash→block map, a `null_block` (BP:107, kv_cache_utils.py:166,254). (`02-kv-cache-memory`'s `PagedKVAllocator` has real ids/tables but `03-batching-simulator` does not use it.) |
 | Prefill vs decode | Explicit partition: `is_prefilling = kv_tokens < prefill_goal`; `_allocate` handles the two sets separately | **No phases**: one `num_computed_tokens` vs `num_tokens_with_spec` distance per request (SCH:718-727) |
 | Time | `CostModel.iteration_time` — a formula (`0.3 + max(0.04·tokens, 7.0 + 0.0001·ctx)`) in simulated ms | A real forward pass; plus scheduling, IPC and sampling that vary with batch shape |
 | Scheduling latency | Zero; scheduler runs "between" iterations | Real CPU cost; hidden by async scheduling/batch queue (ENG:758) |
@@ -44,10 +44,10 @@ file says what *would happen* (a prediction), it says so.
 
 ### 1c. vLLM does it differently (same goal, different design)
 
-| Aspect | Day 3 | vLLM | Why it matters |
+| Aspect | `03-batching-simulator` | vLLM | Why it matters |
 |---|---|---|---|
 | **Order of work within a step** | `_ensure_decode_kv` → `_admit` → `_allocate` (:174-178): admission is decided **before** the budget is spent | One pass: running requests first, then waiting; for each request `n = f(budget)` → `allocate_slots(n)` → charge budget (SCH:809-1023, 1066-1640) | See §2 — this is the budget↔KV coupling |
-| **KV obtained at admission** | `on_demand`: `try_ensure(prefill_goal)` — the **whole prompt is reserved** up front (`_reserve_tokens` :181, `admit` :133), even with chunked prefill | **Checks** the whole prompt fits (`scheduler_reserve_full_isl`, default True, KVM:552-569) but **allocates only the first chunk** (`num_new_tokens`) | Day 3 holds KV for tokens not yet computed; vLLM does not |
+| **KV obtained at admission** | `on_demand`: `try_ensure(prefill_goal)` — the **whole prompt is reserved** up front (`_reserve_tokens` :181, `admit` :133), even with chunked prefill | **Checks** the whole prompt fits (`scheduler_reserve_full_isl`, default True, KVM:552-569) but **allocates only the first chunk** (`num_new_tokens`) | `03-batching-simulator` holds KV for tokens not yet computed; vLLM does not |
 | **KV peak reservation** | `full_reserve`: reserve `prompt + max_output − 1` → preemption impossible | No equivalent (it never reserves for future *output*); the closest knobs are `watermark` (KVM:539-546) and `scheduler_reserve_full_isl` | |
 | **Admission in a step that preempted** | `plan()` calls `_admit` right after `_ensure_decode_kv`, so a request can be admitted into the blocks a victim just freed | Skipped entirely: `if not preempted_reqs …` SCH:1066 | Prevents admit→evict→admit thrash |
 | **Can a waiting request evict a running one?** | Optional: `preempt_for_priority` → `_preempt_lower_priority` :234 | **Never.** On `allocate_slots → None` the waiting loop just `break`s (SCH:1516-1523) | Only KV *growth* of running requests triggers preemption in vLLM |
@@ -55,10 +55,10 @@ file says what *would happen* (a prediction), it says so.
 | **Where preempted requests go** | Appended to `waiting`; ordering restored by `min(key)` | `waiting.prepend_request` (front of FCFS deque; heap push for PRIORITY) SCH:1896 | Equivalent for FCFS, by different means |
 | **Headroom** | None | `watermark_blocks` applied only to WAITING/PREEMPTED requests and only when something is already scheduled (KVM:539-546) | Keeps running decodes from immediately preempting |
 | **Zero-work requests** | Skips a prefill whose chunk exceeds the budget (`continue` :205-206) | `continue` instead of `break` "does not strictly follow FCFS" SCH:921-925 | Similar spirit |
-| **Static batching** | Implemented as a baseline (`StaticScheduler` :251) | Does not exist — continuous batching only | Day 3's baseline has no vLLM counterpart |
+| **Static batching** | Implemented as a baseline (`StaticScheduler` :251) | Does not exist — continuous batching only | `03-batching-simulator`'s baseline has no vLLM counterpart |
 | **Request ids / state** | `int` ids, one mutable `Request` | `str` ids; the scheduler's `Request` is mirrored in the worker as `RequestState` (`worker/gpu/states.py:9`) fed by `NewRequestData` once, then `CachedRequestData` diffs | IPC volume |
 
-### 1d. Not implemented in Day 3
+### 1d. Not implemented in `03-batching-simulator`
 
 | vLLM mechanism | Where | What it buys |
 |---|---|---|
@@ -75,13 +75,13 @@ file says what *would happen* (a prediction), it says so.
 | **The entire worker side**: persistent batch, staged H2D writes, slot-mapping kernels, CUDA graphs, async D2H | GMR:1284-1782, `block_table.py:229` | Making the GPU, not the CPU, the bottleneck |
 | Abort/cancel | ENG:610 → SCH:3100 | |
 
-**Day 3 has, vLLM does not:** static batching, `preempt_for_priority`, `full_reserve` KV mode, the cost model/simulator itself.
+**`03-batching-simulator` has, vLLM does not:** static batching, `preempt_for_priority`, `full_reserve` KV mode, the cost model/simulator itself.
 
 ## 2. Token budget ↔ KV-block coupling
 
 This is the point where the two designs differ most.
 
-**Day 3 — decide in separate phases, tie them together by over-reserving:**
+**`03-batching-simulator` — decide in separate phases, tie them together by over-reserving:**
 
 ```text
 _ensure_decode_kv   KV(+1 token) for each decoder        (budget not consulted)
@@ -111,16 +111,16 @@ Consequences read off the source:
 1. **Failure is clean.** A failed `allocate_slots` charges neither resource; the budget is
    not burned on a request that cannot run (SCH:998-1010, 1516-1523).
 2. **KV tracks computation, not intent.** Under chunked prefill a long prompt acquires blocks
-   chunk by chunk, so more requests can be *running* in the same KV pool than under Day 3's
+   chunk by chunk, so more requests can be *running* in the same KV pool than under `03-batching-simulator`'s
    up-front reservation.
 3. **…but that creates preemption risk, and vLLM spends three mechanisms to manage it:**
    the whole-prompt **check** at admission (`scheduler_reserve_full_isl`, KVM:552-569), the
    **watermark** headroom for waiting/preempted requests (KVM:539-546), and the rule that
-   a step that preempted admits nobody (SCH:1066). Day 3 has none of these, so its
+   a step that preempted admits nobody (SCH:1066). `03-batching-simulator` has none of these, so its
    `on_demand` mode pays for the same risk with early, coarse reservation instead.
 4. **The two failure paths are asymmetric.** A *running* request that cannot grow evicts the
    latest admitted request (recompute cost); a *waiting* request that cannot be admitted
-   simply stops the loop. Day 3's default is the same except under `preempt_for_priority`.
+   simply stops the loop. `03-batching-simulator`'s default is the same except under `preempt_for_priority`.
 5. **Budget is per-step, KV is per-lifetime.** `token_budget` is rebuilt every `schedule()`;
    KV is held until the request finishes or is preempted. So a small `max_num_batched_tokens`
    limits per-step latency but does *not* limit KV pressure; `max_num_seqs` and the pool size do.
@@ -128,15 +128,15 @@ Consequences read off the source:
    profile run sizes activations at that value (SOURCE_TRACE.md, Stage 0).
 
 **Prediction (not yet tested).** Under a workload of long prompts + chunked prefill + a
-tight pool, Day 3's `on_demand` mode should admit *fewer* concurrent requests than vLLM
+tight pool, `03-batching-simulator`'s `on_demand` mode should admit *fewer* concurrent requests than vLLM
 (it reserves whole prompts) and therefore under-estimate vLLM's throughput, while
-over-estimating its stability (fewer preemptions). A natural follow-up for Day 3 is a third
-`kv_mode` that does *check-whole-prompt, allocate-per-chunk, watermark* and re-runs Day 3
+over-estimating its stability (fewer preemptions). A natural follow-up for `03-batching-simulator` is a third
+`kv_mode` that does *check-whole-prompt, allocate-per-chunk, watermark* and re-runs `03-batching-simulator`
 experiment C; I have not implemented that here.
 
-## 3. How the Session 3 knobs map onto both schedulers
+## 3. How the sweep knobs map onto both schedulers
 
-| vLLM flag | Day 3 parameter | Mechanism |
+| vLLM flag | `03-batching-simulator` parameter | Mechanism |
 |---|---|---|
 | `--max-num-seqs` | `max_running_seqs` | admission cap (SCH:1095) |
 | `--max-num-batched-tokens` | `token_budget` | per-step budget (SCH:735, 738); also sizes the profile run |

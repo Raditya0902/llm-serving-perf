@@ -1,4 +1,4 @@
-# Day 6 GPU runbook (NVIDIA host)
+# Profiling GPU runbook (NVIDIA host)
 
 > **Status (updated): run on RunPod A40 pods.** Sections 1, 3, 4 and 5 produced the measurements in [performance-report.md](performance-report.md) section 9; section 2 (nsys) ran in a second round
 > (nsys 2026.5.2 from the CUDA apt repo; `gpu/run_nsys.sh` now passes `--sample=none --cpuctxsw=none`, needed in a container). New in that round: `profile_run.py --model` and `--probe-only` (unprofiled launch probe),
@@ -8,7 +8,7 @@
 
 Hypotheses for every experiment are fixed in [experiments.py](experiments.py) *before* any run.
 Experiments E4-E6 (max batched tokens, max seqs, KV capacity) are the ones that need this runbook;
-the Day 3 simulator gives a labelled **SIMULATED** prediction in `results/sim/`, not a result.
+the simulator in `03-batching-simulator` gives a labelled **SIMULATED** prediction in `results/sim/`, not a result.
 
 ## 0. Setup
 
@@ -21,7 +21,7 @@ cd 06-profiling && uv venv --python 3.12 .venv-gpu && uv pip install --python .v
 Keep model, workload and hardware identical across every comparison; record `nvidia-smi` clocks
 and whether the GPU is otherwise idle (the memory sampler reads whole-GPU memory).
 
-## 1. Profile the Day 1 loop with PyTorch Profiler on CUDA
+## 1. Profile the `01-inference-loop` decode loop with PyTorch Profiler on CUDA
 
 ```bash
 .venv-gpu/bin/python profile_run.py --device cuda --prompt-len 512 --new-tokens 33 --tag cuda-baseline
@@ -39,7 +39,7 @@ Same script as on the Mac, but on CUDA `ProfilerActivity.CUDA` is recorded, so
 | Is the CPU delaying the GPU | `launch_probe.enqueue_fraction` (>= 0.9 means CPU-bound) |
 
 Open `trace_decode.json` in <https://ui.perfetto.dev> to look at the timeline directly.
-Caveat that applies here too: Day 1's loop syncs every step, so the GPU idles at the end of each
+Caveat that applies here too: `01-inference-loop`'s loop syncs every step, so the GPU idles at the end of each
 step by construction. Compare with the `deferred_sync` variant (`run_local_experiments.py --exp O1`).
 
 ## 2. nsys on the same window
@@ -79,11 +79,11 @@ vllm serve Qwen/Qwen2.5-0.5B-Instruct --max-model-len 4096 --gpu-memory-utilizat
 
 ## 4. Baseline vs modified comparison (the report table)
 
-Day 4's `run_sweep.py` requests percentiles `50,99` and does **not** pass `--save-detailed`, and vLLM
+`04-vllm-internals`'s `run_sweep.py` requests percentiles `50,99` and does **not** pass `--save-detailed`, and vLLM
 v0.34.0 deletes per-request arrays from the saved JSON without it (`vllm/benchmarks/serve.py`
-~L2428). So Day 4 sweep files carry no P95. For the two configurations in the report table, run the
+~L2428). So `04-vllm-internals` sweep files carry no P95. For the two configurations in the report table, run the
 bench directly, once per configuration, against a *fresh* server each time (prefix-cache warning in
-Day 4's runbook):
+`04-vllm-internals`'s runbook):
 
 ```bash
 # terminal A: server for configuration X (e.g. baseline: 256 seqs / 8192 tokens)
@@ -104,7 +104,7 @@ Then read both with `gpu/report_from_vllm.py` (`row_from_result(path, mem_path)`
 The sampler reports whole-GPU memory, which for vLLM is dominated by the pre-allocated KV pool, so it
 tracks `--gpu-memory-utilization` and not live tensor use; say so when reporting it.
 
-## 5. E4-E6 sweeps (Day 4 tooling)
+## 5. E4-E6 sweeps (`04-vllm-internals` tooling)
 
 ```bash
 cd ../04-vllm-internals
@@ -120,7 +120,7 @@ from the scraped `/metrics` file (`vllm:num_preemptions`). E6 only shows preempt
 is smaller than the workload's peak demand: check the `GPU KV cache size: N tokens` startup line and
 size the workload against it, otherwise E6 will look flat for the wrong reason.
 For concurrency (E1) and output length (E3) on vLLM, `--max-concurrency` and `--random-output-len`
-exist on `vllm bench serve` but are not in Day 4's sweep knobs; use the direct command in section 4.
+exist on `vllm bench serve` but are not in `04-vllm-internals`'s sweep knobs; use the direct command in section 4.
 
 ## 6. Reading the results against the hypotheses
 

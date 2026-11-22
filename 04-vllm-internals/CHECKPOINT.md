@@ -119,12 +119,12 @@ exception, and these sizes:
   (24 vs 109 ms) for 46% less throughput and 2.0x higher p99 TTFT. Raising it to 16384 adds about 1% throughput (noise) and worsens p99 ITL by 64%.
 - `--max-num-seqs` scales throughput up to 256 (1,124 / 3,513 / 6,926 / 9,445 tok/s for 4 / 16 / 64 / 256) but **1024 is 11% slower (8,399) with
   4x worse p99 ITL (442 vs 109 ms)**. The "larger is better until something binds" prediction is therefore wrong above 256 here; the cause was
-  not fully explained: a CUDA-graph capture-range effect was tested and refuted (Day 6 report 9.3), and traces show prefill-carrying steps cost 42-135 ms vs 7 ms for pure decode, which explains the ITL tail but not the throughput loss. A first pass with only 100 prompts missed this because it
+  not fully explained: a CUDA-graph capture-range effect was tested and refuted (`06-profiling` report 9.3), and traces show prefill-carrying steps cost 42-135 ms vs 7 ms for pure decode, which explains the ITL tail but not the throughput loss. A first pass with only 100 prompts missed this because it
   could not use more than 100 sequences. At the brief 2 req/s workload no latency effect is visible.
 - `--gpu-memory-utilization` sets the KV pool as predicted (1.75M to 3.50M tokens for 0.5 to 0.95) and changed no speed (spread 1.4%), because the
-  pool was 3x to 19x larger than the computed peak demand. **No preemption occurred in any of 168 runs (nor in the 51-run 1.5B repeat), so these sweeps never reached real KV exhaustion.** It was reached later: Day 6 report 9.7 (0.5B, pool capped by `--kv-cache-memory-bytes`: preemptions start when the pool drops below peak demand, 0 -> 71 preemptions between pools of 174,720 and 131,072 tokens, throughput -6% to -24%) and Day 7 (8B, 62-65 preemptions at B@64 with a full pool).
+  pool was 3x to 19x larger than the computed peak demand. **No preemption occurred in any of 168 runs (nor in the 51-run 1.5B repeat), so these sweeps never reached real KV exhaustion.** It was reached later: `06-profiling` report 9.7 (0.5B, pool capped by `--kv-cache-memory-bytes`: preemptions start when the pool drops below peak demand, 0 -> 71 preemptions between pools of 174,720 and 131,072 tokens, throughput -6% to -24%) and `07-capacity-study` (8B, 62-65 preemptions at B@64 with a full pool).
 - Throughput tracks the arrival rate until saturation; longer prompts raise TTFT and cut throughput (16,343 to 1,231 tok/s from 128 to 3,584 tokens).
 
-Mechanism (Day 6 traces): a step that carries prefill costs 93-132 ms vs 7-26 ms for pure decode, and each decode riding in such a step costs about 4x more; this also explains why p50 ITL at `max_num_batched_tokens=1024` exceeds that at 512.
+Mechanism (`06-profiling` traces): a step that carries prefill costs 93-132 ms vs 7-26 ms for pure decode, and each decode riding in such a step costs about 4x more; this also explains why p50 ITL at `max_num_batched_tokens=1024` exceeds that at 512.
 Not established: the cause of the `max_num_seqs=1024` throughput loss, the 234 ms p50 ITL at `input_len=3584`,
 anything for models larger than 0.5B, and the saturation point between 16 req/s and unthrottled.

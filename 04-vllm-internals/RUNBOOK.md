@@ -1,4 +1,4 @@
-# Session 3 runbook — serve and benchmark vLLM
+# Runbook: serve and benchmark vLLM
 
 > **Status: written and unit-tested on a Mac; never run against a real vLLM.**
 > This laptop has no NVIDIA GPU, so everything below that touches `vllm serve` /
@@ -41,7 +41,7 @@ GPU KV cache size: N tokens, Maximum concurrency for 4,096 tokens per request: X
 ```
 
 (logged by `update_kv_cache_capacity`, `vllm/v1/core/kv_cache_utils.py:1157`). `N` is `num_gpu_blocks × block_size` — the number
-that Session 2's Stage 0 derives from `--gpu-memory-utilization`.
+that the source trace's Stage 0 derives from `--gpu-memory-utilization`.
 
 Terminal B:
 
